@@ -3625,47 +3625,85 @@ VIDEO_CAMPUS_UPGRADE_JS = '''
     rb.position.set(px, 0.55, pz); Ht.add(rb);
   }
 
-  // --- 3. G-BLOCK / ECE ICONIC TEDxAnuragU ENTRANCE & RED GAZEBO (15:21, 16:33-18:17) ---
-  // Projecting double-height white portico on G-Block West Entrance (x = 29.5, z = 14.5)
-  he(0xf8fafc, 28.4, 3.5, 11.2, 0.72, 7.0, 0.72); // North portico column
-  he(0xf8fafc, 28.4, 3.5, 17.8, 0.72, 7.0, 0.72); // South portico column
-  he(0xf8fafc, 29.4, 7.05, 14.5, 3.2, 0.85, 7.8); // Portico crown beam
-  ys(["DEPT. OF ELECTRONICS & COMMUNICATION ENGINEERING"], 27.76, 7.08, 14.5, 7.2, 0.58, "#f8fafc", "#1e293b", -Math.PI / 2);
-  // Warm terracotta / red-sandstone lower lobby walls flanking the glass entrance (16:49, 17:05)
-  he(0xb34a3a, 30.2, 2.1, 10.6, 0.55, 4.2, 2.2);
-  he(0xb34a3a, 30.2, 2.1, 18.4, 0.55, 4.2, 2.2);
-  // Grand dark glass entrance + Iconic bold "TEDxAnuragU" banner! (15:21, 17:05)
-  he(0x142230, 30.15, 2.2, 14.5, 0.25, 4.4, 5.6);
-  (function() {
-    const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
-    const g = c.getContext("2d");
-    g.fillStyle = "#ffffff"; g.fillRect(0, 0, 1024, 256);
-    g.fillStyle = "#e62b1e"; g.fillRect(0, 0, 1024, 14); g.fillRect(0, 242, 1024, 14);
-    g.textBaseline = "middle";
-    g.font = "900 124px 'Segoe UI',Arial,sans-serif";
-    g.fillStyle = "#e62b1e"; g.fillText("TED", 82, 118);
-    g.font = "900 84px 'Segoe UI',Arial,sans-serif";
-    g.fillText("x", 334, 88);
-    g.font = "800 110px 'Segoe UI',Arial,sans-serif";
-    g.fillStyle = "#111827"; g.fillText("AnuragU", 398, 118);
-    g.font = "600 30px 'Segoe UI',sans-serif";
-    g.fillStyle = "#475569"; g.fillText("x = independently organized TED event  ·  SPACE RESEARCH CENTER", 90, 204);
-    const t = new dn(c); t.colorSpace = vt;
-    const tedSign = new et(new _i(5.8, 1.45), new Jt({ map: t, roughness: 0.35 }));
-    tedSign.rotation.y = -Math.PI / 2;
-    tedSign.position.set(29.95, 4.85, 14.5);
-    Ht.add(tedSign);
-  })();
-  // Satellite Design & Development Center for Space Research plaque (17:37)
-  ys(["SATELLITE DESIGN & DEVELOPMENT", "CENTER FOR SPACE RESEARCH"], 29.88, 2.3, 10.6, 1.95, 0.78, "#0f172a", "#38bdf8", -Math.PI / 2);
-  // Exterior granite entrance steps
-  for (let s = 0; s < 3; s++) {
-    let sh = (3 - s) * 0.16;
-    he(0x334155, 29.2 - s * 0.35, sh * 0.5, 14.5, 0.4, sh, 6.2);
+  // --- 3. WIDE 2-LANE EAST AVENUE (x = 24.4) + G-BLOCK (ADMIN), F-BLOCK (EXAM) & E-BLOCK (TEDxAnuragU) ---
+  // 3a. Wide 2-Lane Asphalt Campus Avenue between A-Block and G/F/E-Block (wO 01:22, nK 00:26)
+  const aveX = 24.4, aveZ = 1.0, aveLen = 70.0;
+  he(0x3a3f46, aveX, 0.06, aveZ, 8.4, 0.12, aveLen); // Wide 2-lane dark asphalt surface
+  // Crisp dashed white center lane divider
+  for (let lz = -31; lz <= 33; lz += 4.2) {
+    he(0xf8fafc, aveX, 0.13, lz, 0.16, 0.02, 2.1);
+  }
+  // Yellow-and-black striped curbs + checkered granite footpaths along BOTH sides of the 2-lane avenue!
+  for (let cz = -33; cz <= 35; cz += 1.0) {
+    let cCol = Math.abs(Math.round(cz)) % 2 === 0 ? 0xeab308 : 0x1e293b;
+    he(cCol, aveX - 4.32, 0.14, cz, 0.24, 0.2, 0.96);
+    he(cCol, aveX + 4.32, 0.14, cz, 0.24, 0.2, 0.96);
+  }
+  he(0x94a3b8, aveX - 5.1, 0.08, aveZ, 1.35, 0.14, aveLen); // West footpath (A-Block side)
+  he(0x94a3b8, aveX + 5.1, 0.08, aveZ, 1.35, 0.14, aveLen); // East footpath (E/F/G-Block side)
+
+  // 3b. G-BLOCK: CENTRAL ADMINISTRATIVE BLOCK Portico (wO 01:22 — x = 30.2, z = 14.5)
+  he(0xf8fafc, 29.3, 3.6, 11.2, 0.72, 7.2, 0.72); // North portico pillar
+  he(0xf8fafc, 29.3, 3.6, 17.8, 0.72, 7.2, 0.72); // South portico pillar
+  he(0xf8fafc, 30.0, 7.25, 14.5, 2.6, 0.95, 7.8); // Double-height portico crown
+  ys(["CENTRAL ADMINISTRATIVE BLOCK", "G BLOCK · ANURAG UNIVERSITY"], 28.66, 7.28, 14.5, 7.0, 0.74, "#f8fafc", "#1e293b", -Math.PI / 2);
+  he(0x162230, 30.25, 2.2, 14.5, 0.24, 4.4, 5.6); // Sleek glass lobby doors
+  for (let s = 0; s < 4; s++) {
+    let sh = (4 - s) * 0.15;
+    he(0x334155, 29.8 - s * 0.32, sh * 0.5, 14.5, 0.36, sh, 6.4); // Wide dark-granite entrance steps
+  }
+  // Terracotta potted plants flanking G-Block steps (wO 01:22)
+  for (let pz of [11.0, 18.0]) {
+    let pot = new et(new pn(0.28, 0.2, 0.38, 10), new Jt({ color: 0xa64b3a, roughness: 0.78 }));
+    pot.position.set(28.85, 0.2, pz); Ht.add(pot);
+    let foliage = new et(new fn(0.42, 8, 6), new Jt({ color: 0x2e6f28, roughness: 0.82 }));
+    foliage.position.set(28.85, 0.58, pz); Ht.add(foliage);
   }
 
-  // 3b. Covered Red-Roof Outdoor Campus Gazebo / Kiosk & Angled Display Panels (16:33, 18:17)
-  const gx = 24.5, gz = 26.5;
+  // 3c. F-BLOCK: EXAMINATION BRANCH — Terracotta Lower Walls, Black Granite Stairs & Yellow Soffit (wO 01:32)
+  he(0xb34a3a, 30.9, 2.2, -1.6, 0.65, 4.4, 3.2); // Warm terracotta-sandstone South lower wall
+  he(0xb34a3a, 30.9, 2.2, -7.4, 0.65, 4.4, 3.2); // Warm terracotta-sandstone North lower wall
+  he(0xf8fafc, 29.8, 5.2, -2.2, 0.68, 10.4, 0.68); // Tall white architectural pillar
+  he(0xf8fafc, 29.8, 5.2, -6.8, 0.68, 10.4, 0.68);
+  he(0xfacc15, 30.5, 6.85, -4.5, 2.4, 0.28, 5.4); // Iconic cantilevered yellow-soffit upper gallery!
+  ys(["F BLOCK · EXAMINATION BRANCH"], 29.42, 7.65, -4.5, 5.6, 0.62, "#f8fafc", "#1e293b", -Math.PI / 2);
+  for (let st = 0; st < 7; st++) {
+    let sh = (st + 1) * 0.26;
+    he(0x272c33, 29.3 + st * 0.28, sh * 0.5, -4.5, 0.3, sh, 2.8); // Bold exterior black-granite central staircase!
+  }
+
+  // 3d. E-BLOCK: ICONIC "TEDxAnuragU" ENTRANCE, OPEN-SKY ATRIUM & SPACE RESEARCH CENTER (wO 01:52!)
+  he(0xf8fafc, 28.9, 3.8, -16.2, 0.72, 7.6, 0.72); // South portico column
+  he(0xf8fafc, 28.9, 3.8, -22.8, 0.72, 7.6, 0.72); // North portico column
+  he(0xf8fafc, 29.4, 7.55, -19.5, 2.2, 0.85, 7.6); // Portico crown beam
+  ys(["E BLOCK · DEPT. OF ELECTRONICS & COMMUNICATION"], 28.26, 7.58, -19.5, 7.1, 0.58, "#f8fafc", "#1e293b", -Math.PI / 2);
+  // Grand dark glass entrance + Iconic bold "TEDxAnuragU" horizontal beam sign on E-BLOCK!
+  he(0x142230, 29.1, 2.2, -19.5, 0.25, 4.4, 5.8);
+  (function() {
+    const c = document.createElement("canvas"); c.width = 1024; c.height = 224;
+    const g = c.getContext("2d");
+    g.fillStyle = "#f1f5f9"; g.fillRect(0, 0, 1024, 224);
+    g.fillStyle = "#e62b1e"; g.fillRect(0, 0, 1024, 12); g.fillRect(0, 212, 1024, 12);
+    g.textBaseline = "middle";
+    g.font = "900 124px 'Segoe UI',Arial,sans-serif";
+    g.fillStyle = "#e62b1e"; g.fillText("TED", 86, 104);
+    g.font = "900 84px 'Segoe UI',Arial,sans-serif";
+    g.fillText("x", 338, 76);
+    g.font = "800 110px 'Segoe UI',Arial,sans-serif";
+    g.fillStyle = "#111827"; g.fillText("AnuragU", 402, 104);
+    g.font = "600 28px 'Segoe UI',sans-serif";
+    g.fillStyle = "#475569"; g.fillText("x = independently organized TED event  ·  E-BLOCK ATRIUM", 120, 182);
+    const t = new dn(c); t.colorSpace = vt;
+    const tedSign = new et(new _i(6.1, 1.34), new Jt({ map: t, roughness: 0.35 }));
+    tedSign.rotation.y = -Math.PI / 2;
+    tedSign.position.set(28.88, 4.88, -19.5);
+    Ht.add(tedSign);
+  })();
+  // Satellite Design & Development Center for Space Research plaque on E-Block (17:37)
+  ys(["SATELLITE DESIGN & DEVELOPMENT", "CENTER FOR SPACE RESEARCH"], 28.92, 2.3, -16.2, 2.1, 0.78, "#0f172a", "#38bdf8", -Math.PI / 2);
+
+  // 3e. Covered Red-Roof Outdoor Campus Gazebo / Kiosk (South of G-Block, clear of 2-lane avenue!)
+  const gx = 32.5, gz = 27.5;
   he(0x9e3b33, gx, 0.18, gz, 5.2, 0.36, 5.2); // Red-curbed stone terrace
   he(0xd6cfc0, gx, 0.38, gz, 4.6, 0.08, 4.6); // Concrete floor
   for (let [px, pz] of [[-2.0, -2.0], [2.0, -2.0], [-2.0, 2.0], [2.0, 2.0]]) {
@@ -3675,9 +3713,81 @@ VIDEO_CAMPUS_UPGRADE_JS = '''
   gazRoof.rotation.y = Math.PI / 4;
   gazRoof.position.set(gx, 3.85, gz); gazRoof.castShadow = true; Ht.add(gazRoof);
   he(0x64748b, gx, 0.78, gz, 1.6, 0.12, 1.6); // Center table
-  // Blue & Red Campus Info Display Panels beside Gazebo (18:01, 18:17)
-  ys(["INNOVATION HUB", "ANURAG STARTUPS"], gx - 3.6, 1.55, gz + 0.5, 2.1, 1.25, "#1d4ed8", "#ffffff", -0.35);
-  ys(["NAAC A+ ACCREDITED", "NIRF TOP RANKED"], gx - 3.6, 1.55, gz - 2.1, 2.1, 1.25, "#b91c1c", "#ffffff", 0.35);
+  // Blue & Red Campus Info Display Panels beside Gazebo
+  ys(["INNOVATION HUB", "ANURAG STARTUPS"], gx - 3.2, 1.55, gz + 0.5, 2.1, 1.25, "#1d4ed8", "#ffffff", -0.35);
+  ys(["NAAC A+ ACCREDITED", "NIRF TOP RANKED"], gx - 3.2, 1.55, gz - 2.1, 2.1, 1.25, "#b91c1c", "#ffffff", 0.35);
+
+  // --- 3f. 2026 VIDEO LANDMARKS: H-BLOCK SOLAR TREE, B-BLOCK PHARMACY, C-BLOCK COURT, CRICKET TRACK & AU BUSES ---
+  // H-Block Vertical Warm-Wood Louvered Facade Screen (wO 03:52)
+  for (let lz = -34.0; lz <= -25.6; lz += 0.48) {
+    he(0xc69c6d, -68.15, 9.2, lz, 0.14, 5.2, 0.12);
+  }
+  // Iconic Green Solar-Panel Umbrella Charging Tree ("SOLAR TREE") + Red-Roof Juice Kiosk (wO 04:12, 04:22)
+  const stX = -62.5, stZ = -41.5;
+  he(0x475569, stX, 0.22, stZ, 0.9, 0.44, 0.9); // Concrete pedestal
+  let stPole = new et(new pn(0.14, 0.16, 2.8, 12), new Jt({ color: 0x334155, roughness: 0.5, metalness: 0.6 }));
+  stPole.position.set(stX, 1.6, stZ); Ht.add(stPole);
+  let stCanopy = new et(new oa(2.35, 1.65, 6), new Jt({ color: 0x16a34a, roughness: 0.55 }));
+  stCanopy.position.set(stX, 3.25, stZ); stCanopy.castShadow = true; Ht.add(stCanopy);
+  // 4 Slanted Dark-Blue Photovoltaic Solar Panels mounted onto the green umbrella!
+  const pvMat = new Jt({ color: 0x1e3a8a, roughness: 0.2, metalness: 0.65 });
+  for (let a = 0; a < 4; a++) {
+    let ang = a * Math.PI / 2 + Math.PI / 4;
+    let pv = new et(new Ni(1.15, 0.08, 0.85), pvMat);
+    pv.position.set(stX + Math.sin(ang) * 1.15, 3.15, stZ + Math.cos(ang) * 1.15);
+    pv.rotation.y = ang; pv.rotation.x = 0.58;
+    Ht.add(pv);
+    let pvFrame = new et(new Ni(1.22, 0.05, 0.92), new Jt({ color: 0xe2e8f0, metalness: 0.7, roughness: 0.3 }));
+    pvFrame.position.set(stX + Math.sin(ang) * 1.12, 3.12, stZ + Math.cos(ang) * 1.12);
+    pvFrame.rotation.y = ang; pvFrame.rotation.x = 0.58;
+    Ht.add(pvFrame);
+  }
+  // Red-Roofed Outdoor Snack/Juice Kiosk beside Solar Tree (wO 04:12)
+  he(0xe2e8f0, stX - 5.2, 1.35, stZ, 3.2, 2.7, 2.8);
+  he(0xb91c1c, stX - 5.2, 2.2, stZ + 1.44, 3.25, 0.65, 0.14);
+  let kRoof = new et(new oa(2.85, 1.1, 4), new Jt({ color: 0xdc2626, roughness: 0.48 }));
+  kRoof.rotation.y = Math.PI / 4; kRoof.position.set(stX - 5.2, 3.25, stZ); Ht.add(kRoof);
+  ys(["CAMPUS JUICE & SNACKS"], stX - 5.2, 2.25, stZ + 1.54, 2.8, 0.42, "#b91c1c", "#fde047", 0);
+
+  // B-Block School of Pharmacy Teak-Wood Glass Lobby + Crimson Sign (wO 07:52, 08:02)
+  he(0x7c4a26, -51, 2.0, 13.45, 7.6, 3.6, 0.25); // Warm teak window mullions
+  he(0x1e293b, -51, 1.95, 13.38, 7.2, 3.3, 0.12); // Dark glass lobby
+  ys(["ANURAG UNIVERSITY", "SCHOOL OF PHARMACY"], -51, 3.95, 13.62, 4.6, 0.88, "#be123c", "#ffffff", 0);
+  for (let s = 0; s < 3; s++) {
+    let sh = (3 - s) * 0.14;
+    he(0x1f2937, -51, sh * 0.5, 14.0 + s * 0.35, 8.2, sh, 0.38);
+  }
+
+  // C-Block Front Basketball Court Mosaic "ANURAG UNIVERSITY" Wall & Colored Pillars (wO 06:52, 07:12)
+  he(0xd6d1c4, -46.5, 1.3, 56.5, 11.2, 2.6, 0.5);
+  ys(["ANURAG UNIVERSITY", "SPORTS & RECREATION PLAZA"], -46.5, 1.45, 56.2, 8.6, 1.55, "#e7e2d4", "#1e293b", Math.PI);
+  [0xf97316, 0x2563eb, 0xdc2626, 0xeab308].forEach((col, i) => {
+    he(col, -54.5 + i * 3.8, 1.85, 54.8, 0.62, 3.7, 0.62);
+  });
+
+  // Cricket Stadium Wide Red-Clay Circular Athletics Running Track (nK 01:08 aerial!)
+  const trackRing = new et(new xa(27.2, 33.5, 48), new Jt({ color: 0xb85d38, roughness: 0.92, side: Gt }));
+  trackRing.rotation.x = -Math.PI / 2;
+  trackRing.position.set(44, 0.08, -76);
+  Ht.add(trackRing);
+
+  // 3 Bright Yellow Anurag University Fleet Buses with Crimson Side Wrap (wO 09:42, 10:02, r5V 05:12)
+  const busYelMat = new Jt({ color: 0xfacc15, roughness: 0.38, metalness: 0.18 });
+  const busGlassMat = new Jt({ color: 0x0f172a, roughness: 0.15, metalness: 0.5 });
+  const busTireMat = new Jt({ color: 0x17191c, roughness: 0.9 });
+  for (let bi = 0; bi < 3; bi++) {
+    let bx = -76 + bi * 5.2, bz = -68;
+    let body = new et(new Ni(2.55, 2.75, 9.8), busYelMat); body.position.set(bx, 1.82, bz); body.castShadow = true; Ht.add(body);
+    let win = new et(new Ni(2.62, 0.92, 8.9), busGlassMat); win.position.set(bx, 2.38, bz); Ht.add(win);
+    ys(["ANURAG UNIVERSITY", "BE EVERYONE YOU DREAM TO BE"], bx + 1.31, 1.25, bz, 6.8, 0.82, "#991b1b", "#ffffff", Math.PI / 2);
+    ys(["ANURAG UNIVERSITY", "BE EVERYONE YOU DREAM TO BE"], bx - 1.31, 1.25, bz, 6.8, 0.82, "#991b1b", "#ffffff", -Math.PI / 2);
+    for (let wz of [-3.0, 3.0]) {
+      for (let wx of [-1.22, 1.22]) {
+        let wh = new et(new pn(0.48, 0.48, 0.34, 14), busTireMat);
+        wh.rotation.z = Math.PI / 2; wh.position.set(bx + wx, 0.48, bz + wz); Ht.add(wh);
+      }
+    }
+  }
 
   // --- 4. PHARMACY MEDICINAL GARDEN (09:21 - 09:29) ---
   // Positioned cleanly in the green pocket north-east of D-Block & south-east of H-Block (x = -33.5, z = -31.5)
@@ -3837,9 +3947,255 @@ if VIDEO_CAMPUS_UPGRADE_JS not in html:
 # Add quick-teleport stops for the newly detailed video-tour landmarks!
 html = html.replace(
     '["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],',
-    '["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],\n  ["A-Block Courtyard Amphitheater Stage", -3.0, 2.5, 0.0, 0.08, 0],\n  ["G-Block · TEDxAnuragU Entrance", 19.5, 14.5, -Math.PI / 2, 0.10, 0],\n  ["Pharmacy Medicinal Garden", -33.5, -22.5, 0.0, 0.06, 0],\n  ["Cricket Gate & Pitch Roller Shed", 24.5, -48.5, 0.0, 0.06, 0],',
+    '["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],\n  ["A-Block Courtyard Amphitheater Stage", -3.0, 2.5, 0.0, 0.08, 0],\n  ["E-Block · TEDxAnuragU & 2-Lane Avenue", 20.8, -19.5, -Math.PI / 2, 0.10, 0],\n  ["G-Block · Central Admin & 2-Lane Avenue", 20.8, 14.5, -Math.PI / 2, 0.09, 0],\n  ["H-Block · Solar Tree & Bus Yard", -54.5, -44.5, 0.65, 0.06, 0],\n  ["Pharmacy Medicinal Garden", -33.5, -22.5, 0.0, 0.06, 0],\n  ["Cricket Gate & Pitch Roller Shed", 24.5, -48.5, 0.0, 0.06, 0],',
     1
 )
+
+# 7q. REALISTIC GLSL SHADERS & PBR LIGHTING UPGRADE (Atmospheric Sky Dome + Volumetric Clouds + Animated Fresnel Lake Water + Stucco PBR Micro-Bump)
+REALISTIC_SHADERS_JS = '''
+// ============================================================================
+// REALISTIC GLSL SHADERS: ATMOSPHERIC SKY DOME, VOLUMETRIC CLOUDS, FRESNEL WATER & PBR REALISM
+// Uses bundled Three.js ShaderMaterial (Rt), ACESFilmicToneMapping (Tl) & lightweight VR-safe GLSL!
+// ============================================================================
+(function() {
+  // 1. Procedural GLSL Atmospheric Rayleigh/Mie Sky Dome with Drifting Volumetric Clouds!
+  const skyUniforms = {
+    uTime: { value: 0 },
+    uSunDir: { value: new A(-0.45, 0.72, 0.42).normalize() },
+    uZenithCol: { value: new Pe(0x1f62b5) },
+    uHorizonCol: { value: new Pe(0xb8dcf5) },
+    uSunCol: { value: new Pe(0xfff6dc) },
+    uCloudCol: { value: new Pe(0xffffff) },
+    uCloudDensity: { value: 0.48 }
+  };
+
+  const skyMat = new Rt({
+    side: 1, // THREE.BackSide
+    depthWrite: false,
+    fog: false,
+    uniforms: skyUniforms,
+    vertexShader: `
+      varying vec3 vWorldDir;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldDir = normalize(position);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform vec3 uSunDir;
+      uniform vec3 uZenithCol;
+      uniform vec3 uHorizonCol;
+      uniform vec3 uSunCol;
+      uniform vec3 uCloudCol;
+      uniform float uCloudDensity;
+      varying vec3 vWorldDir;
+
+      float hash21(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+      }
+      float noise2(vec2 p) {
+        vec2 i = floor(p), f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash21(i);
+        float b = hash21(i + vec2(1.0, 0.0));
+        float c = hash21(i + vec2(0.0, 1.0));
+        float d = hash21(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      }
+      float fbm(vec2 p) {
+        float v = 0.0, amp = 0.5;
+        for (int i = 0; i < 4; i++) {
+          v += amp * noise2(p);
+          p = p * 2.04 + vec2(17.1, 31.7);
+          amp *= 0.5;
+        }
+        return v;
+      }
+
+      void main() {
+        vec3 dir = normalize(vWorldDir);
+        float h = clamp(dir.y, 0.0, 1.0);
+        // Smooth physical Rayleigh horizon-to-zenith gradient
+        vec3 sky = mix(uHorizonCol, uZenithCol, pow(h, 0.52));
+        // Warm Mie atmospheric horizon haze + solar disc
+        float sunAmt = max(dot(dir, normalize(uSunDir)), 0.0);
+        sky += uSunCol * (pow(sunAmt, 8.0) * 0.24 + pow(sunAmt, 96.0) * 0.65 + smoothstep(0.9985, 0.9996, sunAmt) * 1.45);
+
+        // Soft volumetric drifting cloud deck above horizon
+        if (dir.y > 0.03) {
+          vec2 uv = dir.xz / (dir.y + 0.18) * 1.45 + vec2(uTime * 0.012, uTime * 0.005);
+          float n = fbm(uv);
+          float cl = smoothstep(0.46, 0.78, n) * smoothstep(0.03, 0.22, dir.y) * uCloudDensity;
+          vec3 litCloud = mix(uCloudCol * 0.84, uCloudCol * 1.06 + uSunCol * 0.14, pow(sunAmt, 3.0));
+          sky = mix(sky, litCloud, clamp(cl, 0.0, 0.88));
+        }
+        // Gentle horizon ground blend below y=0
+        if (dir.y < 0.0) {
+          sky = mix(uHorizonCol * 0.86, uHorizonCol * 0.65, clamp(-dir.y * 4.0, 0.0, 1.0));
+        }
+        gl_FragColor = vec4(sky, 1.0);
+      }
+    `
+  });
+  const skyDome = new et(new fn(480, 32, 20), skyMat);
+  skyDome.frustumCulled = false;
+  skyDome.renderOrder = -10;
+  Ht.add(skyDome);
+
+  // 2. GLSL Animated Fresnel Realistic Water Shader on Campus Lake (Ermulli Vagu)!
+  const waterUniforms = {
+    uTime: { value: 0 },
+    uSunDir: { value: skyUniforms.uSunDir.value },
+    uSunCol: { value: skyUniforms.uSunCol.value },
+    uSkyCol: { value: skyUniforms.uHorizonCol.value },
+    uDeepCol: { value: new Pe(0x0c3b52) },
+    uShallowCol: { value: new Pe(0x1f7a8c) }
+  };
+  const realisticWaterMat = new Rt({
+    transparent: true,
+    uniforms: waterUniforms,
+    vertexShader: `
+      varying vec3 vWorldPos;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform vec3 uSunDir;
+      uniform vec3 uSunCol;
+      uniform vec3 uSkyCol;
+      uniform vec3 uDeepCol;
+      uniform vec3 uShallowCol;
+      varying vec3 vWorldPos;
+
+      void main() {
+        vec2 p = vWorldPos.xz * 0.38;
+        float w1 = sin(p.x * 1.7 + uTime * 1.35) * cos(p.y * 1.4 - uTime * 1.1);
+        float w2 = sin((p.x + p.y) * 2.9 - uTime * 1.9) * 0.5;
+        float w3 = cos((p.x * 0.8 - p.y * 2.3) + uTime * 1.6) * 0.35;
+        vec3 N = normalize(vec3((w1 + w2) * 0.075, 1.0, (w2 - w3) * 0.075));
+        vec3 V = normalize(cameraPosition - vWorldPos);
+        vec3 L = normalize(uSunDir);
+
+        // Schlick Fresnel sky reflection + sun specular sparkle
+        float fresnel = 0.06 + 0.94 * pow(1.0 - max(dot(N, V), 0.0), 4.0);
+        vec3 waterBase = mix(uDeepCol, uShallowCol, 0.35 + 0.25 * w1);
+        vec3 col = mix(waterBase, uSkyCol, clamp(fresnel * 0.82, 0.0, 0.85));
+        vec3 H = normalize(L + V);
+        float spec = pow(max(dot(N, H), 0.0), 140.0);
+        col += uSunCol * spec * 1.35;
+        gl_FragColor = vec4(col, 0.92);
+      }
+    `
+  });
+  // Upgrade existing campus lake water mesh automatically!
+  if (typeof lakeGeo !== "undefined") {
+    const realisticLake = new et(lakeGeo, realisticWaterMat);
+    realisticLake.position.y = 0.03;
+    Ht.add(realisticLake);
+  }
+
+  // 3. Procedural PBR Micro-Stucco Bump Map applied subtly to bright campus walls for realistic sunlight texture!
+  const stuccoTex = (function() {
+    const c = document.createElement("canvas"); c.width = 128; c.height = 128;
+    const g = c.getContext("2d");
+    const img = g.createImageData(128, 128);
+    let seed = 1337;
+    for (let i = 0; i < img.data.length; i += 4) {
+      seed = (seed * 16807) % 2147483647;
+      const v = 112 + (seed % 34);
+      img.data[i] = img.data[i+1] = img.data[i+2] = v;
+      img.data[i+3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const t = new dn(c); t.wrapS = t.wrapT = jn; t.repeat.set(3, 3);
+    return t;
+  })();
+  Ht.traverse((obj) => {
+    if (obj.isMesh && obj.material && obj.material.isMeshStandardMaterial && !obj.material.map && !obj.material.bumpMap) {
+      if (obj.material.roughness > 0.45 && obj.material.metalness < 0.25) {
+        obj.material.bumpMap = stuccoTex;
+        obj.material.bumpScale = 0.014;
+        obj.material.needsUpdate = true;
+      }
+    }
+  });
+
+  // 4. Sync GLSL Sky & Water Shaders dynamically with Time-of-Day presets + animate every frame!
+  function syncRealisticAtmosphere() {
+    const tmEl = document.getElementById("time-mode");
+    const mode = tmEl ? tmEl.value : "noon";
+    if (typeof Cn !== "undefined") {
+      skyUniforms.uSunDir.value.copy(Cn.position).normalize();
+    }
+    if (mode === "morning") {
+      skyUniforms.uZenithCol.value.setHex(0x2b76cc);
+      skyUniforms.uHorizonCol.value.setHex(0xd6ecfa);
+      skyUniforms.uSunCol.value.setHex(0xfff1cc);
+      skyUniforms.uCloudCol.value.setHex(0xfffaf0);
+      skyUniforms.uCloudDensity.value = 0.44;
+      Ye.toneMappingExposure = 1.12;
+    } else if (mode === "golden") {
+      skyUniforms.uZenithCol.value.setHex(0x284375);
+      skyUniforms.uHorizonCol.value.setHex(0xf4a261);
+      skyUniforms.uSunCol.value.setHex(0xffb76b);
+      skyUniforms.uCloudCol.value.setHex(0xffd6a5);
+      skyUniforms.uCloudDensity.value = 0.56;
+      Ye.toneMappingExposure = 1.08;
+    } else if (mode === "outbreak") {
+      skyUniforms.uZenithCol.value.setHex(0x160f24);
+      skyUniforms.uHorizonCol.value.setHex(0x5c2428);
+      skyUniforms.uSunCol.value.setHex(0xe85d3c);
+      skyUniforms.uCloudCol.value.setHex(0x8a4848);
+      skyUniforms.uCloudDensity.value = 0.62;
+      Ye.toneMappingExposure = 1.02;
+    } else {
+      // Bright Campus Noon (photorealistic sunlit Deccan sky)
+      skyUniforms.uZenithCol.value.setHex(0x1b5eb8);
+      skyUniforms.uHorizonCol.value.setHex(0xbbe0f7);
+      skyUniforms.uSunCol.value.setHex(0xfff8e6);
+      skyUniforms.uCloudCol.value.setHex(0xffffff);
+      skyUniforms.uCloudDensity.value = 0.48;
+      Ye.toneMappingExposure = 1.10;
+    }
+  }
+  const _tmEl = document.getElementById("time-mode");
+  if (_tmEl) _tmEl.addEventListener("change", () => setTimeout(syncRealisticAtmosphere, 10));
+  syncRealisticAtmosphere();
+
+  let lastShaderT = performance.now();
+  (function animateRealisticShaders() {
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - lastShaderT) * 0.001);
+    lastShaderT = now;
+    skyUniforms.uTime.value += dt;
+    waterUniforms.uTime.value += dt;
+    if (typeof xt !== "undefined") {
+      skyDome.position.set(xt.position.x, 0, xt.position.z);
+    }
+    requestAnimationFrame(animateRealisticShaders);
+  })();
+})();
+'''
+
+html = html.replace(
+    '// ============================================================================\n// BUILDING 9:',
+    REALISTIC_SHADERS_JS + '\n// ============================================================================\n// BUILDING 9:',
+    1
+)
+if REALISTIC_SHADERS_JS not in html:
+    html = html.replace(
+        '// ============================================================================\r\n// BUILDING 9:',
+        REALISTIC_SHADERS_JS + '\r\n// ============================================================================\r\n// BUILDING 9:',
+        1
+    )
 
 with open(SRC_HTML, "w", encoding="utf-8") as f:
     f.write(html)
