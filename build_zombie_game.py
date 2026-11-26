@@ -10,7 +10,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC_HTML = os.path.join(ROOT, "Play-PC.html")
 BACKUP_HTML = os.path.join(ROOT, "Play-PC-Explorer-Backup.html")
 ASSETS_JSON = os.path.join(ROOT, "zombie_assets.json")
-READY_HUMAN_JSON = os.path.join(ROOT, "cesium_zombie_asset.json")
+WALK_HUMAN_JSON = os.path.join(ROOT, "walking_human_asset.json")
 
 # Make sure we always patch from the clean original Explorer backup if it exists
 if not os.path.exists(BACKUP_HTML):
@@ -22,10 +22,10 @@ with open(BACKUP_HTML, "r", encoding="utf-8") as f:
 
 with open(ASSETS_JSON, "r", encoding="utf-8") as f:
     zombie_assets = json.load(f)
-if os.path.exists(READY_HUMAN_JSON):
-    with open(READY_HUMAN_JSON, "r", encoding="utf-8") as f:
-        rh = json.load(f)
-        zombie_assets["ready_human"] = {"p": rh["p"], "n": rh["n"], "i": rh["i"]}
+walk_human_data = None
+if os.path.exists(WALK_HUMAN_JSON):
+    with open(WALK_HUMAN_JSON, "r", encoding="utf-8") as f:
+        walk_human_data = json.load(f)
 
 # ---------------------------------------------------------------------------
 # 1. CSS additions for FPS Combat HUD, Weapon Hotbar, Boss Bar, Damage/Block Flash
@@ -228,6 +228,7 @@ html = html.replace('<div id="crosshair"></div>', '<div id="crosshair"></div>' +
 ZOMBIE_ASSETS_JS = (
     "\nvar ZOMBIE_BLENDER_ASSETS = " + json.dumps(zombie_assets, separators=(",", ":")) + ";\n"
     "for (let zk in ZOMBIE_BLENDER_ASSETS) { blenderGeos[zk] = buildBlenderGeo(ZOMBIE_BLENDER_ASSETS[zk]); }\n"
+    "var WALK_HUMAN_ASSET = " + (json.dumps(walk_human_data, separators=(",", ":")) if walk_human_data else "null") + ";\n"
 )
 
 anchor_meshes = 'if (typeof BLENDER_BAKED_MESHES !== "undefined") {\n  for (let k in BLENDER_BAKED_MESHES) {\n    blenderGeos[k] = buildBlenderGeo(BLENDER_BAKED_MESHES[k]);\n  }\n}'
@@ -448,21 +449,21 @@ ZOMBIE_ENGINE_JS = r"""
 // ANURAG UNIVERSITY: CAMPUS OUTBREAK — 6-LEVEL ZOMBIE GAME ENGINE (PC + QUEST 3)
 // ============================================================================
 const ZOMBIE_LEVELS = [
-  { level: 1, name: "Lab Assistants", badge: "LAB ASST", dept: "ECE / CSE LABS", count: 6, hp: 55, speed: 2.35, dmg: 8, scale: 1.04, skin: 0x5c8244, coat: 0x9fb3c8, pants: 0x1e293b, tie: 0x1e3a5f, glasses: false, badgeCol: "#16a34a", lanyard: 0x16a34a, isBoss: false },
-  { level: 2, name: "Jr. Professors", badge: "JR. PROF", dept: "ASST. FACULTY", count: 8, hp: 85, speed: 2.75, dmg: 11, scale: 1.06, skin: 0x527a3e, coat: 0x6b8cae, pants: 0x1f242c, tie: 0x8c2323, glasses: false, badgeCol: "#2563eb", lanyard: 0x2563eb, isBoss: false },
-  { level: 3, name: "Professors", badge: "PROFESSOR", dept: "SENIOR FACULTY", count: 9, hp: 125, speed: 2.9, dmg: 14, scale: 1.08, skin: 0x4b703a, coat: 0x2d3a4b, pants: 0x181d26, tie: 0x5c2424, glasses: true, badgeCol: "#9333ea", lanyard: 0x9333ea, isBoss: false },
-  { level: 4, name: "Academic / Placement Incharges", badge: "PLACEMENT", dept: "TRAINING & PLACEMENT", count: 10, hp: 170, speed: 3.35, dmg: 17, scale: 1.11, skin: 0x466d4a, coat: 0x1e293b, pants: 0x111827, tie: 0xd97706, glasses: false, badgeCol: "#d97706", lanyard: 0xd97706, isBoss: false },
-  { level: 5, name: "HODs (Head of Department)", badge: "H.O.D", dept: "DEPT. HEAD", count: 7, hp: 260, speed: 3.1, dmg: 22, scale: 1.20, skin: 0x3a5c3d, coat: 0x141b26, pants: 0x0f131a, tie: 0xb91c1c, glasses: true, badgeCol: "#dc2626", lanyard: 0xdc2626, isBoss: false },
-  { level: 6, name: "THE CEO · FINAL BOSS", badge: "CEO · BOSS", dept: "EXECUTIVE OFFICE", count: 1, hp: 1200, speed: 3.45, dmg: 28, scale: 1.48, skin: 0x2f5236, coat: 0x0d1117, pants: 0x090c10, tie: 0xf59e0b, glasses: false, badgeCol: "#eab308", lanyard: 0xeab308, isBoss: true }
+  { level: 1, name: "Lab Assistants", badge: "LAB ASST", dept: "ECE / CSE LABS", count: 6, hp: 80, speed: 2.35, dmg: 9, scale: 1.04, skin: 0x6c9c50, coat: 0xaad49c, pants: 0x1e293b, tie: 0x1e3a5f, glasses: false, badgeCol: "#16a34a", lanyard: 0x16a34a, isBoss: false },
+  { level: 2, name: "Jr. Professors", badge: "JR. PROF", dept: "ASST. FACULTY", count: 8, hp: 120, speed: 2.75, dmg: 12, scale: 1.07, skin: 0x5c8a44, coat: 0x8fb8d6, pants: 0x1f242c, tie: 0x8c2323, glasses: false, badgeCol: "#2563eb", lanyard: 0x2563eb, isBoss: false },
+  { level: 3, name: "Professors", badge: "PROFESSOR", dept: "SENIOR FACULTY", count: 9, hp: 175, speed: 2.95, dmg: 15, scale: 1.10, skin: 0x4b703a, coat: 0x7c8aa6, pants: 0x181d26, tie: 0x5c2424, glasses: true, badgeCol: "#9333ea", lanyard: 0x9333ea, isBoss: false },
+  { level: 4, name: "Academic / Placement Incharges", badge: "PLACEMENT", dept: "TRAINING & PLACEMENT", count: 10, hp: 240, speed: 3.35, dmg: 18, scale: 1.13, skin: 0x466d4a, coat: 0x6b7c93, pants: 0x111827, tie: 0xd97706, glasses: false, badgeCol: "#d97706", lanyard: 0xd97706, isBoss: false },
+  { level: 5, name: "HODs (Head of Department)", badge: "H.O.D", dept: "DEPT. HEAD", count: 7, hp: 350, speed: 3.15, dmg: 23, scale: 1.22, skin: 0x3a5c3d, coat: 0x566478, pants: 0x0f131a, tie: 0xb91c1c, glasses: true, badgeCol: "#dc2626", lanyard: 0xdc2626, isBoss: false },
+  { level: 6, name: "THE CEO · FINAL BOSS", badge: "CEO · BOSS", dept: "EXECUTIVE OFFICE", count: 1, hp: 1600, speed: 3.45, dmg: 30, scale: 1.48, skin: 0x2f5236, coat: 0x4b5563, pants: 0x090c10, tie: 0xf59e0b, glasses: false, badgeCol: "#eab308", lanyard: 0xeab308, isBoss: true }
 ];
 
 const WEAPON_DEFS = [
-  { id: 0, key: "saber", name: "PLASMA LIGHTSABER", type: "melee", dmg: 48, range: 2.55, cooldown: 0.34, knockback: 3.2, mag: Infinity, muzzleZ: -0.5 },
+  { id: 0, key: "saber", name: "PLASMA LIGHTSABER", type: "melee", dmg: 26, range: 2.55, cooldown: 0.42, knockback: 2.8, mag: Infinity, muzzleZ: -0.5 },
   { id: 1, key: "pistol", name: "TACTICAL 9MM PISTOL", type: "gun", dmg: 34, range: 65, cooldown: 0.24, auto: false, pellets: 1, spread: 0.012, mag: 15, reload: 1.1, muzzleZ: -0.22 },
   { id: 2, key: "rifle", name: "PULSE ASSAULT RIFLE", type: "gun", dmg: 26, range: 80, cooldown: 0.105, auto: true, pellets: 1, spread: 0.022, mag: 30, reload: 1.5, muzzleZ: -0.58 },
   { id: 3, key: "shotgun", name: "COMBAT SHOTGUN", type: "gun", dmg: 22, range: 32, cooldown: 0.68, auto: false, pellets: 6, spread: 0.075, mag: 8, reload: 1.65, muzzleZ: -0.62 },
-  { id: 4, key: "iron_rod", name: "IRON CONSTRUCTION ROD", type: "melee", dmg: 64, range: 2.65, cooldown: 0.48, knockback: 5.2, mag: Infinity, muzzleZ: -0.5 },
-  { id: 5, key: "fallen_branch", name: "FALLEN TREE BRANCH", type: "melee", dmg: 52, range: 2.6, cooldown: 0.44, knockback: 4.5, mag: Infinity, muzzleZ: -0.5 }
+  { id: 4, key: "iron_rod", name: "IRON CONSTRUCTION ROD", type: "melee", dmg: 38, range: 2.65, cooldown: 0.52, knockback: 4.8, mag: Infinity, muzzleZ: -0.5 },
+  { id: 5, key: "fallen_branch", name: "FALLEN TREE BRANCH", type: "melee", dmg: 32, range: 2.6, cooldown: 0.48, knockback: 4.2, mag: Infinity, muzzleZ: -0.5 }
 ];
 
 // Procedural WebAudio Combat SFX
@@ -775,8 +776,61 @@ function populateCampusPickups() {
   }
 }
 
-// Build a Clean Single-Piece Ready-Made 3D Faculty Zombie (from web_soldier.glb) + Swinging Faculty ID Card
-// ZERO double bodies, ZERO extra stacked primitives!
+// Load Shared Real Human Diffuse Texture once from embedded base64 JPEG
+var walkHumanTex = null;
+var walkHumanSharedNorm = null, walkHumanSharedUv = null;
+if (typeof WALK_HUMAN_ASSET !== "undefined" && WALK_HUMAN_ASSET) {
+  walkHumanSharedNorm = new ye(WALK_HUMAN_ASSET.n, 3);
+  walkHumanSharedUv = new ye(WALK_HUMAN_ASSET.uv, 2);
+  if (WALK_HUMAN_ASSET.tex) {
+    const img = new Image();
+    img.src = WALK_HUMAN_ASSET.tex;
+    const c = document.createElement("canvas"); c.width = 512; c.height = 512;
+    const g = c.getContext("2d");
+    g.fillStyle = "#6c8a62"; g.fillRect(0, 0, 512, 512);
+    walkHumanTex = new dn(c);
+    walkHumanTex.colorSpace = vt;
+    walkHumanTex.flipY = false;
+    img.onload = () => {
+      g.drawImage(img, 0, 0, 512, 512);
+      // Subtle necrotic undead green glaze so the real human looks infected
+      g.fillStyle = "rgba(65, 130, 55, 0.24)";
+      g.fillRect(0, 0, 512, 512);
+      walkHumanTex.needsUpdate = true;
+    };
+  }
+}
+
+function createAnimatedWalkingHumanGeo() {
+  if (!WALK_HUMAN_ASSET) return null;
+  const geo = new Ze();
+  const posArr = new Float32Array(WALK_HUMAN_ASSET.frames[0]);
+  geo.setAttribute("position", new ye(posArr, 3));
+  geo.setAttribute("normal", walkHumanSharedNorm);
+  geo.setAttribute("uv", walkHumanSharedUv);
+  geo.setIndex(WALK_HUMAN_ASSET.i);
+  geo.computeBoundingSphere();
+  return geo;
+}
+
+function updateWalkingHumanMorph(z) {
+  if (!z.walkGeo || !WALK_HUMAN_ASSET) return;
+  const frames = WALK_HUMAN_ASSET.frames;
+  const nFrames = frames.length;
+  const fPos = ((z.phase * 0.95) % nFrames + nFrames) % nFrames;
+  const i0 = Math.floor(fPos);
+  const i1 = (i0 + 1) % nFrames;
+  const t = fPos - i0;
+  const a = frames[i0], b = frames[i1];
+  const attr = z.walkGeo.attributes.position;
+  const arr = attr.array;
+  for (let i = 0, len = arr.length; i < len; i++) {
+    arr[i] = a[i] + (b[i] - a[i]) * t;
+  }
+  attr.needsUpdate = true;
+}
+
+// Build a Real Textured 3D Human Zombie with Genuine 8-Frame Mixamo Walking Animation + Swinging Faculty ID Card!
 function createFacultyZombie(lvlDef, x, z) {
   const root = new fi();
   const s = lvlDef.scale;
@@ -785,49 +839,42 @@ function createFacultyZombie(lvlDef, x, z) {
   root.scale.set(s, s, s);
 
   const zBodyMat = new Jt({
+    map: walkHumanTex || null,
     color: lvlDef.coat,
     emissive: lvlDef.skin,
-    emissiveIntensity: 0.16,
-    roughness: 0.52,
-    metalness: 0.28
+    emissiveIntensity: 0.14,
+    roughness: 0.65,
+    metalness: 0.08
   });
-  const eyeColor = lvlDef.isBoss ? 0xff1e1e : (lvlDef.level >= 4 ? 0xff9f1c : 0xcaff33);
-  const zEye = new Yi({ color: eyeColor });
 
-  // Single unified ready-made realistic 3D human character mesh
+  // Real animated walking human geometry (smooth 8-frame Mixamo skeletal walk cycle!)
   const bodyPivot = new fi();
-  const bodyMesh = blenderGeos.ready_human
-    ? new et(blenderGeos.ready_human, zBodyMat)
+  const walkGeo = createAnimatedWalkingHumanGeo();
+  const bodyMesh = walkGeo
+    ? new et(walkGeo, zBodyMat)
     : new et(new sa(0.24, 1.32, 6, 12), zBodyMat);
   bodyMesh.castShadow = true;
   bodyPivot.add(bodyMesh);
-
-  // Glowing Undead Eyes on the character's face/visor
-  for (const side of [-1, 1]) {
-    const eye = new et(new fn(0.018, 8, 8), zEye);
-    eye.position.set(side * 0.042, 1.59, 0.135);
-    bodyPivot.add(eye);
-  }
 
   // CEO Boss Golden Crown Ring
   if (lvlDef.isBoss) {
     const crown = new et(new gn(0.16, 0.016, 8, 22), new Yi({ color: 0xf59e0b }));
     crown.rotation.x = Math.PI / 2;
-    crown.position.set(0, 1.84, 0);
+    crown.position.set(0, 1.88, 0);
     bodyPivot.add(crown);
   }
 
   // FACULTY ID CARD + COLORED LANYARD (Cleanly hanging on chest)
   const lanyardMat = new Jt({ color: lvlDef.lanyard, roughness: 0.55 });
-  const strapL = new et(new Ni(0.015, 0.24, 0.012), lanyardMat);
-  strapL.position.set(-0.055, 1.38, 0.185); strapL.rotation.z = -0.24;
+  const strapL = new et(new Ni(0.014, 0.22, 0.012), lanyardMat);
+  strapL.position.set(-0.048, 1.38, 0.145); strapL.rotation.z = -0.24;
   bodyPivot.add(strapL);
-  const strapR = new et(new Ni(0.015, 0.24, 0.012), lanyardMat);
-  strapR.position.set(0.055, 1.38, 0.185); strapR.rotation.z = 0.24;
+  const strapR = new et(new Ni(0.014, 0.22, 0.012), lanyardMat);
+  strapR.position.set(0.048, 1.38, 0.145); strapR.rotation.z = 0.24;
   bodyPivot.add(strapR);
 
   const idCardPivot = new fi();
-  idCardPivot.position.set(0, 1.27, 0.205);
+  idCardPivot.position.set(0, 1.27, 0.165);
   const idCard = new et(new Ni(0.125, 0.175, 0.010), new Yi({ map: getFacultyIdCardTexture(lvlDef) }));
   idCard.position.set(0, -0.088, 0);
   idCardPivot.add(idCard);
@@ -846,11 +893,11 @@ function createFacultyZombie(lvlDef, x, z) {
 
   Ht.add(root);
   return {
-    root, torso: bodyPivot, headGroup: bodyPivot, idCardPivot, arms: [], legs: [], hpBarBg, hpBarFill,
+    root, torso: bodyPivot, headGroup: bodyPivot, idCardPivot, arms: [], legs: [], hpBarBg, hpBarFill, walkGeo,
     lvlDef, hp: lvlDef.hp, maxHp: lvlDef.hp,
     speed: lvlDef.speed * (0.9 + Math.random() * 0.2),
     alive: true, deathTimer: 0, attackCd: 0, hitFlash: 0, meleeHitCd: 0,
-    phase: Math.random() * Math.PI * 2,
+    phase: Math.random() * 8.0,
     knockVel: new A(),
     boltCd: 3.2, slamCd: 5.5,
     skinMat: zBodyMat, baseSkinHex: lvlDef.coat
@@ -1065,8 +1112,8 @@ function checkVRPhysicalMeleeHit(hand, dt) {
   const tipSpeed = tipWorld.distanceTo(ZGAME.vrPrevTipPos) / safeDt;
   ZGAME.vrPrevTipPos.copy(tipWorld);
 
-  // Trigger hit on any natural hand movement (tipSpeed > 0.75 m/s) when blade touches a zombie!
-  if (tipSpeed < 0.75) return;
+  // Require a REAL intentional slash/swing (tipSpeed > 1.85 m/s) — lightly touching the saber deals ZERO damage!
+  if (tipSpeed < 1.85) return;
 
   const seg = new A().subVectors(tipWorld, hiltWorld);
   const segLenSq = Math.max(0.001, seg.lengthSq());
@@ -1082,12 +1129,12 @@ function checkVRPhysicalMeleeHit(hand, dt) {
     const dXZ = Math.hypot(closest.x - zBody.x, closest.z - zBody.z);
     const dY = Math.abs(closest.y - zBody.y);
 
-    if (dXZ < 0.58 * sc && dY < 0.92 * sc) {
-      z.meleeHitCd = 0.28;
-      const isHead = closest.y > z.root.position.y + 1.42 * sc;
-      const speedBonus = so.clamp(tipSpeed / 3.0, 0.85, 1.65);
+    if (dXZ < 0.52 * sc && dY < 0.88 * sc) {
+      z.meleeHitCd = 0.55;
+      const isHead = closest.y > z.root.position.y + 1.48 * sc;
+      const speedBonus = so.clamp(tipSpeed / 4.2, 0.8, 1.35);
       const knockDir = new A(zBody.x - hiltWorld.x, 0, zBody.z - hiltWorld.z).normalize();
-      damageZombie(z, w.dmg * speedBonus * (isHead ? 1.6 : 1.0), closest, knockDir, w.knockback, isHead);
+      damageZombie(z, w.dmg * speedBonus * (isHead ? 1.45 : 1.0), closest, knockDir, w.knockback, isHead);
       spawnBurst(closest, w.key === "saber" ? 0x22d3ee : 0xfde047, 10, 4.8);
       hitAny = true;
     }
@@ -1498,13 +1545,12 @@ function updateZombieGame(dt, timeSec) {
     }
     z.root.position.y = groundAt(z.root.position.x, z.root.position.z);
 
-    // Smooth Zombie Stride Sway, Bob, Attack Lunge & Swinging Faculty ID Card
-    z.phase += dt * (z.speed * 2.6);
-    const lunge = z.attackCd > 0.65 ? Math.sin((z.attackCd - 0.65) * 9) * 0.28 : 0;
-    z.torso.rotation.z = Math.sin(z.phase) * 0.085;
-    z.torso.rotation.x = 0.08 + Math.abs(Math.cos(z.phase)) * 0.05 + lunge;
-    z.torso.position.y = Math.abs(Math.sin(z.phase)) * 0.065;
-    z.idCardPivot.rotation.z = -Math.sin(z.phase) * 0.22;
+    // Real 8-Frame Mixamo Skeletal Walk Animation + Attack Lunge & Swinging Faculty ID Card
+    z.phase += dt * (z.speed * 3.1);
+    updateWalkingHumanMorph(z);
+    const lunge = z.attackCd > 0.65 ? Math.sin((z.attackCd - 0.65) * 9) * 0.24 : 0;
+    z.torso.rotation.x = lunge;
+    z.idCardPivot.rotation.z = -Math.sin(z.phase * 1.1) * 0.20;
     z.idCardPivot.rotation.x = -0.14;
 
     // Billboard HP bar toward camera
