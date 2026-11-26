@@ -3429,7 +3429,121 @@ THROWBALL_COURT_JS = f'''
 '''
 
 html = html.replace(
-    'with open(SRC_HTML, "w", encoding="utf-8") as f:' if False else '// ============================================================================\n// BUILDING 9:',
+    '# 7o. Photo-Accurate Palm-Lined Pathway between A-Block and B/D-Block (x = -31.2, z = -22 .. +14)
+AB_PATHWAY_JS = '''
+// ============================================================================
+// A-BLOCK <-> B/D-BLOCK PALM-LINED PATHWAY — PHOTO-ACCURATE DETAIL UPGRADE
+// ============================================================================
+(function() {
+  const px = -31.2, zStart = -22, zEnd = 14, len = zEnd - zStart, midZ = (zStart + zEnd) * 0.5;
+
+  // 1. Warm Cream-Beige Scored Concrete Pathway with Expansion Joint Lines
+  he(0xd5cbb8, px, 0.08, midZ, 6.8, 0.12, len + 2.0);
+  for (let jz = zStart; jz <= zEnd; jz += 3.6) {
+    he(0xb5aa96, px, 0.145, jz, 6.7, 0.015, 0.06);
+  }
+  he(0xb5aa96, px, 0.145, midZ, 0.06, 0.015, len);
+
+  // 2. West Side (B/D-Block Side, x = -35.2): Dark Stone-Brick Retaining Ledge + Terracotta Flowerpots!
+  const brickTex = (function() {
+    const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+    const g = c.getContext("2d");
+    g.fillStyle = "#2b2a26"; g.fillRect(0, 0, 256, 128);
+    for (let r = 0; r < 8; r++) {
+      let off = (r % 2) * 16;
+      for (let col = -1; col < 9; col++) {
+        g.fillStyle = (col + r) % 3 === 0 ? "#3f3b32" : "#322f28";
+        g.fillRect(col * 32 + off + 2, r * 16 + 2, 28, 12);
+      }
+    }
+    const t = new dn(c); t.colorSpace = vt; t.wrapS = t.wrapT = jn; t.repeat.set(16, 1);
+    return t;
+  })();
+  let brickWall = new et(new Ni(0.95, 1.05, len), new Jt({ map: brickTex, roughness: 0.88 }));
+  brickWall.position.set(-35.1, 0.54, midZ);
+  brickWall.castShadow = true; brickWall.receiveShadow = true;
+  Ht.add(brickWall);
+  he(0x6e6a62, -35.1, 1.09, midZ, 1.05, 0.07, len); // Concrete coping slab on top
+
+  // Row of Terracotta Flowerpots with Green Plants perched along the brick ledge!
+  const potMat = new Jt({ color: 0x9a4a32, roughness: 0.78 });
+  const plantMat = new Jt({ color: 0x3b6e28, roughness: 0.84 });
+  for (let pz = zStart + 1.5; pz <= zEnd - 1.5; pz += 3.2) {
+    let pot = new et(new pn(0.22, 0.16, 0.28, 10), potMat);
+    pot.position.set(-35.1, 1.26, pz); Ht.add(pot);
+    let bush = new et(new fn(0.28, 8, 6), plantMat);
+    bush.scale.set(1.1, 0.85, 1.1); bush.position.set(-35.1, 1.48, pz); Ht.add(bush);
+  }
+
+  // 3. East Side (A-Block Side, x = -27.2): Terracotta-Curbed Planter Strip + Lush Green Grass!
+  he(0x9e433a, -27.55, 0.22, midZ, 0.22, 0.44, len);
+  he(0x3a6a26, -26.75, 0.34, midZ, 1.45, 0.18, len);
+  const grassMat = new Jt({ color: 0x689f38, roughness: 0.85 });
+  for (let gz = zStart + 1.0; gz <= zEnd - 1.0; gz += 1.35) {
+    let tuft = new et(new fn(0.38, 7, 6), grassMat);
+    tuft.scale.set(1.15, 0.58, 1.2); tuft.position.set(-26.85 + (Math.random() - 0.5) * 0.3, 0.52, gz); Ht.add(tuft);
+  }
+
+  // 4. Wall-Mounted AC Outdoor Compressor Units on Steel Brackets along A-Block West Wall (x = -25.85)!
+  const acBodyMat = new Jt({ color: 0xe8ecee, roughness: 0.42, metalness: 0.22 });
+  const acFanMat = new Jt({ color: 0x262b30, roughness: 0.65 });
+  const acBrkMat = new Jt({ color: 0x525860, roughness: 0.55, metalness: 0.7 });
+  for (let [az, ay] of [[9.5, 1.85], [3.5, 1.85], [-2.5, 5.2], [-8.5, 1.85], [-14.5, 5.2]]) {
+    let ac = new et(new Ni(0.42, 0.62, 0.86), acBodyMat);
+    ac.position.set(-25.85, ay, az); Ht.add(ac);
+    let fan = new et(new pn(0.22, 0.22, 0.06, 14), acFanMat);
+    fan.rotation.z = Math.PI / 2; fan.position.set(-26.07, ay, az + 0.12); Ht.add(fan);
+    let brk = new et(new Ni(0.48, 0.06, 0.75), acBrkMat);
+    brk.position.set(-25.82, ay - 0.34, az); Ht.add(brk);
+    let pipe = new et(new pn(0.025, 0.025, 2.2, 6), acBodyMat);
+    pipe.position.set(-25.68, ay + 1.1, az - 0.32); Ht.add(pipe);
+  }
+
+  // 5. Symmetrical Double Avenue of Tall Royal Palm Trees with Orange/White/Green Tricolor Trunks!
+  const palmPositions = [-19, -13.5, -8, -2.5, 3, 8.5, 13];
+  for (let idx = 0; idx < palmPositions.length; idx++) {
+    let tz = palmPositions[idx];
+    for (let tx of [-34.45, -27.75]) {
+      entrancePalm(tx, tz, 6.8 + (idx % 2) * 0.7, idx * 1.1 + (tx < -30 ? 0 : 1.7));
+      // Iconic Orange / White / Green Indian Tricolor Painted Bands on Lower Trunk!
+      let bandG = new et(new pn(0.165, 0.175, 0.32, 12), new Jt({ color: 0x16803c, roughness: 0.72 }));
+      bandG.position.set(tx, 0.42, tz); Ht.add(bandG);
+      let bandW = new et(new pn(0.162, 0.168, 0.32, 12), new Jt({ color: 0xf8fafc, roughness: 0.72 }));
+      bandW.position.set(tx, 0.74, tz); Ht.add(bandW);
+      let bandO = new et(new pn(0.158, 0.164, 0.32, 12), new Jt({ color: 0xea580c, roughness: 0.72 }));
+      bandO.position.set(tx, 1.06, tz); Ht.add(bandO);
+    }
+  }
+
+  // 6. Iconic Double-Level Red Elevated Skybridges Spanning Overhead at the North End (z = -18.5)!
+  for (let sy of [6.4, 9.8]) {
+    he(0xb84a42, px, sy, -18.5, 11.4, 1.55, 2.8);
+    he(0xf3f4f6, px, sy + 0.85, -18.5, 11.4, 0.18, 2.95);
+    he(0xf3f4f6, px, sy - 0.85, -18.5, 11.4, 0.18, 2.95);
+  }
+})();
+'''
+
+html = html.replace(
+    '// ============================================================================\n// BUILDING 9:',
+    AB_PATHWAY_JS + '\n// ============================================================================\n// BUILDING 9:',
+    1
+)
+if AB_PATHWAY_JS not in html:
+    html = html.replace(
+        '// ============================================================================\r\n// BUILDING 9:',
+        AB_PATHWAY_JS + '\r\n// ============================================================================\r\n// BUILDING 9:',
+        1
+    )
+
+# Add "A-Block & B/D-Block Palm Pathway" viewpoint to ld[] stops!
+html = html.replace(
+    '["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],',
+    '["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],\n  ["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],',
+    1
+)
+
+with open(SRC_HTML, "w", encoding="utf-8") as f:' if False else '// ============================================================================\n// BUILDING 9:',
     THROWBALL_COURT_JS + '\n// ============================================================================\n// BUILDING 9:',
     1
 )
@@ -3451,6 +3565,120 @@ html = html.replace(
 html = html.replace(
     '[-51, 43, -40, 61, "#1368aa", "COURT"],',
     '[-54, 18, -39, 27.5, "#c68251", "THROWBALL"],\n    [-51, 43, -40, 61, "#1368aa", "COURT"],',
+    1
+)
+
+# 7o. Photo-Accurate Palm-Lined Pathway between A-Block and B/D-Block (x = -31.2, z = -22 .. +14)
+AB_PATHWAY_JS = '''
+// ============================================================================
+// A-BLOCK <-> B/D-BLOCK PALM-LINED PATHWAY — PHOTO-ACCURATE DETAIL UPGRADE
+// ============================================================================
+(function() {
+  const px = -31.2, zStart = -22, zEnd = 14, len = zEnd - zStart, midZ = (zStart + zEnd) * 0.5;
+
+  // 1. Warm Cream-Beige Scored Concrete Pathway with Expansion Joint Lines
+  he(0xd5cbb8, px, 0.08, midZ, 6.8, 0.12, len + 2.0);
+  for (let jz = zStart; jz <= zEnd; jz += 3.6) {
+    he(0xb5aa96, px, 0.145, jz, 6.7, 0.015, 0.06);
+  }
+  he(0xb5aa96, px, 0.145, midZ, 0.06, 0.015, len);
+
+  // 2. West Side (B/D-Block Side, x = -35.2): Dark Stone-Brick Retaining Ledge + Terracotta Flowerpots!
+  const brickTex = (function() {
+    const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+    const g = c.getContext("2d");
+    g.fillStyle = "#2b2a26"; g.fillRect(0, 0, 256, 128);
+    for (let r = 0; r < 8; r++) {
+      let off = (r % 2) * 16;
+      for (let col = -1; col < 9; col++) {
+        g.fillStyle = (col + r) % 3 === 0 ? "#3f3b32" : "#322f28";
+        g.fillRect(col * 32 + off + 2, r * 16 + 2, 28, 12);
+      }
+    }
+    const t = new dn(c); t.colorSpace = vt; t.wrapS = t.wrapT = jn; t.repeat.set(16, 1);
+    return t;
+  })();
+  let brickWall = new et(new Ni(0.95, 1.05, len), new Jt({ map: brickTex, roughness: 0.88 }));
+  brickWall.position.set(-35.1, 0.54, midZ);
+  brickWall.castShadow = true; brickWall.receiveShadow = true;
+  Ht.add(brickWall);
+  he(0x6e6a62, -35.1, 1.09, midZ, 1.05, 0.07, len); // Concrete coping slab on top
+
+  // Row of Terracotta Flowerpots with Green Plants perched along the brick ledge!
+  const potMat = new Jt({ color: 0x9a4a32, roughness: 0.78 });
+  const plantMat = new Jt({ color: 0x3b6e28, roughness: 0.84 });
+  for (let pz = zStart + 1.5; pz <= zEnd - 1.5; pz += 3.2) {
+    let pot = new et(new pn(0.22, 0.16, 0.28, 10), potMat);
+    pot.position.set(-35.1, 1.26, pz); Ht.add(pot);
+    let bush = new et(new fn(0.28, 8, 6), plantMat);
+    bush.scale.set(1.1, 0.85, 1.1); bush.position.set(-35.1, 1.48, pz); Ht.add(bush);
+  }
+
+  // 3. East Side (A-Block Side, x = -27.2): Terracotta-Curbed Planter Strip + Lush Green Grass!
+  he(0x9e433a, -27.55, 0.22, midZ, 0.22, 0.44, len);
+  he(0x3a6a26, -26.75, 0.34, midZ, 1.45, 0.18, len);
+  const grassMat = new Jt({ color: 0x689f38, roughness: 0.85 });
+  for (let gz = zStart + 1.0; gz <= zEnd - 1.0; gz += 1.35) {
+    let tuft = new et(new fn(0.38, 7, 6), grassMat);
+    tuft.scale.set(1.15, 0.58, 1.2); tuft.position.set(-26.85 + (Math.random() - 0.5) * 0.3, 0.52, gz); Ht.add(tuft);
+  }
+
+  // 4. Wall-Mounted AC Outdoor Compressor Units on Steel Brackets along A-Block West Wall (x = -25.85)!
+  const acBodyMat = new Jt({ color: 0xe8ecee, roughness: 0.42, metalness: 0.22 });
+  const acFanMat = new Jt({ color: 0x262b30, roughness: 0.65 });
+  const acBrkMat = new Jt({ color: 0x525860, roughness: 0.55, metalness: 0.7 });
+  for (let [az, ay] of [[9.5, 1.85], [3.5, 1.85], [-2.5, 5.2], [-8.5, 1.85], [-14.5, 5.2]]) {
+    let ac = new et(new Ni(0.42, 0.62, 0.86), acBodyMat);
+    ac.position.set(-25.85, ay, az); Ht.add(ac);
+    let fan = new et(new pn(0.22, 0.22, 0.06, 14), acFanMat);
+    fan.rotation.z = Math.PI / 2; fan.position.set(-26.07, ay, az + 0.12); Ht.add(fan);
+    let brk = new et(new Ni(0.48, 0.06, 0.75), acBrkMat);
+    brk.position.set(-25.82, ay - 0.34, az); Ht.add(brk);
+    let pipe = new et(new pn(0.025, 0.025, 2.2, 6), acBodyMat);
+    pipe.position.set(-25.68, ay + 1.1, az - 0.32); Ht.add(pipe);
+  }
+
+  // 5. Symmetrical Double Avenue of Tall Royal Palm Trees with Orange/White/Green Tricolor Trunks!
+  const palmPositions = [-19, -13.5, -8, -2.5, 3, 8.5, 13];
+  for (let idx = 0; idx < palmPositions.length; idx++) {
+    let tz = palmPositions[idx];
+    for (let tx of [-34.45, -27.75]) {
+      entrancePalm(tx, tz, 6.8 + (idx % 2) * 0.7, idx * 1.1 + (tx < -30 ? 0 : 1.7));
+      // Iconic Orange / White / Green Indian Tricolor Painted Bands on Lower Trunk!
+      let bandG = new et(new pn(0.165, 0.175, 0.32, 12), new Jt({ color: 0x16803c, roughness: 0.72 }));
+      bandG.position.set(tx, 0.42, tz); Ht.add(bandG);
+      let bandW = new et(new pn(0.162, 0.168, 0.32, 12), new Jt({ color: 0xf8fafc, roughness: 0.72 }));
+      bandW.position.set(tx, 0.74, tz); Ht.add(bandW);
+      let bandO = new et(new pn(0.158, 0.164, 0.32, 12), new Jt({ color: 0xea580c, roughness: 0.72 }));
+      bandO.position.set(tx, 1.06, tz); Ht.add(bandO);
+    }
+  }
+
+  // 6. Iconic Double-Level Red Elevated Skybridges Spanning Overhead at the North End (z = -18.5)!
+  for (let sy of [6.4, 9.8]) {
+    he(0xb84a42, px, sy, -18.5, 11.4, 1.55, 2.8);
+    he(0xf3f4f6, px, sy + 0.85, -18.5, 11.4, 0.18, 2.95);
+    he(0xf3f4f6, px, sy - 0.85, -18.5, 11.4, 0.18, 2.95);
+  }
+})();
+'''
+
+html = html.replace(
+    '// ============================================================================\n// BUILDING 9:',
+    AB_PATHWAY_JS + '\n// ============================================================================\n// BUILDING 9:',
+    1
+)
+if AB_PATHWAY_JS not in html:
+    html = html.replace(
+        '// ============================================================================\r\n// BUILDING 9:',
+        AB_PATHWAY_JS + '\r\n// ============================================================================\r\n// BUILDING 9:',
+        1
+    )
+
+# Add "A-Block & B/D-Block Palm Pathway" viewpoint to ld[] stops!
+html = html.replace(
+    '["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],',
+    '["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],\n  ["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],',
     1
 )
 
