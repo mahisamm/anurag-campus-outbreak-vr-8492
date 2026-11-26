@@ -12,11 +12,17 @@ SRC_HTML = os.path.join(ROOT, "Play-PC.html")
 BACKUP_HTML = os.path.join(ROOT, "Play-PC-Explorer-Backup.html")
 ASSETS_JSON = os.path.join(ROOT, "zombie_assets.json")
 MURAL_JPG = os.path.join(ROOT, "dblock_mural_real.jpg")
+THROWBALL_MURAL_JPG = os.path.join(ROOT, "throwball_mural_real.jpg")
 
 dblock_mural_uri = ""
 if os.path.exists(MURAL_JPG):
     with open(MURAL_JPG, "rb") as mf:
         dblock_mural_uri = "data:image/jpeg;base64," + base64.b64encode(mf.read()).decode("ascii")
+
+throwball_mural_uri = ""
+if os.path.exists(THROWBALL_MURAL_JPG):
+    with open(THROWBALL_MURAL_JPG, "rb") as mf:
+        throwball_mural_uri = "data:image/jpeg;base64," + base64.b64encode(mf.read()).decode("ascii")
 
 # Make sure we always patch from the clean original Explorer backup if it exists
 if not os.path.exists(BACKUP_HTML):
@@ -3321,6 +3327,132 @@ for (let [bx, by, bz] of [[-76.8, 1.6, 68.7], [-77.3, 1.9, 69.4], [-77.9, 1.4, 6
 }'''
 
 html = html.replace(KALAM_OLD, KALAM_UPGRADE_JS, 1)
+
+# 7n. Photo-Accurate D-Block Throwball Court (Red-clay court, chalk lines, white posts & mesh net, 2-tier topiary,
+#     yellow-framed street-art mural, grid-tiled walkway, granite plinth, directory kiosk & hedges!)
+THROWBALL_COURT_JS = f'''
+// ============================================================================
+// D-BLOCK / B-BLOCK THROWBALL COURT — PHOTO-ACCURATE DETAIL UPGRADE
+// ============================================================================
+(function() {{
+  const cx = -46.5, cz = 22.8, cw = 15.2, cd = 9.4;
+  // Surrounding lush green lawn border
+  he(0x4f7d3a, cx, 0.04, cz, cw + 5.6, 0.08, cd + 5.2);
+  // Warm terracotta red-clay throwball court surface
+  he(0xc68251, cx, 0.09, cz, cw, 0.06, cd);
+
+  // Crisp white chalk boundary & service lines
+  const lineMat = new Yi({{ color: 0xf8fafc }});
+  const addLine = (x, z, w, d) => {{
+    let m = new et(new Ni(w, 0.015, d), lineMat);
+    m.position.set(x, 0.13, z);
+    Ht.add(m);
+  }};
+  addLine(cx, cz - cd/2 + 0.15, cw - 0.3, 0.09); // North sideline
+  addLine(cx, cz + cd/2 - 0.15, cw - 0.3, 0.09); // South sideline
+  addLine(cx - cw/2 + 0.15, cz, 0.09, cd - 0.3); // West baseline
+  addLine(cx + cw/2 - 0.15, cz, 0.09, cd - 0.3); // East baseline
+  addLine(cx, cz, 0.08, cd - 0.3);               // Center line
+  addLine(cx - 2.6, cz, 0.06, cd - 0.3);         // West attack line
+  addLine(cx + 2.6, cz, 0.06, cd - 0.3);         // East attack line
+
+  // Tall white steel throwball net posts + realistic fine mesh net with bright white top tape
+  const postMat = new Jt({{ color: 0xf8fafc, roughness: 0.32, metalness: 0.55 }});
+  for (let pz of [cz - cd/2 - 0.25, cz + cd/2 + 0.25]) {{
+    let post = new et(new pn(0.055, 0.06, 2.55, 12), postMat);
+    post.position.set(cx, 1.32, pz);
+    post.castShadow = true;
+    Ht.add(post);
+  }}
+  // Procedural throwball net mesh texture
+  const nc = document.createElement("canvas"); nc.width = 256; nc.height = 64;
+  const ng = nc.getContext("2d");
+  ng.clearRect(0, 0, 256, 64);
+  ng.fillStyle = "#ffffff"; ng.fillRect(0, 0, 256, 7); // Bright white top tape
+  ng.fillStyle = "#e2e8f0"; ng.fillRect(0, 59, 256, 4); // Bottom tape
+  ng.strokeStyle = "rgba(255,255,255,0.72)"; ng.lineWidth = 1.4;
+  for (let x = 0; x < 256; x += 8) {{ ng.beginPath(); ng.moveTo(x, 7); ng.lineTo(x, 60); ng.stroke(); }}
+  for (let y = 12; y < 60; y += 8) {{ ng.beginPath(); ng.moveTo(0, y); ng.lineTo(256, y); ng.stroke(); }}
+  const netTex = new dn(nc); netTex.colorSpace = vt;
+  const netPlane = new et(new _i(cd + 0.4, 0.96), new Yi({{ map: netTex, transparent: true, side: Gt }}));
+  netPlane.rotation.y = Math.PI / 2;
+  netPlane.position.set(cx, 1.98, cz);
+  Ht.add(netPlane);
+
+  // Yellow & Black Striped Curb along the East/Far Road Edge of Throwball Court
+  for (let kz = cz - cd/2 - 1.5; kz <= cz + cd/2 + 1.5; kz += 0.9) {{
+    let isY = Math.round(kz * 2) % 2 === 0;
+    he(isY ? 0xeab308 : 0x18181b, cx + cw/2 + 1.4, 0.12, kz, 0.32, 0.22, 0.86);
+  }}
+
+  // Iconic 2-Tier Sculpted Topiary Shrub on the Foreground Grass Corner!
+  let topTrunk = new et(new pn(0.08, 0.11, 1.45, 10), new Jt({{ color: 0x6b5344, roughness: 0.9 }}));
+  topTrunk.position.set(cx - cw/2 - 1.4, 0.72, cz + cd/2 + 1.1); Ht.add(topTrunk);
+  let topMat = new Jt({{ color: 0x3b6928, roughness: 0.85 }});
+  let tier1 = new et(new fn(0.72, 12, 10), topMat);
+  tier1.scale.set(1.15, 0.56, 1.15); tier1.position.set(cx - cw/2 - 1.4, 1.05, cz + cd/2 + 1.1); Ht.add(tier1);
+  let tier2 = new et(new fn(0.56, 12, 10), topMat);
+  tier2.scale.set(1.12, 0.58, 1.12); tier2.position.set(cx - cw/2 - 1.4, 1.62, cz + cd/2 + 1.1); Ht.add(tier2);
+
+  // Foreground Cream-and-Charcoal Grid-Tiled Walkway + Black-Granite-Topped Stone Seating Plinth!
+  he(0xd6cfc0, cx - 2.0, 0.08, cz + cd/2 + 2.9, cw + 4.0, 0.10, 2.2);
+  for (let tx = cx - cw/2 - 2.5; tx <= cx + cw/2 + 1.5; tx += 1.4) {{
+    he(0x2d3238, tx, 0.135, cz + cd/2 + 2.9, 0.12, 0.02, 2.15);
+  }}
+  he(0x9a896d, cx + 2.6, 0.42, cz + cd/2 + 1.7, 3.6, 0.74, 1.05); // Stone masonry base
+  he(0x14181e, cx + 2.6, 0.82, cz + cd/2 + 1.7, 3.75, 0.09, 1.18); // Polished black granite top
+
+  // Low Trimmed Green Hedge Row + Dark Charcoal Campus Directory Kiosk (with Red Top Header!)
+  for (let hx = cx - 6.5; hx <= cx + 4.5; hx += 1.4) {{
+    let hBush = new et(new fn(0.52, 8, 6), new Jt({{ color: 0x3f702b, roughness: 0.88 }}));
+    hBush.scale.set(1.3, 0.82, 0.85); hBush.position.set(hx, 0.48, cz - cd/2 - 1.7); Ht.add(hBush);
+  }}
+  he(0x1f242b, cx + 5.8, 1.15, cz - cd/2 - 1.6, 0.34, 2.15, 0.92); // Dark directory monolith
+  he(0xb91c1c, cx + 5.8, 2.30, cz - cd/2 - 1.6, 0.38, 0.24, 0.98); // Red top crown cap
+  ys(["AU CAMPUS", "D-BLOCK  >", "THROWBALL", "A-BLOCK  <"], cx + 5.62, 1.22, cz - cd/2 - 1.6, 0.82, 1.65, "#1f242b", "#f8fafc", -Math.PI / 2);
+
+  // Yellow-Framed Street-Art Mural on the Adjacent East End Wall of B-Block (visible across Throwball Court!)
+  const tbUri = "{throwball_mural_uri}";
+  if (tbUri) {{
+    const mc = document.createElement("canvas"); mc.width = 384; mc.height = 512;
+    const mg = mc.getContext("2d");
+    mg.fillStyle = "#e6d85c"; mg.fillRect(0, 0, 384, 512);
+    const mt = new dn(mc); mt.colorSpace = vt;
+    const mim = new Image(); mim.src = tbUri;
+    mim.onload = () => {{ mg.drawImage(mim, 0, 0, 384, 512); mt.needsUpdate = true; }};
+    const tbMural = new et(new _i(7.6, 10.2), new Jt({{ map: mt, roughness: 0.52 }}));
+    tbMural.rotation.y = Math.PI / 2;
+    tbMural.position.set(-36.68, 5.4, 8.2);
+    Ht.add(tbMural);
+  }}
+}})();
+'''
+
+html = html.replace(
+    'with open(SRC_HTML, "w", encoding="utf-8") as f:' if False else '// ============================================================================\n// BUILDING 9:',
+    THROWBALL_COURT_JS + '\n// ============================================================================\n// BUILDING 9:',
+    1
+)
+if THROWBALL_COURT_JS not in html:
+    html = html.replace(
+        '// ============================================================================\r\n// BUILDING 9:',
+        THROWBALL_COURT_JS + '\r\n// ============================================================================\r\n// BUILDING 9:',
+        1
+    )
+
+# Add "D-Block · Throwball Court" viewpoint to ld[] stops so users can jump straight to it!
+html = html.replace(
+    '["D Block · Solar Roof & Street-Art Mural", -75.5, -4.8, -Math.PI / 2, 0.14, 0],',
+    '["D Block · Solar Roof & Street-Art Mural", -75.5, -4.8, -Math.PI / 2, 0.14, 0],\n  ["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],',
+    1
+)
+
+# Add Throwball Court label to the Campus Minimap!
+html = html.replace(
+    '[-51, 43, -40, 61, "#1368aa", "COURT"],',
+    '[-54, 18, -39, 27.5, "#c68251", "THROWBALL"],\n    [-51, 43, -40, 61, "#1368aa", "COURT"],',
+    1
+)
 
 with open(SRC_HTML, "w", encoding="utf-8") as f:
     f.write(html)
