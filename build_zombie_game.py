@@ -211,7 +211,7 @@ COMBAT_HUD_HTML = """
       <div class="vital-bar"><div id="hp-fill"></div></div>
     </div>
     <div class="vital-row">
-      <div class="vital-lbl"><span>HI-TECH SHIELD [RMB / R-TRIG]</span><span id="shield-val">100%</span></div>
+      <div class="vital-lbl"><span>HI-TECH SHIELD [RMB / L-TRIG]</span><span id="shield-val">100%</span></div>
       <div class="vital-bar"><div id="shield-fill"></div></div>
     </div>
   </div>
@@ -482,12 +482,12 @@ ZOMBIE_ENGINE_JS = r"""
 // ANURAG UNIVERSITY: CAMPUS OUTBREAK — 6-LEVEL ZOMBIE GAME ENGINE (PC + QUEST 3)
 // ============================================================================
 const ZOMBIE_LEVELS = [
-  { level: 1, name: "Lab Assistants", badge: "LAB ASST", dept: "ECE / CSE LABS", count: 6, hp: 80, speed: 2.35, dmg: 9, scale: 1.02, skin: 0x6ba854, coat: 0x9ec5e8, pants: 0x1e293b, tie: 0x1d4ed8, hair: 0x1a1a1d, glasses: false, badgeCol: "#16a34a", lanyard: 0x16a34a, isBoss: false },
-  { level: 2, name: "Jr. Professors", badge: "JR. PROF", dept: "ASST. FACULTY", count: 8, hp: 120, speed: 2.75, dmg: 12, scale: 1.05, skin: 0x5c9a49, coat: 0xe6eef6, pants: 0x262c36, tie: 0x991b1b, hair: 0x221e1c, glasses: false, badgeCol: "#2563eb", lanyard: 0x2563eb, isBoss: false },
-  { level: 3, name: "Professors", badge: "PROFESSOR", dept: "SENIOR FACULTY", count: 9, hp: 175, speed: 2.95, dmg: 15, scale: 1.08, skin: 0x528c42, coat: 0x2b3e56, pants: 0x181d26, tie: 0x7f1d1d, hair: 0x5b6472, glasses: true, badgeCol: "#9333ea", lanyard: 0x9333ea, isBoss: false },
-  { level: 4, name: "Academic / Placement Incharges", badge: "PLACEMENT", dept: "TRAINING & PLACEMENT", count: 10, hp: 240, speed: 3.35, dmg: 18, scale: 1.11, skin: 0x4b8248, coat: 0x1f2937, pants: 0x111827, tie: 0xd97706, hair: 0x1f1f24, glasses: false, badgeCol: "#d97706", lanyard: 0xd97706, isBoss: false },
-  { level: 5, name: "HODs (Head of Department)", badge: "H.O.D", dept: "DEPT. HEAD", count: 7, hp: 350, speed: 3.15, dmg: 23, scale: 1.18, skin: 0x427542, coat: 0x172030, pants: 0x0f131a, tie: 0xdc2626, hair: 0x6b7280, glasses: true, badgeCol: "#dc2626", lanyard: 0xdc2626, isBoss: false },
-  { level: 6, name: "THE CEO · FINAL BOSS", badge: "CEO · BOSS", dept: "EXECUTIVE OFFICE", count: 1, hp: 1600, speed: 3.45, dmg: 30, scale: 1.44, skin: 0x386b3c, coat: 0x0f141c, pants: 0x090c10, tie: 0xf59e0b, hair: 0x111318, glasses: false, badgeCol: "#eab308", lanyard: 0xeab308, isBoss: true }
+  { level: 1, name: "Lab Assistants", badge: "LAB ASST", dept: "ECE / CSE LABS", count: 6, hp: 90, armor: 0.0, speed: 2.35, dmg: 9, scale: 1.02, skin: 0x6ba854, coat: 0x9ec5e8, pants: 0x1e293b, tie: 0x1d4ed8, hair: 0x1a1a1d, glasses: false, badgeCol: "#16a34a", lanyard: 0x16a34a, isBoss: false },
+  { level: 2, name: "Jr. Professors", badge: "JR. PROF", dept: "ASST. FACULTY", count: 8, hp: 150, armor: 0.12, speed: 2.75, dmg: 12, scale: 1.05, skin: 0x5c9a49, coat: 0xe6eef6, pants: 0x262c36, tie: 0x991b1b, hair: 0x221e1c, glasses: false, badgeCol: "#2563eb", lanyard: 0x2563eb, isBoss: false },
+  { level: 3, name: "Professors", badge: "PROFESSOR", dept: "SENIOR FACULTY", count: 9, hp: 240, armor: 0.22, speed: 3.0, dmg: 16, scale: 1.08, skin: 0x528c42, coat: 0x2b3e56, pants: 0x181d26, tie: 0x7f1d1d, hair: 0x5b6472, glasses: true, badgeCol: "#9333ea", lanyard: 0x9333ea, isBoss: false },
+  { level: 4, name: "Academic / Placement Incharges", badge: "PLACEMENT", dept: "TRAINING & PLACEMENT", count: 10, hp: 360, armor: 0.32, speed: 3.4, dmg: 20, scale: 1.11, skin: 0x4b8248, coat: 0x1f2937, pants: 0x111827, tie: 0xd97706, hair: 0x1f1f24, glasses: false, badgeCol: "#d97706", lanyard: 0xd97706, isBoss: false },
+  { level: 5, name: "HODs (Head of Department)", badge: "H.O.D", dept: "DEPT. HEAD", count: 8, hp: 520, armor: 0.42, speed: 3.3, dmg: 26, scale: 1.18, skin: 0x427542, coat: 0x172030, pants: 0x0f131a, tie: 0xdc2626, hair: 0x6b7280, glasses: true, badgeCol: "#dc2626", lanyard: 0xdc2626, isBoss: false },
+  { level: 6, name: "THE CEO · FINAL BOSS", badge: "CEO · BOSS", dept: "EXECUTIVE OFFICE", count: 1, hp: 2200, armor: 0.48, speed: 3.55, dmg: 32, scale: 1.44, skin: 0x386b3c, coat: 0x0f141c, pants: 0x090c10, tie: 0xf59e0b, hair: 0x111318, glasses: false, badgeCol: "#eab308", lanyard: 0xeab308, isBoss: true }
 ];
 
 const WEAPON_DEFS = [
@@ -725,6 +725,7 @@ const ZGAME = {
   pickups: [],
   gameOver: false,
   victory: false,
+  campusEntered: false,
   waveDelay: 0,
   phaseTimer: 120,
   spawnTimer: 2.5,
@@ -1117,15 +1118,23 @@ function createFacultyZombie(lvlDef, x, z) {
   };
 }
 
-function findZombieSpawnAround(px, pz, minDist = 17, maxDist = 34) {
-  for (let tries = 0; tries < 40; tries++) {
+// Strictly inside Anurag University campus walls (NEVER outside on Venkatapur Main Road Z > 58!)
+function isInsideCampus(x, z) {
+  return x >= -112 && x <= 102 && z >= -92 && z <= 58;
+}
+
+function findZombieSpawnAround(px, pz, minDist = 16, maxDist = 30) {
+  const baseX = so.clamp(px, -95, 85);
+  const baseZ = Math.min(pz, 46); // Keep spawn anchor well inside the campus gate
+  for (let tries = 0; tries < 55; tries++) {
     const ang = Math.random() * Math.PI * 2;
     const dist = minDist + Math.random() * (maxDist - minDist);
-    const sx = px + Math.cos(ang) * dist;
-    const sz = pz + Math.sin(ang) * dist;
-    if (!yo(sx, sz)) return [sx, sz];
+    const sx = baseX + Math.cos(ang) * dist;
+    const sz = baseZ + Math.sin(ang) * dist;
+    if (isInsideCampus(sx, sz) && !yo(sx, sz)) return [sx, sz];
   }
-  return [px + 12, pz + 12];
+  // Safe fallback inside A-Block Central Plaza
+  return [-3 + (Math.random() - 0.5) * 18, 26 + (Math.random() - 0.5) * 12];
 }
 
 function clearZombiesAndFX() {
@@ -1323,6 +1332,8 @@ function startZombieGame(playIntro = false) {
   ZGAME.reloading = 0;
   ZGAME.pickupWeaponIdx = -1;
   ZGAME.waveDelay = 0;
+  ZGAME.campusEntered = false;
+  ZGAME.phaseTimer = 120;
   selectWeapon(0);
   populateCampusPickups();
   // Ensure 1st-Person POV for combat
@@ -1331,7 +1342,7 @@ function startZombieGame(playIntro = false) {
   kt("time-mode").value = "outbreak";
   kt("time-mode").dispatchEvent(new Event("change"));
   document.body.classList.add("zombie-mode");
-  spawnZombieWave(0);
+  updateCombatHUD();
   if (playIntro) startStoryIntro();
 }
 
@@ -1418,13 +1429,16 @@ function triggerReload() {
 
 function damageZombie(z, dmg, hitPos, knockDir, knockAmt = 1.8, isHeadshot = false) {
   if (!z.alive) return;
-  z.hp -= dmg;
+  // Higher faculty phases have tougher armor resistance (harder to kill as phases progress!)
+  const armorFactor = 1.0 - (z.lvlDef.armor || 0);
+  const finalDmg = Math.max(4, dmg * armorFactor);
+  z.hp -= finalDmg;
   z.hitFlash = 0.14;
   z.hpBarBg.visible = true;
   if (knockDir) z.knockVel.addScaledVector(knockDir, knockAmt / z.lvlDef.scale);
   spawnBurst(hitPos, isHeadshot ? 0xfef08a : 0x4ade80, isHeadshot ? 11 : 6, 4.2);
   playSFX(isHeadshot ? "headshot" : "hit");
-  showHitMarker(isHeadshot, isHeadshot ? `HEADSHOT! -${Math.round(dmg)}` : `-${Math.round(dmg)}`);
+  showHitMarker(isHeadshot, isHeadshot ? `HEADSHOT! -${Math.round(finalDmg)}` : `-${Math.round(finalDmg)}`);
 
   // CEO Boss Phase 2: Summon Lab Assistants at 50% HP!
   if (z.lvlDef.isBoss && !ZGAME.bossSummonedMinions && z.hp < z.maxHp * 0.5 && z.hp > 0) {
@@ -1668,10 +1682,15 @@ function updateCombatHUD() {
   if (!ZGAME.active) return;
   const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
   const aliveCount = ZGAME.zombies.filter(z => z.alive).length;
-  kt("wave-title").textContent = lvl.isBoss ? "FINAL BOSS · DEFEAT THE CEO" : `LEVEL ${lvl.level} · ${lvl.name.toUpperCase()}`;
-  kt("wave-sub").textContent = lvl.isBoss
-    ? `Active Enemies: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`
-    : `SURVIVE: ${formatTimer(ZGAME.phaseTimer)} · Active: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`;
+  if (!ZGAME.campusEntered) {
+    kt("wave-title").textContent = "ENTER ANURAG UNIVERSITY GATE";
+    kt("wave-sub").textContent = "Walk forward inside the campus to begin Phase 1 (2:00 Survival)!";
+  } else {
+    kt("wave-title").textContent = lvl.isBoss ? "FINAL BOSS · DEFEAT THE CEO" : `LEVEL ${lvl.level} · ${lvl.name.toUpperCase()}`;
+    kt("wave-sub").textContent = lvl.isBoss
+      ? `Active Enemies: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`
+      : `SURVIVE: ${formatTimer(ZGAME.phaseTimer)} · Active: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`;
+  }
   kt("hp-val").textContent = `${Math.ceil(ZGAME.hp)} / ${ZGAME.maxHp}`;
   kt("hp-fill").style.width = `${(ZGAME.hp / ZGAME.maxHp) * 100}%`;
   kt("shield-val").textContent = `${Math.ceil(ZGAME.shield)}%${ZGAME.shieldBlocking ? " · BLOCKING" : ""}`;
@@ -2013,8 +2032,16 @@ function updateZombieGame(dt, timeSec) {
     }
   }
 
-  // Continuous Horde Spawning & 2-Minute Phase Survival Progression!
+  // Continuous Horde Spawning & 2-Minute Phase Survival Progression — ONLY AFTER ENTERING CAMPUS!
   if (!ZGAME.gameOver && !ZGAME.victory) {
+    if (!ZGAME.campusEntered) {
+      // Wait until the player crosses inside the Main Gate (Z <= 60) before spawning any zombies!
+      if (pz <= 60) {
+        ZGAME.campusEntered = true;
+        spawnZombieWave(0);
+      }
+      return;
+    }
     const curLvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
     if (ZGAME.waveDelay > 0) {
       ZGAME.waveDelay -= dt;
@@ -2027,13 +2054,13 @@ function updateZombieGame(dt, timeSec) {
       ZGAME.phaseTimer = Math.max(0, ZGAME.phaseTimer - dt);
       if (Math.ceil(ZGAME.phaseTimer) !== prevSec) updateCombatHUD();
 
-      // Keep spawning fresh zombies around the player so they NEVER stop coming!
+      // Keep spawning fresh zombies inside the campus around the player so they NEVER stop coming!
       ZGAME.spawnTimer -= dt;
-      const maxActive = Math.min(10, 5 + curLvl.level);
+      const maxActive = Math.min(12, 6 + curLvl.level);
       if (ZGAME.spawnTimer <= 0) {
-        ZGAME.spawnTimer = Math.max(1.8, 3.6 - curLvl.level * 0.3);
+        ZGAME.spawnTimer = Math.max(1.5, 3.2 - curLvl.level * 0.32);
         if (aliveCount < maxActive) {
-          const batch = aliveCount < 3 ? 2 : 1;
+          const batch = aliveCount < 4 ? 2 : 1;
           for (let b = 0; b < batch; b++) {
             const [sx, sz] = findZombieSpawnAround(px, pz, 15, 29);
             ZGAME.zombies.push(createFacultyZombie(curLvl, sx, sz));
@@ -2214,7 +2241,7 @@ WRIST_REPLACE = """function updateWristDisplay(){
     const alive=ZGAME.zombies.filter(z=>z.alive).length;
     const w=WEAPON_DEFS[ZGAME.weaponIdx];
     const ammoStr=ZGAME.reloading>0?"RELOAD":(w.mag===Infinity?"INF":ZGAME.ammo[w.id]+"/"+w.mag);
-    const timerStr = lvl.isBoss ? "BOSS" : formatTimer(ZGAME.phaseTimer);
+    const timerStr = !ZGAME.campusEntered ? "ENTER GATE" : (lvl.isBoss ? "BOSS" : formatTimer(ZGAME.phaseTimer));
     const key=`${Math.ceil(ZGAME.hp)}-${Math.ceil(ZGAME.shield)}-${lvl.level}-${timerStr}-${alive}-${w.id}-${ammoStr}-${ZGAME.gameOver}`;
     if(wristDisplay.last===key)return;
     wristDisplay.last=key;
@@ -2264,8 +2291,6 @@ VR_SYNC_REPLACE = """    const pressed=!!buttons?.[4]?.pressed;
       }
       const curPos=hand.anchor.position;
       if(side==="right"){
-        // Right Controller Trigger opens the Transparent Hi-Tech Shield (and fires guns)
-        ZGAME.vrShieldTrigger = trigDown || !!(trackedHands.get("left")?.trigDown);
         const w=WEAPON_DEFS[ZGAME.weaponIdx];
         if(w.type==="melee"){
           // Real physical 3D blade-contact damage on hand movement (NO trigger needed!)
@@ -2287,10 +2312,10 @@ VR_SYNC_REPLACE = """    const pressed=!!buttons?.[4]?.pressed;
           if(ZGAME.gameOver || ZGAME.victory) startZombieGame(); else triggerReload();
         }
       } else {
-        // Left Hand: Shield Bash via fast forward thrust or Left Trigger (+ also opens shield)
+        // Left Hand: Shield opens ONLY when Left Trigger is actively pressed!
+        ZGAME.vrShieldTrigger = trigger > 0.55;
         const lSpeed=curPos.distanceTo(ZGAME.vrPrevLeftPos)*60;
         ZGAME.vrPrevLeftPos.copy(curPos);
-        ZGAME.vrShieldTrigger = trigDown || !!(trackedHands.get("right")?.trigDown);
         if(lSpeed>5.2 || (gripDown && !hand.gripDown)) triggerShieldBash();
         // X button cycles lighting/atmosphere in VR
         if(hand.source===source && pressed && !hand.buttonDown){
@@ -2317,6 +2342,13 @@ html = html.replace(VR_SYNC_ANCHOR, VR_SYNC_REPLACE, 1)
 html = html.replace(
     'screen.position.set(0,.039,.072);',
     'screen.position.set(0,.048,.125);',
+    1
+)
+
+# Reset VR left-trigger shield state every frame before polling controllers so it NEVER sticks open!
+html = html.replace(
+    'function syncControllerHands(frame,space,sources){',
+    'function syncControllerHands(frame,space,sources){\n  ZGAME.vrShieldTrigger=false;',
     1
 )
 
