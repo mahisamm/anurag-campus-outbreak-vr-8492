@@ -7586,6 +7586,108 @@ function playSFX(kind) {
   }
 }
 
+// Realistic Procedural Textures for Thrown Laptops & Engineering Textbooks (Round 3+ Faculty Attacks!)
+let laptopScreenTex = null, laptopKeyTex = null;
+const bookTexCache = [];
+function initThrowablesTextures() {
+  if (laptopScreenTex) return;
+  // Laptop Screen: Glowing IDE / Exam Error screen
+  const sc = document.createElement("canvas"); sc.width = 256; sc.height = 160;
+  const sg = sc.getContext("2d");
+  sg.fillStyle = "#0b192c"; sg.fillRect(0, 0, 256, 160);
+  sg.fillStyle = "#1d4ed8"; sg.fillRect(0, 0, 256, 22);
+  sg.fillStyle = "#ffffff"; sg.font = "bold 12px monospace";
+  sg.fillText("ANURAG LABS · EXAM SYSTEM", 10, 15);
+  sg.fillStyle = "#38bdf8"; sg.font = "11px monospace";
+  sg.fillText("int main() { // FATAL ERR", 12, 46);
+  sg.fillStyle = "#4ade80"; sg.fillText("  attendance = 0%;", 12, 66);
+  sg.fillStyle = "#f87171"; sg.font = "bold 15px sans-serif";
+  sg.fillText("DETAINED! RE-EXAM!", 28, 106);
+  sg.fillStyle = "#fbbf24"; sg.fillRect(16, 126, 224, 14);
+  laptopScreenTex = new dn(sc); laptopScreenTex.colorSpace = vt;
+
+  // Laptop Keyboard Deck
+  const kc = document.createElement("canvas"); kc.width = 256; kc.height = 160;
+  const kg = kc.getContext("2d");
+  kg.fillStyle = "#94a3b8"; kg.fillRect(0, 0, 256, 160);
+  kg.fillStyle = "#1e293b"; kg.fillRect(16, 14, 224, 86);
+  kg.fillStyle = "#334155";
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 13; c++) kg.fillRect(22 + c * 16.5, 20 + r * 15, 13, 11);
+  }
+  kg.fillStyle = "#64748b"; kg.fillRect(88, 110, 80, 40); // Trackpad
+  laptopKeyTex = new dn(kc); laptopKeyTex.colorSpace = vt;
+
+  // Hardcover Engineering Textbooks
+  const titles = [
+    ["DATA", "STRUCTURES", "#991b1b", "#fde047"],
+    ["DBMS &", "SQL LAB", "#1e3a8a", "#7dd3fc"],
+    ["CIRCUIT", "THEORY", "#065f46", "#bbf7d0"],
+    ["ENGG.", "MATHS III", "#581c87", "#f5d0fe"]
+  ];
+  for (const [t1, t2, bg, fg] of titles) {
+    const bc = document.createElement("canvas"); bc.width = 256; bc.height = 340;
+    const bgc = bc.getContext("2d");
+    bgc.fillStyle = bg; bgc.fillRect(0, 0, 256, 340);
+    bgc.fillStyle = "rgba(0,0,0,0.22)"; bgc.fillRect(0, 0, 26, 340); // Spine crease
+    bgc.strokeStyle = fg; bgc.lineWidth = 5; bgc.strokeRect(36, 22, 200, 296);
+    bgc.fillStyle = "#ffffff"; bgc.font = "bold 20px sans-serif"; bgc.textAlign = "center";
+    bgc.fillText("ANURAG UNIV", 136, 64);
+    bgc.fillStyle = fg; bgc.font = "bold 32px serif";
+    bgc.fillText(t1, 136, 145);
+    bgc.fillText(t2, 136, 186);
+    bgc.fillStyle = "#e2e8f0"; bgc.font = "bold 16px sans-serif";
+    bgc.fillText("FACULTY EDITION", 136, 286);
+    const tex = new dn(bc); tex.colorSpace = vt;
+    bookTexCache.push({ tex, bg });
+  }
+}
+
+function createThrownLaptop() {
+  initThrowablesTextures();
+  const g = new fi();
+  const alumMat = new Jt({ color: 0xb8c2cc, roughness: 0.32, metalness: 0.78 });
+  const keyMat = new Jt({ map: laptopKeyTex, roughness: 0.55, metalness: 0.25 });
+  const scrMat = new Yi({ map: laptopScreenTex });
+  // Base deck
+  const base = new et(new Ni(0.36, 0.018, 0.24), [alumMat, alumMat, keyMat, alumMat, alumMat, alumMat]);
+  g.add(base);
+  // Open hinged screen lid (tilted ~108 deg open!)
+  const lidPivot = new fi();
+  lidPivot.position.set(0, 0.01, -0.118);
+  lidPivot.rotation.x = -0.30;
+  const lidBack = new et(new Ni(0.36, 0.23, 0.014), alumMat);
+  lidBack.position.set(0, 0.115, 0);
+  lidPivot.add(lidBack);
+  const screen = new et(new _i(0.33, 0.20), scrMat);
+  screen.position.set(0, 0.115, 0.009);
+  lidPivot.add(screen);
+  g.add(lidPivot);
+  return g;
+}
+
+function createThrownBook() {
+  initThrowablesTextures();
+  const pick = bookTexCache[Math.floor(Math.random() * bookTexCache.length)];
+  const g = new fi();
+  const coverMat = new Jt({ map: pick.tex, roughness: 0.72 });
+  const spineMat = new Jt({ color: pick.bg, roughness: 0.78 });
+  const pagesMat = new Jt({ color: 0xf5f0e1, roughness: 0.92 });
+  // Thick hardcover book with crisp white paper pages visible on 3 edges!
+  const pages = new et(new Ni(0.22, 0.044, 0.29), pagesMat);
+  g.add(pages);
+  const topCover = new et(new Ni(0.235, 0.008, 0.305), coverMat);
+  topCover.position.y = 0.025;
+  g.add(topCover);
+  const botCover = new et(new Ni(0.235, 0.008, 0.305), spineMat);
+  botCover.position.y = -0.025;
+  g.add(botCover);
+  const spine = new et(new Ni(0.012, 0.056, 0.305), spineMat);
+  spine.position.x = -0.114;
+  g.add(spine);
+  return g;
+}
+
 // High-Resolution Procedural Faculty ID Card Textures
 const idCardTexCache = new Map();
 function getFacultyIdCardTexture(lvlDef) {
@@ -8090,6 +8192,8 @@ function createFacultyZombie(lvlDef, x, z) {
     phase: Math.random() * Math.PI * 2,
     knockVel: new A(),
     boltCd: 3.2, slamCd: 5.5,
+    canThrow: lvlDef.level >= 3 && (lvlDef.isBoss || Math.random() < 0.62),
+    throwCd: 2.2 + Math.random() * 2.8,
     skinMat: zSkin, baseSkinHex: lvlDef.skin
   };
 }
@@ -8993,6 +9097,34 @@ function updateZombieGame(dt, timeSec) {
       damagePlayer(z.lvlDef.dmg);
     }
 
+    // From Round 3 (Professors, Placement Incharges, HODs, CEO): Zombies throw realistic Laptops & Textbooks!
+    if (z.canThrow && !ZGAME.gameOver && dist > 6.5 && dist < 29) {
+      z.throwCd -= dt;
+      if (z.throwCd <= 0) {
+        z.throwCd = Math.max(2.6, 5.4 - z.lvlDef.level * 0.45) + Math.random() * 1.8;
+        const isLaptop = Math.random() < (z.lvlDef.level >= 4 ? 0.58 : 0.45);
+        const projMesh = isLaptop ? createThrownLaptop() : createThrownBook();
+        const startPos = new A(z.root.position.x, z.root.position.y + 1.55 * z.lvlDef.scale, z.root.position.z);
+        projMesh.position.copy(startPos);
+        Ht.add(projMesh);
+        // Parabolic lob toward player's chest/head so it arcs realistically through the air!
+        const flightTime = so.clamp(dist / 13.5, 0.55, 1.85);
+        const vx = (px - startPos.x) / flightTime;
+        const vz = (pz - startPos.z) / flightTime;
+        const vy = ((py + 1.32) - startPos.y + 0.5 * 9.8 * flightTime * flightTime) / flightTime;
+        ZGAME.projectiles.push({
+          mesh: projMesh,
+          vel: new A(vx, vy, vz),
+          gravity: 9.8,
+          spin: new A((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 11, (Math.random() - 0.5) * 8),
+          life: 3.6,
+          dmg: isLaptop ? (14 + z.lvlDef.level * 2) : (10 + z.lvlDef.level * 1.5),
+          kind: isLaptop ? "laptop" : "book"
+        });
+        playSFX("zgroan");
+      }
+    }
+
     // CEO Boss Ranged Toxic Bolts & Ground Shockwave
     if (z.lvlDef.isBoss && !ZGAME.gameOver) {
       z.boltCd -= dt;
@@ -9016,20 +9148,34 @@ function updateZombieGame(dt, timeSec) {
     }
   }
 
-  // Update Boss Projectiles
+  // Update Boss Bolts & Thrown Laptops / Engineering Textbooks
   for (let i = ZGAME.projectiles.length - 1; i >= 0; i--) {
     const pr = ZGAME.projectiles[i];
     pr.life -= dt;
+    if (pr.gravity) pr.vel.y -= pr.gravity * dt;
     pr.mesh.position.addScaledVector(pr.vel, dt);
+    if (pr.spin) {
+      pr.mesh.rotation.x += pr.spin.x * dt;
+      pr.mesh.rotation.y += pr.spin.y * dt;
+      pr.mesh.rotation.z += pr.spin.z * dt;
+    }
     const dToPlayer = Math.hypot(pr.mesh.position.x - px, pr.mesh.position.z - pz);
-    if (dToPlayer < 0.95 && Math.abs(pr.mesh.position.y - (py + 1.25)) < 1.1) {
+    if (dToPlayer < 0.95 && Math.abs(pr.mesh.position.y - (py + 1.25)) < 1.15) {
       damagePlayer(pr.dmg);
-      spawnBurst(pr.mesh.position, 0xef4444, 10, 4);
+      const burstCol = pr.kind === "laptop" ? 0x38bdf8 : pr.kind === "book" ? 0xf5f0e1 : 0xef4444;
+      spawnBurst(pr.mesh.position, burstCol, 12, 4.6);
+      if (pr.kind === "laptop") playSFX("rod");
+      else if (pr.kind === "book") playSFX("branch");
       Ht.remove(pr.mesh);
       ZGAME.projectiles.splice(i, 1);
       continue;
     }
-    if (pr.life <= 0) {
+    // Smash on ground impact
+    const gY = groundAt(pr.mesh.position.x, pr.mesh.position.z);
+    if (pr.life <= 0 || pr.mesh.position.y <= gY + 0.08) {
+      if (pr.kind) {
+        spawnBurst(pr.mesh.position, pr.kind === "laptop" ? 0x38bdf8 : 0xf5f0e1, 7, 3.2);
+      }
       Ht.remove(pr.mesh);
       ZGAME.projectiles.splice(i, 1);
     }
