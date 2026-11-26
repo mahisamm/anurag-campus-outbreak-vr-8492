@@ -10,6 +10,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC_HTML = os.path.join(ROOT, "Play-PC.html")
 BACKUP_HTML = os.path.join(ROOT, "Play-PC-Explorer-Backup.html")
 ASSETS_JSON = os.path.join(ROOT, "zombie_assets.json")
+HUMAN_JSON = os.path.join(ROOT, "human_zombie_meshes.json")
 
 # Make sure we always patch from the clean original Explorer backup if it exists
 if not os.path.exists(BACKUP_HTML):
@@ -21,6 +22,9 @@ with open(BACKUP_HTML, "r", encoding="utf-8") as f:
 
 with open(ASSETS_JSON, "r", encoding="utf-8") as f:
     zombie_assets = json.load(f)
+if os.path.exists(HUMAN_JSON):
+    with open(HUMAN_JSON, "r", encoding="utf-8") as f:
+        zombie_assets.update(json.load(f))
 
 # ---------------------------------------------------------------------------
 # 1. CSS additions for FPS Combat HUD, Weapon Hotbar, Boss Bar, Damage/Block Flash
@@ -772,7 +776,7 @@ function populateCampusPickups() {
   }
 }
 
-// Build a Realistic Articulated Faculty Zombie with Blender Sculpted Head + Faculty ID Card
+// Build a Realistic Articulated Faculty Zombie using Blender-Modified CC0 Human Anatomy + Faculty ID Card
 function createFacultyZombie(lvlDef, x, z) {
   const root = new fi();
   const s = lvlDef.scale;
@@ -780,143 +784,173 @@ function createFacultyZombie(lvlDef, x, z) {
   root.position.set(x, gy, z);
   root.scale.set(s, s, s);
 
-  const zSkin = new Jt({ color: lvlDef.skin, roughness: 0.72, metalness: 0.04 });
-  const zCoat = new Jt({ color: lvlDef.coat, roughness: 0.82, metalness: 0.05 });
+  const zSkin = new Jt({ color: lvlDef.skin, roughness: 0.68, metalness: 0.04 });
+  const zCoat = new Jt({ color: lvlDef.coat, roughness: 0.80, metalness: 0.06 });
   const zPants = new Jt({ color: lvlDef.pants, roughness: 0.86 });
+  const zBelt = new Jt({ color: 0x1a1614, roughness: 0.55, metalness: 0.2 });
   const zBlood = new Jt({ color: 0x6e1414, roughness: 0.55 });
   const eyeColor = lvlDef.isBoss ? 0xff1e1e : (lvlDef.level >= 4 ? 0xff9f1c : 0xcaff33);
   const zEye = new Yi({ color: eyeColor });
 
-  // Legs
+  // Realistic Anatomical Legs (Blender-modified CC0 human base mesh)
   const legs = [];
-  for (const side of [-1, 1]) {
+  for (const [idx, side] of [[-1, -1], [1, 1]].entries()) {
     const hip = new fi();
-    hip.position.set(side * 0.115, 0.84, 0);
-    const thigh = new et(new sa(0.075, 0.34, 4, 8), zPants);
-    thigh.position.y = -0.22;
-    hip.add(thigh);
-    const shin = new et(new sa(0.062, 0.34, 4, 8), zPants);
-    shin.position.y = -0.58;
-    hip.add(shin);
-    const shoe = new et(new Ni(0.11, 0.08, 0.24), new Jt({ color: 0x16181c, roughness: 0.7 }));
-    shoe.position.set(0, -0.80, 0.05);
-    hip.add(shoe);
+    hip.position.set(side[0] * 0.095, 0.86, 0);
+    const legGeo = idx === 0 ? blenderGeos.human_leg_l : blenderGeos.human_leg_r;
+    if (legGeo) {
+      const legMesh = new et(legGeo, zPants);
+      legMesh.castShadow = true;
+      hip.add(legMesh);
+    } else {
+      const thigh = new et(new sa(0.075, 0.72, 4, 8), zPants);
+      thigh.position.y = -0.42;
+      hip.add(thigh);
+    }
     root.add(hip);
     legs.push(hip);
   }
 
-  // Torso (Faculty Lab Coat / Shirt / Blazer / CEO Suit)
+  // Realistic Anatomical Torso + Tailored Faculty Attire (Lab Coat / Shirt / Blazer / CEO Suit)
   const torso = new fi();
-  torso.position.set(0, 1.18, 0);
-  const chest = new et(new Ni(0.42, 0.56, 0.23), zCoat);
-  chest.castShadow = true;
-  torso.add(chest);
+  torso.position.set(0, 0.86, 0);
+  if (blenderGeos.human_torso) {
+    const torsoMesh = new et(blenderGeos.human_torso, zCoat);
+    torsoMesh.castShadow = true;
+    torso.add(torsoMesh);
+  } else {
+    const chest = new et(new Ni(0.42, 0.56, 0.23), zCoat);
+    chest.position.y = 0.32;
+    torso.add(chest);
+  }
 
-  // Inner shirt V-neck & optional Tie
-  const innerShirt = new et(new Ni(0.14, 0.28, 0.03), new Jt({ color: 0xe2e8f0, roughness: 0.75 }));
-  innerShirt.position.set(0, 0.12, 0.11);
-  torso.add(innerShirt);
+  // Tailored waist belt & jacket hem (blends torso cleanly into trousers)
+  const belt = new et(new pn(0.155, 0.162, 0.06, 18), zBelt);
+  belt.scale.set(1.18, 1, 0.82);
+  belt.position.set(0, 0.06, 0.0);
+  torso.add(belt);
+  const buckle = new et(new Ni(0.055, 0.045, 0.025), new Jt({ color: 0xd4af37, roughness: 0.25, metalness: 0.85 }));
+  buckle.position.set(0, 0.06, 0.132);
+  torso.add(buckle);
+
+  // Crisp White Collar & Faculty Tie
+  const collar = new et(new pn(0.078, 0.095, 0.055, 16), new Jt({ color: 0xe2e8f0, roughness: 0.7 }));
+  collar.position.set(0, 0.61, 0.005);
+  torso.add(collar);
   if (lvlDef.tie) {
-    const tie = new et(new Ni(0.055, 0.30, 0.025), new Jt({ color: lvlDef.tie, roughness: 0.6 }));
-    tie.position.set(0, 0.06, 0.128);
+    const tie = new et(new Ni(0.048, 0.30, 0.024), new Jt({ color: lvlDef.tie, roughness: 0.55 }));
+    tie.position.set(0, 0.42, 0.125);
     torso.add(tie);
   }
-  // Lab coat lower skirt for Level 1
+  // Lab coat lower skirt for Level 1 Lab Assistants
   if (lvlDef.level === 1) {
-    const skirt = new et(new Ni(0.43, 0.36, 0.24), zCoat);
-    skirt.position.set(0, -0.34, -0.01);
+    const skirt = new et(new pn(0.168, 0.195, 0.34, 18), zCoat);
+    skirt.scale.set(1.15, 1, 0.85);
+    skirt.position.set(0, -0.10, -0.01);
     torso.add(skirt);
   }
-  // Undead grime / bloodstains on chest & shoulder
-  const stain = new et(new Ni(0.16, 0.14, 0.02), zBlood);
-  stain.position.set(0.11, -0.08, 0.115);
-  stain.rotation.z = 0.28;
+  // Subtle undead bloodstain on coat
+  const stain = new et(new fn(0.065, 10, 8), zBlood);
+  stain.scale.set(1.2, 0.9, 0.25);
+  stain.position.set(0.095, 0.24, 0.118);
   torso.add(stain);
 
-  // FACULTY ID CARD + COLORED LANYARD (Signature Faculty Feel!)
+  // FACULTY ID CARD + COLORED LANYARD (Swings naturally on chest)
   const lanyardMat = new Jt({ color: lvlDef.lanyard, roughness: 0.6 });
-  const strapL = new et(new Ni(0.016, 0.22, 0.012), lanyardMat);
-  strapL.position.set(-0.052, 0.19, 0.124); strapL.rotation.z = -0.26;
+  const strapL = new et(new Ni(0.014, 0.22, 0.012), lanyardMat);
+  strapL.position.set(-0.048, 0.50, 0.122); strapL.rotation.z = -0.24;
   torso.add(strapL);
-  const strapR = new et(new Ni(0.016, 0.22, 0.012), lanyardMat);
-  strapR.position.set(0.052, 0.19, 0.124); strapR.rotation.z = 0.26;
+  const strapR = new et(new Ni(0.014, 0.22, 0.012), lanyardMat);
+  strapR.position.set(0.048, 0.50, 0.122); strapR.rotation.z = 0.24;
   torso.add(strapR);
 
   const idCardPivot = new fi();
-  idCardPivot.position.set(0, 0.08, 0.138);
-  const idCard = new et(new Ni(0.115, 0.165, 0.008), new Yi({ map: getFacultyIdCardTexture(lvlDef) }));
-  idCard.position.set(0, -0.085, 0);
+  idCardPivot.position.set(0, 0.40, 0.138);
+  const idCard = new et(new Ni(0.11, 0.155, 0.008), new Yi({ map: getFacultyIdCardTexture(lvlDef) }));
+  idCard.position.set(0, -0.08, 0);
   idCardPivot.add(idCard);
   torso.add(idCardPivot);
 
   root.add(torso);
 
-  // Blender-Sculpted Necrotic Zombie Head
+  // Realistic Anatomical Human Head & Neck (Blender-modified CC0 human base mesh)
   const headGroup = new fi();
-  headGroup.position.set(0, 1.62, 0.02);
-  const headMesh = blenderGeos.zombie_head
-    ? new et(blenderGeos.zombie_head, zSkin)
-    : new et(new fn(0.135, 16, 14), zSkin);
+  headGroup.position.set(0, 1.48, 0.0);
+  const headMesh = blenderGeos.human_head
+    ? new et(blenderGeos.human_head, zSkin)
+    : (blenderGeos.zombie_head ? new et(blenderGeos.zombie_head, zSkin) : new et(new fn(0.12, 16, 14), zSkin));
   headMesh.castShadow = true;
   headGroup.add(headMesh);
 
-  // Glowing Sunken Eyes
+  // Glowing Sunken Undead Eyes & Dark Sockets (positioned on realistic face at Y~0.165, Z~0.095)
+  const sockMat = new Jt({ color: 0x1a2418, roughness: 0.9 });
   for (const side of [-1, 1]) {
-    const eye = new et(new fn(0.018, 8, 8), zEye);
-    eye.position.set(side * 0.040, 0.018, 0.098);
+    const sock = new et(new fn(0.022, 8, 8), sockMat);
+    sock.scale.set(1.15, 0.78, 0.45);
+    sock.position.set(side * 0.033, 0.165, 0.090);
+    headGroup.add(sock);
+    const eye = new et(new fn(0.012, 8, 8), zEye);
+    eye.position.set(side * 0.033, 0.165, 0.098);
     headGroup.add(eye);
   }
-  // Snarling dark mouth & teeth
-  const mouth = new et(new Ni(0.068, 0.024, 0.02), new Yi({ color: 0x2b0a0a }));
-  mouth.position.set(0, -0.062, 0.098);
+  // Snarling undead mouth
+  const mouth = new et(new Ni(0.052, 0.018, 0.016), new Yi({ color: 0x2b0a0a }));
+  mouth.position.set(0, 0.092, 0.094);
   headGroup.add(mouth);
 
-  // Hair / Faculty Glasses / CEO Aura
-  const hair = new et(new fn(0.122, 12, 10), new Jt({ color: lvlDef.level >= 3 ? 0x4b5563 : 0x18181b, roughness: 0.9 }));
-  hair.scale.set(0.92, 0.52, 1.05);
-  hair.position.set(0, 0.092, -0.015);
+  // Realistic Hair Cap / Professor Glasses / CEO Boss Crown
+  const hair = new et(new fn(0.108, 14, 10), new Jt({ color: lvlDef.level >= 3 ? 0x4b5563 : 0x18181b, roughness: 0.88 }));
+  hair.scale.set(0.92, 0.56, 1.05);
+  hair.position.set(0, 0.245, -0.008);
   headGroup.add(hair);
 
   if (lvlDef.glasses) {
     const glMat = new Jt({ color: 0x111827, roughness: 0.3, metalness: 0.7 });
     for (const side of [-1, 1]) {
-      const rim = new et(new gn(0.028, 0.004, 6, 14), glMat);
-      rim.position.set(side * 0.042, 0.018, 0.118);
+      const rim = new et(new gn(0.024, 0.0038, 6, 14), glMat);
+      rim.position.set(side * 0.034, 0.165, 0.106);
       headGroup.add(rim);
     }
-    const bridge = new et(new Ni(0.028, 0.006, 0.006), glMat);
-    bridge.position.set(0, 0.022, 0.118);
+    const bridge = new et(new Ni(0.024, 0.005, 0.005), glMat);
+    bridge.position.set(0, 0.168, 0.106);
     headGroup.add(bridge);
   }
   if (lvlDef.isBoss) {
-    // CEO Executive Golden Shoulder Epaulettes + Glowing Red Crown Ring
-    const crown = new et(new gn(0.15, 0.014, 8, 22), new Yi({ color: 0xf59e0b }));
+    const crown = new et(new gn(0.135, 0.014, 8, 22), new Yi({ color: 0xf59e0b }));
     crown.rotation.x = Math.PI / 2;
-    crown.position.set(0, 0.18, 0);
+    crown.position.set(0, 0.32, 0);
     headGroup.add(crown);
   }
   root.add(headGroup);
 
-  // Outstretched Zombie Arms
+  // Realistic Anatomical Arms with Five-Fingered Hands + Tailored Shoulder Sleeves
   const arms = [];
-  for (const side of [-1, 1]) {
+  for (const [idx, side] of [[-1, -1], [1, 1]].entries()) {
     const sh = new fi();
-    sh.position.set(side * 0.255, 1.40, 0.02);
-    const upper = new et(new sa(0.056, 0.28, 4, 8), zCoat);
-    upper.rotation.x = Math.PI / 2;
-    upper.position.set(0, 0, 0.16);
-    sh.add(upper);
-    const fore = new et(new sa(0.046, 0.28, 4, 8), zSkin);
-    fore.rotation.x = Math.PI / 2;
-    fore.position.set(0, -0.02, 0.44);
-    sh.add(fore);
+    sh.position.set(side[0] * 0.19, 1.42, 0.0);
+    // Smooth shoulder cap sleeve so arm joint blends seamlessly into coat/shirt
+    const shCap = new et(new fn(0.068, 12, 10), zCoat);
+    shCap.scale.set(1.0, 1.08, 1.0);
+    sh.add(shCap);
+    const armGeo = idx === 0 ? blenderGeos.human_arm_l : blenderGeos.human_arm_r;
+    if (armGeo) {
+      const armMesh = new et(armGeo, zSkin);
+      armMesh.castShadow = true;
+      sh.add(armMesh);
+    } else {
+      const upper = new et(new sa(0.052, 0.56, 4, 8), zSkin);
+      upper.position.set(0, -0.32, 0);
+      sh.add(upper);
+    }
+    // Natural outstretched zombie arm pose (bringing A-pose arms smoothly forward!)
+    sh.rotation.set(-1.12, 0, side[0] * 0.48);
     root.add(sh);
     arms.push(sh);
   }
 
   // Diegetic Floating HP Bar above Zombie
   const hpBarBg = new et(new _i(0.56, 0.07), new Yi({ color: 0x0f172a, side: Gt }));
-  hpBarBg.position.set(0, 1.98, 0);
+  hpBarBg.position.set(0, 2.02, 0);
   const hpBarFill = new et(new _i(0.52, 0.045), new Yi({ color: lvlDef.isBoss ? 0xf59e0b : 0xef4444, side: Gt }));
   hpBarFill.position.set(0, 0, 0.004);
   hpBarBg.add(hpBarFill);
@@ -1535,8 +1569,8 @@ function updateZombieGame(dt, timeSec) {
     z.idCardPivot.rotation.x = -0.18;
 
     const lunge = z.attackCd > 0.65 ? Math.sin((z.attackCd - 0.65) * 9) * 0.5 : 0;
-    z.arms[0].rotation.x = -0.25 + Math.sin(z.phase) * 0.16 - lunge;
-    z.arms[1].rotation.x = -0.25 - Math.sin(z.phase) * 0.16 - lunge;
+    z.arms[0].rotation.x = -1.12 + Math.sin(z.phase) * 0.16 - lunge;
+    z.arms[1].rotation.x = -1.12 - Math.sin(z.phase) * 0.16 - lunge;
 
     // Billboard HP bar toward camera
     if (z.hpBarBg.visible) {
