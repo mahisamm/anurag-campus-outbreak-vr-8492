@@ -63,6 +63,33 @@ EXTRA_CSS = """
   padding:11px 26px;border-radius:10px;border:none;cursor:pointer;
   background:linear-gradient(135deg,#0ea5e9,#14b8a6);color:#04151f;font:800 15px system-ui;
 }
+#intro-overlay{
+  position:fixed;inset:0;z-index:42;display:none;pointer-events:none;
+}
+#intro-overlay.playing{display:block}
+.cine-bar{
+  position:fixed;left:0;right:0;height:10vh;background:#050910;
+  transition:transform .5s ease;pointer-events:none;
+}
+#cine-top{top:0}
+#cine-bot{bottom:0}
+#intro-story-box{
+  position:fixed;left:50%;bottom:13vh;transform:translateX(-50%);
+  width:min(760px,90vw);padding:16px 26px;border-radius:14px;text-align:center;
+  background:linear-gradient(160deg,rgba(8,18,30,0.88),rgba(24,10,16,0.86));
+  border:1px solid rgba(114,239,221,0.45);box-shadow:0 14px 40px rgba(0,0,0,0.65);
+  backdrop-filter:blur(10px);
+}
+#intro-kicker{font:800 12px/1.2 system-ui;color:#fbbf24;letter-spacing:2.2px;text-transform:uppercase;margin-bottom:5px}
+#intro-headline{font:800 clamp(18px,2.5vw,28px)/1.2 Georgia,serif;color:#ffffff;letter-spacing:0.6px;margin:0}
+#intro-sub{font:600 13px/1.4 system-ui;color:#a5d8ee;margin-top:6px}
+#btn-skip-intro{
+  position:fixed;right:22px;bottom:2.8vh;z-index:44;pointer-events:auto;
+  padding:8px 18px;border-radius:8px;border:1px solid rgba(114,239,221,0.55);
+  background:rgba(15,32,48,0.92);color:#e0f7fa;font:700 12.5px system-ui;cursor:pointer;
+}
+#btn-skip-intro:hover{background:#0ea5e9;color:#04151f}
+.intro-active #combat-hud,.intro-active #top-left-hud,.intro-active #minimap-wrap,.intro-active #crosshair,.intro-active #hint{opacity:0 !important;pointer-events:none !important}
 #wave-banner{
   position:fixed;top:14px;left:50%;transform:translateX(-50%);
   padding:8px 22px;border-radius:12px;text-align:center;
@@ -217,6 +244,16 @@ COMBAT_HUD_HTML = """
       <button id="btn-restart-game">Play Again [R]</button>
     </div>
   </div>
+</div>
+<div id="intro-overlay">
+  <div id="cine-top" class="cine-bar"></div>
+  <div id="cine-bot" class="cine-bar"></div>
+  <div id="intro-story-box">
+    <div id="intro-kicker">ANURAG UNIVERSITY · EMERGENCY BROADCAST</div>
+    <h2 id="intro-headline">WELCOME TO ANURAG UNIVERSITY</h2>
+    <div id="intro-sub">Venkatapur Campus · Aerial Reconnaissance</div>
+  </div>
+  <button id="btn-skip-intro">Skip Intro [Space]</button>
 </div>
 """
 
@@ -605,6 +642,11 @@ const ZGAME = {
   keyShieldDown: false,
   medkits: [],
   groanTimer: 2.5,
+  introPlaying: false,
+  introTime: 0,
+  introDur: 10.5,
+  introDoneOnce: false,
+  vrStoryBanner: null,
   hp: 100,
   maxHp: 100,
   shield: 100,
@@ -938,7 +980,138 @@ function spawnZombieWave(levelIdx) {
   updateCombatHUD();
 }
 
-function startZombieGame() {
+// Cinematic Aerial-to-First-Person Story Intro Controller
+const INTRO_BEATS = [
+  { t: 0.0, kicker: "ANURAG UNIVERSITY · VENKATAPUR CAMPUS", head: "WELCOME TO ANURAG UNIVERSITY", sub: "A peaceful evening across A-Block, Central Plaza & the Sports Grounds... until the bio-lab alarm sounded." },
+  { t: 3.5, kicker: "BIO-CONTAINMENT BREACH DETECTED", head: "SAVE YOURSELF FROM THE INFECTED FACULTY!", sub: "Lab Assistants · Jr. Professors · Professors · Placement Incharges · HODs · and THE CEO have turned!" },
+  { t: 7.2, kicker: "ENTERING FIRST-PERSON COMBAT", head: "EQUIP YOUR HI-TECH SHIELD & LIGHTSABER", sub: "Defend the campus across all 6 levels · Grab fallen rods & branches · Defeat the CEO!" }
+];
+
+function createVRStoryBanner() {
+  if (ZGAME.vrStoryBanner) return ZGAME.vrStoryBanner;
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
+  const g = c.getContext("2d");
+  g.fillStyle = "rgba(8,18,30,0.92)"; g.fillRect(0, 0, 1024, 256);
+  g.strokeStyle = "#72efdd"; g.lineWidth = 6; g.strokeRect(6, 6, 1012, 244);
+  g.fillStyle = "#fbbf24"; g.font = "bold 28px sans-serif"; g.textAlign = "center";
+  g.fillText("WELCOME TO ANURAG UNIVERSITY", 512, 68);
+  g.fillStyle = "#ffffff"; g.font = "bold 42px sans-serif";
+  g.fillText("SAVE YOURSELF FROM THE INFECTED FACULTY!", 512, 138);
+  g.fillStyle = "#a5d8ee"; g.font = "26px sans-serif";
+  g.fillText("Press A to Skip  ·  Swing Saber / Fire Guns / Right-Trigger for Shield", 512, 206);
+  const tex = new dn(c); tex.colorSpace = vt;
+  const mesh = new et(new _i(3.8, 0.95), new Yi({ map: tex, transparent: true, side: Gt }));
+  mesh.position.set(0, 2.0, -4.2);
+  xt.add(mesh);
+  ZGAME.vrStoryBanner = mesh;
+  return mesh;
+}
+
+function startStoryIntro() {
+  ZGAME.introPlaying = true;
+  ZGAME.introTime = 0;
+  document.body.classList.add("intro-active");
+  if (kt("intro-overlay")) kt("intro-overlay").classList.add("playing");
+  // Hide 1st-person hands during aerial flyover
+  fpHands.forEach(a => (a.root.visible = false));
+  if (Ye.xr.isPresenting) {
+    createVRStoryBanner().visible = true;
+  }
+  playSFX("levelup");
+}
+
+function finishStoryIntro() {
+  if (!ZGAME.introPlaying) return;
+  ZGAME.introPlaying = false;
+  ZGAME.introDoneOnce = true;
+  document.body.classList.remove("intro-active");
+  if (kt("intro-overlay")) kt("intro-overlay").classList.remove("playing");
+  if (ZGAME.vrStoryBanner) ZGAME.vrStoryBanner.visible = false;
+  // Snap cleanly to 1st-Person Player Start at Main Gate facing A-Block
+  xo(0);
+  if (povMode !== "1st") { povMode = "1st"; updateCameraPOV(); }
+  Mi.position.set(0, 0, 0);
+  Mi.rotation.set(0, 0, 0);
+  syncWeaponVisuals();
+  playSFX("saber");
+  showToast("LEVEL 1: LAB ASSISTANTS — SURVIVE!", 2.6);
+}
+
+if (kt("btn-skip-intro")) kt("btn-skip-intro").onclick = () => finishStoryIntro();
+
+function updateStoryIntro(dt) {
+  if (!ZGAME.introPlaying) return false;
+  ZGAME.introTime += dt;
+  const t = Math.min(1, ZGAME.introTime / ZGAME.introDur);
+
+  // Update cinematic story captions
+  let beat = INTRO_BEATS[0];
+  for (const b of INTRO_BEATS) { if (ZGAME.introTime >= b.t) beat = b; }
+  if (kt("intro-kicker")) kt("intro-kicker").textContent = beat.kicker;
+  if (kt("intro-headline")) kt("intro-headline").textContent = beat.head;
+  if (kt("intro-sub")) kt("intro-sub").textContent = beat.sub;
+
+  // Target First-Person Spawn (Main Gate facing A-Block)
+  const [_, endX, endZ, endYaw, endPitch = 0.07] = ld[0];
+  const endY = groundAt(endX, endZ);
+
+  if (Ye.xr.isPresenting) {
+    // Gentle elevated VR aerial descent into Main Gate (keeps headset rotation 100% free & comfortable!)
+    const ease = t * t * (3 - 2 * t);
+    const rx = so.lerp(28, endX, ease);
+    const rz = so.lerp(-18, endZ, ease);
+    const ry = so.lerp(24, endY, ease);
+    xt.position.set(rx, ry, rz);
+    xt.rotation.y = endYaw;
+    if (ZGAME.vrStoryBanner) ZGAME.vrStoryBanner.visible = true;
+  } else {
+    // Sweeping 3-Act Aerial Drone Flyover -> Smooth Dive into 1st-Person POV!
+    const smooth = (x) => x * x * (3 - 2 * x);
+    let cx, cy, cz, lx, ly, lz;
+    if (t < 0.38) {
+      // Act 1: High aerial sweep over the entire Anurag University campus
+      const u = smooth(t / 0.38);
+      cx = so.lerp(56, -42, u);
+      cy = so.lerp(46, 30, u);
+      cz = so.lerp(-32, 34, u);
+      lx = so.lerp(-4, -3, u);
+      ly = so.lerp(4, 5, u);
+      lz = so.lerp(0, 10, u);
+    } else if (t < 0.72) {
+      // Act 2: Dramatic swoop down past A-Block palm plaza & courtyard
+      const u = smooth((t - 0.38) / 0.34);
+      cx = so.lerp(-42, endX + 12, u);
+      cy = so.lerp(30, 11, u);
+      cz = so.lerp(34, endZ + 14, u);
+      lx = so.lerp(-3, endX, u);
+      ly = so.lerp(5, 3.2, u);
+      lz = so.lerp(10, 14, u);
+    } else {
+      // Act 3: Seamless dive straight into First-Person Eye Height (1.66m)!
+      const u = smooth((t - 0.72) / 0.28);
+      cx = so.lerp(endX + 12, endX, u);
+      cy = so.lerp(11, endY + 1.66, u);
+      cz = so.lerp(endZ + 14, endZ, u);
+      lx = endX - Math.sin(endYaw) * 28;
+      ly = so.lerp(3.2, endY + 1.66 + Math.sin(endPitch) * 28, u);
+      lz = endZ - Math.cos(endYaw) * 28;
+    }
+    xt.position.set(cx, cy - 1.66, cz);
+    xt.rotation.set(0, 0, 0);
+    camPivot.position.set(0, 1.66, 0);
+    camPivot.rotation.set(0, 0, 0);
+    Mi.position.set(0, 0, 0);
+    Mi.lookAt(lx, ly, lz);
+    fpHands.forEach(a => (a.root.visible = false));
+  }
+
+  if (ZGAME.introTime >= ZGAME.introDur) {
+    finishStoryIntro();
+  }
+  return true;
+}
+
+function startZombieGame(playIntro = false) {
   clearZombiesAndFX();
   ZGAME.active = true;
   ZGAME.gameOver = false;
@@ -971,6 +1144,7 @@ function startZombieGame() {
   kt("time-mode").dispatchEvent(new Event("change"));
   document.body.classList.add("zombie-mode");
   spawnZombieWave(0);
+  if (playIntro) startStoryIntro();
 }
 
 function stopZombieGame() {
@@ -1361,6 +1535,7 @@ function getVRRightAimRay() {
 
 function updateZombieGame(dt, timeSec) {
   if (!ZGAME.active) return;
+  if (ZGAME.introPlaying) { updateStoryIntro(dt); return; }
   if (!En && !Ye.xr.isPresenting) return;
 
   if (ZGAME.toastTimer > 0) {
@@ -1717,7 +1892,10 @@ KEY_REPLACE = KEY_ANCHOR + """
     if (r.code === "KeyE") { if (tryPickupNearbyWeapon()) return; }
     if (r.code === "KeyQ") { triggerShieldBash(); return; }
     if (r.code === "KeyF") { ZGAME.keyShieldDown = true; return; }
-    if (r.code === "Space" && ZGAME.jumpY === 0) { ZGAME.jumpVel = 7.2; return; }
+    if (r.code === "Space") {
+      if (ZGAME.introPlaying) { finishStoryIntro(); return; }
+      if (ZGAME.jumpY === 0) { ZGAME.jumpVel = 7.2; return; }
+    }
     if (r.code === "KeyR") { if (ZGAME.gameOver || ZGAME.victory) { startZombieGame(); cd(); } else { triggerReload(); } return; }
   }"""
 html = html.replace(KEY_ANCHOR, KEY_REPLACE, 1)
@@ -1843,8 +2021,10 @@ VR_SYNC_REPLACE = """    const pressed=!!buttons?.[4]?.pressed;
         }
         // Right Grip picks up nearby campus Iron Rod or Fallen Branch
         if(gripDown && !hand.gripDown) tryPickupNearbyWeapon();
-        // A button cycles Right-Hand Weapons
-        if(hand.source===source && pressed && !hand.buttonDown) cycleWeapon(1);
+        // A button cycles Right-Hand Weapons (or skips story intro in VR)
+        if(hand.source===source && pressed && !hand.buttonDown){
+          if(ZGAME.introPlaying) finishStoryIntro(); else cycleWeapon(1);
+        }
         // B button reloads gun (or restarts if game over)
         if(hand.source===source && upper && !hand.upperDown){
           if(ZGAME.gameOver || ZGAME.victory) startZombieGame(); else triggerReload();
@@ -1970,10 +2150,35 @@ STATUS_REPLACE = """  if (t && bo.value === "zombie") {
   } else if (t && bo.value !== "survival") {"""
 html = html.replace(STATUS_ANCHOR, STATUS_REPLACE, 1)
 
-# 7k. Keep dynamic shadow updates reasonable in VR (don't freeze shadow map completely)
+# 7k. Keep dynamic shadow updates reasonable in VR + trigger cinematic aerial-to-FP story intro!
 html = html.replace(
     "Ye.shadowMap.autoUpdate=false;Ye.shadowMap.needsUpdate=true;",
-    "Ye.shadowMap.autoUpdate=true;syncWeaponVisuals();",
+    "Ye.shadowMap.autoUpdate=true;syncWeaponVisuals();if(ZGAME.active && !ZGAME.introDoneOnce && !ZGAME.introPlaying)startStoryIntro();",
+    1
+)
+html = html.replace(
+    'kt("walk").onclick = cd;',
+    'kt("walk").onclick = () => { cd(); if (ZGAME.active && !ZGAME.introDoneOnce && !ZGAME.introPlaying) startStoryIntro(); };',
+    1
+)
+html = html.replace(
+    '  if (!l && moveMag > 0) {',
+    '  if (!l && moveMag > 0 && !ZGAME.introPlaying) {',
+    1
+)
+html = html.replace(
+    '  xt.position.y=followGround?newGround:Math.max(xt.position.y,newGround);',
+    '  if(!ZGAME.introPlaying) xt.position.y=followGround?newGround:Math.max(xt.position.y,newGround);',
+    1
+)
+html = html.replace(
+    '  if (povMode === "1st" && !Ye.xr.isPresenting) {',
+    '  if (povMode === "1st" && !Ye.xr.isPresenting && !ZGAME.introPlaying) {',
+    1
+)
+html = html.replace(
+    '    let showFP = povMode === "1st" && !Ye.xr.isPresenting;',
+    '    let showFP = povMode === "1st" && !Ye.xr.isPresenting && !ZGAME.introPlaying;',
     1
 )
 
