@@ -7201,8 +7201,8 @@ function controllerHand(side){
   const sign=side==="left"?-1:1;
   const arm=createRealisticArmAndHand(sign), anchor=new fi();
   // The grip origin lies inside the palm. Place the wrist just behind it.
-  arm.root.position.set(0,.012,.046);
-  arm.root.rotation.z=sign*.72;
+  arm.root.position.set(0,.008,.052);
+  arm.root.rotation.set(0.56, 0, sign*.22);
   arm.root.traverse(obj=>{obj.castShadow=false;});
   anchor.add(arm.root);xt.add(anchor);
   if(side==="left")addWristDisplay(arm);
@@ -7239,18 +7239,12 @@ function syncControllerHands(frame,space,sources){
     if(ZGAME.active){
       const curPos=hand.anchor.position;
       if(side==="right"){
-        // Right Controller Trigger opens the Transparent Hi-Tech Shield (and fires guns / swings)
+        // Right Controller Trigger opens the Transparent Hi-Tech Shield (and fires guns)
         ZGAME.vrShieldTrigger = trigDown || !!(trackedHands.get("left")?.trigDown);
-        // Track physical swing speed for Lightsaber / Iron Rod / Fallen Branch
-        const speed=curPos.distanceTo(ZGAME.vrPrevRightPos)*60;
-        ZGAME.vrPrevRightPos.copy(curPos);
         const w=WEAPON_DEFS[ZGAME.weaponIdx];
         if(w.type==="melee"){
-          if((speed>3.4 || (trigDown && !hand.trigDown)) && ZGAME.vrSwingCd<=0 && ZGAME.fireCd<=0){
-            const {origin,forward}=getVRRightAimRay();
-            performMeleeAttack(origin,forward);
-            ZGAME.vrSwingCd=0.28;
-          }
+          // Real physical 3D blade-contact damage on hand movement (NO trigger needed!)
+          checkVRPhysicalMeleeHit(hand, 0.016);
         } else {
           if(trigDown && (w.auto || !hand.trigDown) && ZGAME.fireCd<=0){
             const {origin,forward}=getVRRightAimRay();
@@ -7530,6 +7524,7 @@ const ZGAME = {
   waveDelay: 0,
   bossSummonedMinions: false,
   vrPrevRightPos: new A(),
+  vrPrevTipPos: new A(),
   vrPrevLeftPos: new A(),
   vrRightVel: 0,
   vrLeftVel: 0,
@@ -7859,7 +7854,7 @@ function createFacultyZombie(lvlDef, x, z) {
     root, torso, headGroup, idCardPivot, arms, legs, hpBarBg, hpBarFill,
     lvlDef, hp: lvlDef.hp, maxHp: lvlDef.hp,
     speed: lvlDef.speed * (0.9 + Math.random() * 0.2),
-    alive: true, deathTimer: 0, attackCd: 0, hitFlash: 0,
+    alive: true, deathTimer: 0, attackCd: 0, hitFlash: 0, meleeHitCd: 0,
     phase: Math.random() * Math.PI * 2,
     knockVel: new A(),
     boltCd: 3.2, slamCd: 5.5,
@@ -8056,6 +8051,56 @@ function damageZombie(z, dmg, hitPos, knockDir, knockAmt = 1.8, isHeadshot = fal
     }
   }
   updateCombatHUD();
+}
+
+// Real 3D Physical Blade/Rod Segment Collision for Meta Quest 3 VR Hand Swings (No trigger needed!)
+function checkVRPhysicalMeleeHit(hand, dt) {
+  const w = WEAPON_DEFS[ZGAME.weaponIdx];
+  if (!w || w.type !== "melee" || !hand || !hand.anchor.visible) return;
+
+  // Compute real world-space hilt & blade-tip positions along the weapon's actual 3D orientation
+  const mount = hand.arm.weaponMount;
+  if (!mount) return;
+  mount.updateWorldMatrix(true, false);
+  const hiltWorld = new A(0, 0.05, 0).applyMatrix4(mount.matrixWorld);
+  const tipLocal = new A(0, 1.15, -0.35); // Matches lightsaber / iron rod / fallen branch blade axis
+  const tipWorld = tipLocal.applyMatrix4(mount.matrixWorld);
+
+  const safeDt = Math.max(0.008, dt || 0.016);
+  const tipSpeed = tipWorld.distanceTo(ZGAME.vrPrevTipPos) / safeDt;
+  ZGAME.vrPrevTipPos.copy(tipWorld);
+
+  // Trigger hit on any natural hand movement (tipSpeed > 0.75 m/s) when blade touches a zombie!
+  if (tipSpeed < 0.75) return;
+
+  const seg = new A().subVectors(tipWorld, hiltWorld);
+  const segLenSq = Math.max(0.001, seg.lengthSq());
+  let hitAny = false;
+
+  for (const z of ZGAME.zombies) {
+    if (!z.alive || z.meleeHitCd > 0) continue;
+    const sc = z.lvlDef.scale;
+    // Check closest point on blade segment to zombie torso & head
+    const zBody = new A(z.root.position.x, z.root.position.y + 1.15 * sc, z.root.position.z);
+    const t = so.clamp(new A().subVectors(zBody, hiltWorld).dot(seg) / segLenSq, 0, 1);
+    const closest = hiltWorld.clone().addScaledVector(seg, t);
+    const dXZ = Math.hypot(closest.x - zBody.x, closest.z - zBody.z);
+    const dY = Math.abs(closest.y - zBody.y);
+
+    if (dXZ < 0.58 * sc && dY < 0.92 * sc) {
+      z.meleeHitCd = 0.28;
+      const isHead = closest.y > z.root.position.y + 1.42 * sc;
+      const speedBonus = so.clamp(tipSpeed / 3.0, 0.85, 1.65);
+      const knockDir = new A(zBody.x - hiltWorld.x, 0, zBody.z - hiltWorld.z).normalize();
+      damageZombie(z, w.dmg * speedBonus * (isHead ? 1.6 : 1.0), closest, knockDir, w.knockback, isHead);
+      spawnBurst(closest, w.key === "saber" ? 0x22d3ee : 0xfde047, 10, 4.8);
+      hitAny = true;
+    }
+  }
+  if (hitAny) {
+    playSFX(w.key === "saber" ? "saber" : w.key === "iron_rod" ? "rod" : "branch");
+    pulseHaptics("right", 0.95, 110);
+  }
 }
 
 function performMeleeAttack(origin, forward) {
@@ -8262,10 +8307,12 @@ function getPCAimRay() {
 function getVRRightAimRay() {
   const hand = trackedHands.get("right");
   if (!hand || !hand.anchor.visible) return getPCAimRay();
+  const src = hand.arm.weaponMount || hand.anchor;
+  src.updateWorldMatrix(true, false);
   const origin = new A();
-  hand.anchor.getWorldPosition(origin);
+  src.getWorldPosition(origin);
   const q = new Ot();
-  hand.anchor.getWorldQuaternion(q);
+  src.getWorldQuaternion(q);
   const forward = new A(0, 0, -1).applyQuaternion(q).normalize();
   return { origin, forward };
 }
@@ -8411,7 +8458,8 @@ function updateZombieGame(dt, timeSec) {
     }
     aliveCount++;
 
-    // Hit flash recovery
+    // Hit flash & per-zombie melee swing cooldown recovery
+    if (z.meleeHitCd > 0) z.meleeHitCd = Math.max(0, z.meleeHitCd - dt);
     if (z.hitFlash > 0) {
       z.hitFlash -= dt;
       z.skinMat.color.setHex(z.hitFlash > 0 ? 0xff4d4d : z.baseSkinHex);
