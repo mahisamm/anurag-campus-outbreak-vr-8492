@@ -10,7 +10,6 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC_HTML = os.path.join(ROOT, "Play-PC.html")
 BACKUP_HTML = os.path.join(ROOT, "Play-PC-Explorer-Backup.html")
 ASSETS_JSON = os.path.join(ROOT, "zombie_assets.json")
-WALK_HUMAN_JSON = os.path.join(ROOT, "walking_human_asset.json")
 
 # Make sure we always patch from the clean original Explorer backup if it exists
 if not os.path.exists(BACKUP_HTML):
@@ -22,10 +21,6 @@ with open(BACKUP_HTML, "r", encoding="utf-8") as f:
 
 with open(ASSETS_JSON, "r", encoding="utf-8") as f:
     zombie_assets = json.load(f)
-walk_human_data = None
-if os.path.exists(WALK_HUMAN_JSON):
-    with open(WALK_HUMAN_JSON, "r", encoding="utf-8") as f:
-        walk_human_data = json.load(f)
 
 # ---------------------------------------------------------------------------
 # 1. CSS additions for FPS Combat HUD, Weapon Hotbar, Boss Bar, Damage/Block Flash
@@ -265,7 +260,6 @@ html = html.replace('<div id="crosshair"></div>', '<div id="crosshair"></div>' +
 ZOMBIE_ASSETS_JS = (
     "\nvar ZOMBIE_BLENDER_ASSETS = " + json.dumps(zombie_assets, separators=(",", ":")) + ";\n"
     "for (let zk in ZOMBIE_BLENDER_ASSETS) { blenderGeos[zk] = buildBlenderGeo(ZOMBIE_BLENDER_ASSETS[zk]); }\n"
-    "var WALK_HUMAN_ASSET = " + (json.dumps(walk_human_data, separators=(",", ":")) if walk_human_data else "null") + ";\n"
 )
 
 anchor_meshes = 'if (typeof BLENDER_BAKED_MESHES !== "undefined") {\n  for (let k in BLENDER_BAKED_MESHES) {\n    blenderGeos[k] = buildBlenderGeo(BLENDER_BAKED_MESHES[k]);\n  }\n}'
@@ -488,12 +482,12 @@ ZOMBIE_ENGINE_JS = r"""
 // ANURAG UNIVERSITY: CAMPUS OUTBREAK — 6-LEVEL ZOMBIE GAME ENGINE (PC + QUEST 3)
 // ============================================================================
 const ZOMBIE_LEVELS = [
-  { level: 1, name: "Lab Assistants", badge: "LAB ASST", dept: "ECE / CSE LABS", count: 6, hp: 80, speed: 2.35, dmg: 9, scale: 1.04, skin: 0x6c9c50, coat: 0xaad49c, pants: 0x1e293b, tie: 0x1e3a5f, glasses: false, badgeCol: "#16a34a", lanyard: 0x16a34a, isBoss: false },
-  { level: 2, name: "Jr. Professors", badge: "JR. PROF", dept: "ASST. FACULTY", count: 8, hp: 120, speed: 2.75, dmg: 12, scale: 1.07, skin: 0x5c8a44, coat: 0x8fb8d6, pants: 0x1f242c, tie: 0x8c2323, glasses: false, badgeCol: "#2563eb", lanyard: 0x2563eb, isBoss: false },
-  { level: 3, name: "Professors", badge: "PROFESSOR", dept: "SENIOR FACULTY", count: 9, hp: 175, speed: 2.95, dmg: 15, scale: 1.10, skin: 0x4b703a, coat: 0x7c8aa6, pants: 0x181d26, tie: 0x5c2424, glasses: true, badgeCol: "#9333ea", lanyard: 0x9333ea, isBoss: false },
-  { level: 4, name: "Academic / Placement Incharges", badge: "PLACEMENT", dept: "TRAINING & PLACEMENT", count: 10, hp: 240, speed: 3.35, dmg: 18, scale: 1.13, skin: 0x466d4a, coat: 0x6b7c93, pants: 0x111827, tie: 0xd97706, glasses: false, badgeCol: "#d97706", lanyard: 0xd97706, isBoss: false },
-  { level: 5, name: "HODs (Head of Department)", badge: "H.O.D", dept: "DEPT. HEAD", count: 7, hp: 350, speed: 3.15, dmg: 23, scale: 1.22, skin: 0x3a5c3d, coat: 0x566478, pants: 0x0f131a, tie: 0xb91c1c, glasses: true, badgeCol: "#dc2626", lanyard: 0xdc2626, isBoss: false },
-  { level: 6, name: "THE CEO · FINAL BOSS", badge: "CEO · BOSS", dept: "EXECUTIVE OFFICE", count: 1, hp: 1600, speed: 3.45, dmg: 30, scale: 1.48, skin: 0x2f5236, coat: 0x4b5563, pants: 0x090c10, tie: 0xf59e0b, glasses: false, badgeCol: "#eab308", lanyard: 0xeab308, isBoss: true }
+  { level: 1, name: "Lab Assistants", badge: "LAB ASST", dept: "ECE / CSE LABS", count: 6, hp: 80, speed: 2.35, dmg: 9, scale: 1.02, skin: 0x6ba854, coat: 0x9ec5e8, pants: 0x1e293b, tie: 0x1d4ed8, hair: 0x1a1a1d, glasses: false, badgeCol: "#16a34a", lanyard: 0x16a34a, isBoss: false },
+  { level: 2, name: "Jr. Professors", badge: "JR. PROF", dept: "ASST. FACULTY", count: 8, hp: 120, speed: 2.75, dmg: 12, scale: 1.05, skin: 0x5c9a49, coat: 0xe6eef6, pants: 0x262c36, tie: 0x991b1b, hair: 0x221e1c, glasses: false, badgeCol: "#2563eb", lanyard: 0x2563eb, isBoss: false },
+  { level: 3, name: "Professors", badge: "PROFESSOR", dept: "SENIOR FACULTY", count: 9, hp: 175, speed: 2.95, dmg: 15, scale: 1.08, skin: 0x528c42, coat: 0x2b3e56, pants: 0x181d26, tie: 0x7f1d1d, hair: 0x5b6472, glasses: true, badgeCol: "#9333ea", lanyard: 0x9333ea, isBoss: false },
+  { level: 4, name: "Academic / Placement Incharges", badge: "PLACEMENT", dept: "TRAINING & PLACEMENT", count: 10, hp: 240, speed: 3.35, dmg: 18, scale: 1.11, skin: 0x4b8248, coat: 0x1f2937, pants: 0x111827, tie: 0xd97706, hair: 0x1f1f24, glasses: false, badgeCol: "#d97706", lanyard: 0xd97706, isBoss: false },
+  { level: 5, name: "HODs (Head of Department)", badge: "H.O.D", dept: "DEPT. HEAD", count: 7, hp: 350, speed: 3.15, dmg: 23, scale: 1.18, skin: 0x427542, coat: 0x172030, pants: 0x0f131a, tie: 0xdc2626, hair: 0x6b7280, glasses: true, badgeCol: "#dc2626", lanyard: 0xdc2626, isBoss: false },
+  { level: 6, name: "THE CEO · FINAL BOSS", badge: "CEO · BOSS", dept: "EXECUTIVE OFFICE", count: 1, hp: 1600, speed: 3.45, dmg: 30, scale: 1.44, skin: 0x386b3c, coat: 0x0f141c, pants: 0x090c10, tie: 0xf59e0b, hair: 0x111318, glasses: false, badgeCol: "#eab308", lanyard: 0xeab308, isBoss: true }
 ];
 
 const WEAPON_DEFS = [
@@ -505,8 +499,8 @@ const WEAPON_DEFS = [
   { id: 5, key: "fallen_branch", name: "FALLEN TREE BRANCH", type: "melee", dmg: 32, range: 2.6, cooldown: 0.48, knockback: 4.2, mag: Infinity, muzzleZ: -0.5 }
 ];
 
-// Procedural WebAudio Combat SFX
-let audioCtx = null;
+// Rich Layered WebAudio Synthesizer (Zombie Groans, Boss Roar, Lightsaber Hum/Whoosh/Clash, Punchy Gunshots, Reload, Shield)
+let audioCtx = null, saberHumNode = null, saberHumGain = null;
 function ensureAudio() {
   if (!audioCtx) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -515,62 +509,120 @@ function ensureAudio() {
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
   return audioCtx;
 }
+function updateSaberHum(active) {
+  const ctx = audioCtx;
+  if (!ctx || ctx.state !== "running") return;
+  if (active && !saberHumNode) {
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    o1.type = "sawtooth"; o1.frequency.value = 88;
+    o2.type = "triangle"; o2.frequency.value = 132.5;
+    f.type = "lowpass"; f.frequency.value = 260;
+    g.gain.value = 0.032;
+    o1.connect(f); o2.connect(f); f.connect(g); g.connect(ctx.destination);
+    o1.start(); o2.start();
+    saberHumNode = [o1, o2]; saberHumGain = g;
+  } else if (saberHumGain) {
+    saberHumGain.gain.setTargetAtTime(active ? 0.032 : 0.0001, ctx.currentTime, 0.06);
+  }
+}
 function playSFX(kind) {
   const ctx = ensureAudio();
   if (!ctx) return;
   const now = ctx.currentTime;
   const gain = ctx.createGain();
   gain.connect(ctx.destination);
-  if (kind === "saber") {
-    const osc = ctx.createOscillator();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(420, now + 0.09);
-    osc.frequency.exponentialRampToValueAtTime(110, now + 0.24);
-    gain.gain.setValueAtTime(0.14, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-    osc.connect(gain); osc.start(now); osc.stop(now + 0.26);
+
+  if (kind === "saber" || kind === "saber_clash") {
+    // Rich Lightsaber Plasma Whoosh + Sizzle Clash
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), filt = ctx.createBiquadFilter();
+    o1.type = "sawtooth"; o2.type = "square";
+    o1.frequency.setValueAtTime(kind === "saber_clash" ? 310 : 145, now);
+    o1.frequency.exponentialRampToValueAtTime(kind === "saber_clash" ? 95 : 420, now + 0.08);
+    o1.frequency.exponentialRampToValueAtTime(92, now + 0.28);
+    o2.frequency.setValueAtTime(220, now);
+    o2.frequency.exponentialRampToValueAtTime(110, now + 0.28);
+    filt.type = "bandpass"; filt.frequency.value = kind === "saber_clash" ? 1100 : 520; filt.Q.value = 2.2;
+    gain.gain.setValueAtTime(kind === "saber_clash" ? 0.24 : 0.16, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.29);
+    o1.connect(filt); o2.connect(filt); filt.connect(gain);
+    o1.start(now); o2.start(now); o1.stop(now + 0.3); o2.stop(now + 0.3);
   } else if (kind === "pistol" || kind === "rifle" || kind === "shotgun") {
-    const dur = kind === "shotgun" ? 0.22 : kind === "pistol" ? 0.11 : 0.08;
+    // Layered Realistic Gunshot: High-crack Noise Burst + Sub-bass Punch + Shotgun Pump
+    const dur = kind === "shotgun" ? 0.28 : kind === "pistol" ? 0.14 : 0.095;
     const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (d.length * 0.25));
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (d.length * 0.22));
     const src = ctx.createBufferSource(); src.buffer = buf;
     const filt = ctx.createBiquadFilter(); filt.type = "lowpass";
-    filt.frequency.value = kind === "shotgun" ? 950 : kind === "pistol" ? 2100 : 1700;
-    gain.gain.setValueAtTime(kind === "shotgun" ? 0.34 : 0.22, now);
+    filt.frequency.setValueAtTime(kind === "shotgun" ? 1350 : kind === "pistol" ? 2800 : 2200, now);
+    filt.frequency.exponentialRampToValueAtTime(260, now + dur);
+    gain.gain.setValueAtTime(kind === "shotgun" ? 0.44 : kind === "pistol" ? 0.28 : 0.24, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
     src.connect(filt); filt.connect(gain); src.start(now);
+    // Low punch oscillator
+    const punch = ctx.createOscillator(), pg = ctx.createGain();
+    punch.type = "sine";
+    punch.frequency.setValueAtTime(kind === "shotgun" ? 135 : 185, now);
+    punch.frequency.exponentialRampToValueAtTime(36, now + 0.11);
+    pg.gain.setValueAtTime(kind === "shotgun" ? 0.42 : 0.24, now);
+    pg.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    punch.connect(pg); pg.connect(ctx.destination); punch.start(now); punch.stop(now + 0.13);
+  } else if (kind === "reload") {
+    [0, 0.16, 0.34].forEach((tOff, idx) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "square"; o.frequency.value = [520, 340, 780][idx];
+      g.gain.setValueAtTime(0.10, now + tOff); g.gain.exponentialRampToValueAtTime(0.001, now + tOff + 0.055);
+      o.connect(g); g.connect(ctx.destination); o.start(now + tOff); o.stop(now + tOff + 0.06);
+    });
+  } else if (kind === "zgroan" || kind === "zdeath" || kind === "boss_roar") {
+    // Formant-Filtered Undead Zombie Groan / Death Snarl / Deep Boss Roar
+    const isBoss = kind === "boss_roar", isDeath = kind === "zdeath";
+    const dur = isBoss ? 0.95 : isDeath ? 0.45 : 0.58;
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), f = ctx.createBiquadFilter();
+    o1.type = "sawtooth"; o2.type = "sawtooth";
+    const base = isBoss ? 68 : (isDeath ? 125 : 92 + Math.random() * 28);
+    o1.frequency.setValueAtTime(base, now);
+    o1.frequency.linearRampToValueAtTime(base * (isDeath ? 0.52 : 0.78), now + dur);
+    o2.frequency.setValueAtTime(base * 1.04, now);
+    o2.frequency.linearRampToValueAtTime(base * 0.72, now + dur);
+    f.type = "bandpass"; f.Q.value = 3.2;
+    f.frequency.setValueAtTime(isBoss ? 360 : 540, now);
+    f.frequency.linearRampToValueAtTime(isBoss ? 190 : 260, now + dur);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(isBoss ? 0.30 : 0.15, now + 0.07);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    o1.connect(f); o2.connect(f); f.connect(gain);
+    o1.start(now); o2.start(now); o1.stop(now + dur + 0.02); o2.stop(now + dur + 0.02);
   } else if (kind === "rod" || kind === "branch") {
     const osc = ctx.createOscillator();
     osc.type = kind === "rod" ? "triangle" : "sine";
-    osc.frequency.setValueAtTime(kind === "rod" ? 520 : 190, now);
-    osc.frequency.exponentialRampToValueAtTime(kind === "rod" ? 130 : 65, now + 0.16);
-    gain.gain.setValueAtTime(0.24, now);
+    osc.frequency.setValueAtTime(kind === "rod" ? 560 : 210, now);
+    osc.frequency.exponentialRampToValueAtTime(kind === "rod" ? 140 : 65, now + 0.16);
+    gain.gain.setValueAtTime(0.26, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
     osc.connect(gain); osc.start(now); osc.stop(now + 0.19);
-  } else if (kind === "block" || kind === "bash") {
+  } else if (kind === "block" || kind === "bash" || kind === "shield_on") {
     const osc = ctx.createOscillator();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(kind === "bash" ? 280 : 680, now);
-    osc.frequency.exponentialRampToValueAtTime(kind === "bash" ? 75 : 320, now + 0.22);
-    gain.gain.setValueAtTime(0.22, now);
+    osc.frequency.setValueAtTime(kind === "bash" ? 280 : kind === "shield_on" ? 360 : 740, now);
+    osc.frequency.exponentialRampToValueAtTime(kind === "bash" ? 70 : kind === "shield_on" ? 620 : 320, now + 0.22);
+    gain.gain.setValueAtTime(kind === "shield_on" ? 0.12 : 0.24, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
     osc.connect(gain); osc.start(now); osc.stop(now + 0.25);
   } else if (kind === "hit" || kind === "headshot") {
     const osc = ctx.createOscillator();
     osc.type = "square";
-    osc.frequency.setValueAtTime(kind === "headshot" ? 920 : 280, now);
-    osc.frequency.exponentialRampToValueAtTime(kind === "headshot" ? 1320 : 120, now + 0.09);
-    gain.gain.setValueAtTime(0.14, now);
+    osc.frequency.setValueAtTime(kind === "headshot" ? 960 : 290, now);
+    osc.frequency.exponentialRampToValueAtTime(kind === "headshot" ? 1380 : 120, now + 0.09);
+    gain.gain.setValueAtTime(0.16, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     osc.connect(gain); osc.start(now); osc.stop(now + 0.11);
   } else if (kind === "hurt") {
     const osc = ctx.createOscillator();
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(140, now);
-    osc.frequency.linearRampToValueAtTime(60, now + 0.22);
-    gain.gain.setValueAtTime(0.22, now);
+    osc.frequency.linearRampToValueAtTime(55, now + 0.22);
+    gain.gain.setValueAtTime(0.24, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
     osc.connect(gain); osc.start(now); osc.stop(now + 0.25);
   } else if (kind === "levelup" || kind === "pickup") {
@@ -579,7 +631,7 @@ function playSFX(kind) {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = "triangle"; o.frequency.value = frq;
-      g.gain.setValueAtTime(0.12, now + idx * 0.08);
+      g.gain.setValueAtTime(0.13, now + idx * 0.08);
       g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.22);
       o.connect(g); g.connect(ctx.destination);
       o.start(now + idx * 0.08); o.stop(now + idx * 0.08 + 0.24);
@@ -820,61 +872,7 @@ function populateCampusPickups() {
   }
 }
 
-// Load Shared Real Human Diffuse Texture once from embedded base64 JPEG
-var walkHumanTex = null;
-var walkHumanSharedNorm = null, walkHumanSharedUv = null;
-if (typeof WALK_HUMAN_ASSET !== "undefined" && WALK_HUMAN_ASSET) {
-  walkHumanSharedNorm = new ye(WALK_HUMAN_ASSET.n, 3);
-  walkHumanSharedUv = new ye(WALK_HUMAN_ASSET.uv, 2);
-  if (WALK_HUMAN_ASSET.tex) {
-    const img = new Image();
-    img.src = WALK_HUMAN_ASSET.tex;
-    const c = document.createElement("canvas"); c.width = 512; c.height = 512;
-    const g = c.getContext("2d");
-    g.fillStyle = "#6c8a62"; g.fillRect(0, 0, 512, 512);
-    walkHumanTex = new dn(c);
-    walkHumanTex.colorSpace = vt;
-    walkHumanTex.flipY = false;
-    img.onload = () => {
-      g.drawImage(img, 0, 0, 512, 512);
-      // Subtle necrotic undead green glaze so the real human looks infected
-      g.fillStyle = "rgba(65, 130, 55, 0.24)";
-      g.fillRect(0, 0, 512, 512);
-      walkHumanTex.needsUpdate = true;
-    };
-  }
-}
-
-function createAnimatedWalkingHumanGeo() {
-  if (!WALK_HUMAN_ASSET) return null;
-  const geo = new Ze();
-  const posArr = new Float32Array(WALK_HUMAN_ASSET.frames[0]);
-  geo.setAttribute("position", new ye(posArr, 3));
-  geo.setAttribute("normal", walkHumanSharedNorm);
-  geo.setAttribute("uv", walkHumanSharedUv);
-  geo.setIndex(WALK_HUMAN_ASSET.i);
-  geo.computeBoundingSphere();
-  return geo;
-}
-
-function updateWalkingHumanMorph(z) {
-  if (!z.walkGeo || !WALK_HUMAN_ASSET) return;
-  const frames = WALK_HUMAN_ASSET.frames;
-  const nFrames = frames.length;
-  const fPos = ((z.phase * 0.95) % nFrames + nFrames) % nFrames;
-  const i0 = Math.floor(fPos);
-  const i1 = (i0 + 1) % nFrames;
-  const t = fPos - i0;
-  const a = frames[i0], b = frames[i1];
-  const attr = z.walkGeo.attributes.position;
-  const arr = attr.array;
-  for (let i = 0, len = arr.length; i < len; i++) {
-    arr[i] = a[i] + (b[i] - a[i]) * t;
-  }
-  attr.needsUpdate = true;
-}
-
-// Build a Real Textured 3D Human Zombie with Genuine 8-Frame Mixamo Walking Animation + Swinging Faculty ID Card!
+// Clean Stylized Cartoon Human Faculty Zombie Builder (Formal Shirt/Suit + Tie + Trousers + Articulated Knees/Elbows + Faculty ID Card!)
 function createFacultyZombie(lvlDef, x, z) {
   const root = new fi();
   const s = lvlDef.scale;
@@ -882,53 +880,222 @@ function createFacultyZombie(lvlDef, x, z) {
   root.position.set(x, gy, z);
   root.scale.set(s, s, s);
 
-  const zBodyMat = new Jt({
-    map: walkHumanTex || null,
-    color: lvlDef.coat,
-    emissive: lvlDef.skin,
-    emissiveIntensity: 0.14,
-    roughness: 0.65,
-    metalness: 0.08
-  });
+  const zSkin = new Jt({ color: lvlDef.skin, roughness: 0.62, metalness: 0.04 });
+  const zCoat = new Jt({ color: lvlDef.coat, roughness: 0.72, metalness: 0.06 });
+  const zShirtWhite = new Jt({ color: 0xf1f5f9, roughness: 0.68 });
+  const zPants = new Jt({ color: lvlDef.pants, roughness: 0.80 });
+  const zShoe = new Jt({ color: 0x111418, roughness: 0.45, metalness: 0.15 });
+  const zBelt = new Jt({ color: 0x1a1512, roughness: 0.5 });
+  const zHair = new Jt({ color: lvlDef.hair || 0x1c1917, roughness: 0.85 });
+  const zTie = new Jt({ color: lvlDef.tie || 0x991b1b, roughness: 0.52 });
+  const eyeColor = lvlDef.isBoss ? 0xff2222 : (lvlDef.level >= 4 ? 0xffaa00 : 0xd9ff33);
+  const zEye = new Yi({ color: eyeColor });
 
-  // Real animated walking human geometry (smooth 8-frame Mixamo skeletal walk cycle!)
-  const bodyPivot = new fi();
-  const walkGeo = createAnimatedWalkingHumanGeo();
-  const bodyMesh = walkGeo
-    ? new et(walkGeo, zBodyMat)
-    : new et(new sa(0.24, 1.32, 6, 12), zBodyMat);
-  bodyMesh.castShadow = true;
-  bodyPivot.add(bodyMesh);
+  // 1. Articulated Cartoon Human Legs (Hip + Knee + Formal Trousers + Dress Shoes!)
+  const legs = [];
+  for (const side of [-1, 1]) {
+    const hip = new fi();
+    hip.position.set(side * 0.115, 0.86, 0);
+    const thigh = new et(new sa(0.078, 0.30, 6, 12), zPants);
+    thigh.position.y = -0.21;
+    thigh.castShadow = true;
+    hip.add(thigh);
 
-  // CEO Boss Golden Crown Ring
-  if (lvlDef.isBoss) {
-    const crown = new et(new gn(0.16, 0.016, 8, 22), new Yi({ color: 0xf59e0b }));
-    crown.rotation.x = Math.PI / 2;
-    crown.position.set(0, 1.88, 0);
-    bodyPivot.add(crown);
+    const knee = new fi();
+    knee.position.set(0, -0.42, 0);
+    const shin = new et(new sa(0.065, 0.30, 6, 12), zPants);
+    shin.position.y = -0.20;
+    shin.castShadow = true;
+    knee.add(shin);
+
+    // Formal Black Dress Shoe
+    const shoe = new et(new sa(0.056, 0.12, 6, 10), zShoe);
+    shoe.rotation.x = Math.PI / 2;
+    shoe.scale.set(1.05, 1.0, 0.78);
+    shoe.position.set(0, -0.40, 0.045);
+    knee.add(shoe);
+
+    hip.add(knee);
+    root.add(hip);
+    legs.push({ hip, knee });
   }
 
-  // FACULTY ID CARD + COLORED LANYARD (Cleanly hanging on chest)
+  // 2. Stylized Cartoon Masculine Formal Torso (Shirt/Blazer + Belt + Collar + Tie + Faculty ID Card!)
+  const torso = new fi();
+  torso.position.set(0, 0.86, 0);
+
+  // Pelvis / Waist + Leather Belt + Gold Buckle
+  const waist = new et(new pn(0.16, 0.155, 0.16, 16), zPants);
+  waist.scale.set(1.22, 1, 0.82);
+  waist.position.set(0, 0.04, 0);
+  torso.add(waist);
+
+  const belt = new et(new pn(0.168, 0.168, 0.048, 16), zBelt);
+  belt.scale.set(1.22, 1, 0.84);
+  belt.position.set(0, 0.10, 0);
+  torso.add(belt);
+  const buckle = new et(new Ni(0.055, 0.042, 0.025), new Jt({ color: 0xfbbf24, roughness: 0.25, metalness: 0.85 }));
+  buckle.position.set(0, 0.10, 0.142);
+  torso.add(buckle);
+
+  // Broad Formal Chest (tapered masculine V-shape)
+  const chest = new et(new pn(0.215, 0.165, 0.48, 16), zCoat);
+  chest.scale.set(1.18, 1, 0.72);
+  chest.position.set(0, 0.35, 0);
+  chest.castShadow = true;
+  torso.add(chest);
+
+  // Crisp White Dress Shirt V-Front & Collar
+  const vShirt = new et(new Ni(0.13, 0.24, 0.03), zShirtWhite);
+  vShirt.position.set(0, 0.46, 0.145);
+  torso.add(vShirt);
+  const collar = new et(new pn(0.088, 0.102, 0.055, 16), zShirtWhite);
+  collar.position.set(0, 0.60, 0);
+  torso.add(collar);
+
+  // Formal Necktie (knot + hanging blade)
+  const tieKnot = new et(new Ni(0.048, 0.045, 0.028), zTie);
+  tieKnot.position.set(0, 0.54, 0.162);
+  torso.add(tieKnot);
+  const tieBlade = new et(new Ni(0.044, 0.30, 0.020), zTie);
+  tieBlade.position.set(0, 0.38, 0.160);
+  torso.add(tieBlade);
+
+  // FACULTY ID CARD + COLORED LANYARD (Swinging cleanly on chest!)
   const lanyardMat = new Jt({ color: lvlDef.lanyard, roughness: 0.55 });
   const strapL = new et(new Ni(0.014, 0.22, 0.012), lanyardMat);
-  strapL.position.set(-0.048, 1.38, 0.145); strapL.rotation.z = -0.24;
-  bodyPivot.add(strapL);
+  strapL.position.set(-0.052, 0.49, 0.158); strapL.rotation.z = -0.25;
+  torso.add(strapL);
   const strapR = new et(new Ni(0.014, 0.22, 0.012), lanyardMat);
-  strapR.position.set(0.048, 1.38, 0.145); strapR.rotation.z = 0.24;
-  bodyPivot.add(strapR);
+  strapR.position.set(0.052, 0.49, 0.158); strapR.rotation.z = 0.25;
+  torso.add(strapR);
 
   const idCardPivot = new fi();
-  idCardPivot.position.set(0, 1.27, 0.165);
-  const idCard = new et(new Ni(0.125, 0.175, 0.010), new Yi({ map: getFacultyIdCardTexture(lvlDef) }));
-  idCard.position.set(0, -0.088, 0);
+  idCardPivot.position.set(0, 0.38, 0.176);
+  const idCard = new et(new Ni(0.12, 0.165, 0.010), new Yi({ map: getFacultyIdCardTexture(lvlDef) }));
+  idCard.position.set(0, -0.084, 0);
   idCardPivot.add(idCard);
-  bodyPivot.add(idCardPivot);
+  torso.add(idCardPivot);
 
-  root.add(bodyPivot);
+  root.add(torso);
 
-  // Diegetic Floating HP Bar above Zombie
+  // 3. Expressive Cartoon Human Zombie Head (Neck + Head + Ears + Hair + Angry Brows + Glowing Eyes + Teeth!)
+  const headGroup = new fi();
+  headGroup.position.set(0, 1.48, 0);
+
+  const neck = new et(new pn(0.062, 0.072, 0.10, 12), zSkin);
+  neck.position.set(0, 0.03, 0);
+  headGroup.add(neck);
+
+  const cranium = new et(new fn(0.145, 18, 14), zSkin);
+  cranium.scale.set(0.92, 1.08, 0.96);
+  cranium.position.set(0, 0.18, 0);
+  cranium.castShadow = true;
+  headGroup.add(cranium);
+
+  // Nose & Ears
+  const nose = new et(new fn(0.024, 8, 8), zSkin);
+  nose.scale.set(0.85, 1.25, 1.15);
+  nose.position.set(0, 0.165, 0.14);
+  headGroup.add(nose);
+  for (const side of [-1, 1]) {
+    const ear = new et(new fn(0.028, 8, 8), zSkin);
+    ear.scale.set(0.55, 1.15, 0.85);
+    ear.position.set(side * 0.132, 0.175, 0);
+    headGroup.add(ear);
+  }
+
+  // Expressive Cartoon Undead Eyes (dark rings + glowing pupils + angry eyebrows!)
+  const bagMat = new Jt({ color: 0x1e301c, roughness: 0.9 });
+  for (const side of [-1, 1]) {
+    const bag = new et(new fn(0.032, 10, 8), bagMat);
+    bag.scale.set(1.15, 0.9, 0.45);
+    bag.position.set(side * 0.048, 0.195, 0.122);
+    headGroup.add(bag);
+    const eye = new et(new fn(0.017, 10, 8), zEye);
+    eye.position.set(side * 0.048, 0.195, 0.134);
+    headGroup.add(eye);
+    const brow = new et(new Ni(0.056, 0.015, 0.018), zHair);
+    brow.position.set(side * 0.048, 0.232, 0.134);
+    brow.rotation.z = -side * 0.24;
+    headGroup.add(brow);
+  }
+
+  // Snarling Zombie Mouth + White Cartoon Teeth
+  const mouth = new et(new Ni(0.078, 0.032, 0.022), new Yi({ color: 0x2b0a0a }));
+  mouth.position.set(0, 0.108, 0.128);
+  headGroup.add(mouth);
+  const teeth = new et(new Ni(0.068, 0.011, 0.024), new Yi({ color: 0xeef2d8 }));
+  teeth.position.set(0, 0.118, 0.130);
+  headGroup.add(teeth);
+
+  // Clean Styled Male Faculty Hair
+  const hairTop = new et(new fn(0.148, 16, 12), zHair);
+  hairTop.scale.set(0.96, 0.58, 1.02);
+  hairTop.position.set(0, 0.275, -0.012);
+  headGroup.add(hairTop);
+  const hairBack = new et(new fn(0.138, 14, 10), zHair);
+  hairBack.scale.set(0.94, 0.78, 0.65);
+  hairBack.position.set(0, 0.21, -0.068);
+  headGroup.add(hairBack);
+
+  // Faculty Glasses (Professors & HODs)
+  if (lvlDef.glasses) {
+    const glMat = new Jt({ color: 0x0f172a, roughness: 0.25, metalness: 0.75 });
+    for (const side of [-1, 1]) {
+      const rim = new et(new gn(0.032, 0.0048, 6, 16), glMat);
+      rim.position.set(side * 0.048, 0.195, 0.146);
+      headGroup.add(rim);
+    }
+    const bridge = new et(new Ni(0.032, 0.006, 0.006), glMat);
+    bridge.position.set(0, 0.198, 0.146);
+    headGroup.add(bridge);
+  }
+
+  // CEO Boss Golden Crown
+  if (lvlDef.isBoss) {
+    const crown = new et(new gn(0.155, 0.016, 8, 22), new Yi({ color: 0xf59e0b }));
+    crown.rotation.x = Math.PI / 2;
+    crown.position.set(0, 0.36, 0);
+    headGroup.add(crown);
+  }
+  root.add(headGroup);
+
+  // 4. Articulated Reaching Cartoon Arms (Shoulder + Formal Sleeve + Elbow + Cuff + Green Zombie Hand!)
+  const arms = [];
+  for (const side of [-1, 1]) {
+    const sh = new fi();
+    sh.position.set(side * 0.275, 1.38, 0);
+    const upper = new et(new sa(0.060, 0.24, 6, 10), zCoat);
+    upper.position.set(0, -0.15, 0);
+    upper.castShadow = true;
+    sh.add(upper);
+
+    const elbow = new fi();
+    elbow.position.set(0, -0.30, 0);
+    const fore = new et(new sa(0.052, 0.22, 6, 10), zCoat);
+    fore.position.set(0, -0.13, 0);
+    elbow.add(fore);
+
+    const cuff = new et(new pn(0.048, 0.048, 0.032, 12), zShirtWhite);
+    cuff.position.set(0, -0.25, 0);
+    elbow.add(cuff);
+
+    const hand = new et(new fn(0.054, 10, 8), zSkin);
+    hand.scale.set(0.85, 1.15, 0.72);
+    hand.position.set(0, -0.31, 0);
+    elbow.add(hand);
+
+    elbow.rotation.x = -0.38; // Natural bent zombie grabbing elbows
+    sh.rotation.x = -1.18;    // Reaching straight forward toward player!
+    sh.add(elbow);
+    root.add(sh);
+    arms.push({ sh, elbow });
+  }
+
+  // 5. Diegetic Floating HP Bar above Zombie
   const hpBarBg = new et(new _i(0.56, 0.07), new Yi({ color: 0x0f172a, side: Gt }));
-  hpBarBg.position.set(0, 2.04, 0);
+  hpBarBg.position.set(0, 2.02, 0);
   const hpBarFill = new et(new _i(0.52, 0.045), new Yi({ color: lvlDef.isBoss ? 0xf59e0b : 0xef4444, side: Gt }));
   hpBarFill.position.set(0, 0, 0.004);
   hpBarBg.add(hpBarFill);
@@ -937,14 +1104,14 @@ function createFacultyZombie(lvlDef, x, z) {
 
   Ht.add(root);
   return {
-    root, torso: bodyPivot, headGroup: bodyPivot, idCardPivot, arms: [], legs: [], hpBarBg, hpBarFill, walkGeo,
+    root, torso, headGroup, idCardPivot, arms, legs, hpBarBg, hpBarFill,
     lvlDef, hp: lvlDef.hp, maxHp: lvlDef.hp,
     speed: lvlDef.speed * (0.9 + Math.random() * 0.2),
     alive: true, deathTimer: 0, attackCd: 0, hitFlash: 0, meleeHitCd: 0,
-    phase: Math.random() * 8.0,
+    phase: Math.random() * Math.PI * 2,
     knockVel: new A(),
     boltCd: 3.2, slamCd: 5.5,
-    skinMat: zBodyMat, baseSkinHex: lvlDef.coat
+    skinMat: zSkin, baseSkinHex: lvlDef.skin
   };
 }
 
@@ -978,7 +1145,7 @@ function spawnZombieWave(levelIdx) {
     ZGAME.zombies.push(createFacultyZombie(lvl, sx, sz));
   }
   showToast(lvl.isBoss ? "FINAL BOSS: THE CEO HAS ARRIVED!" : `LEVEL ${lvl.level}: ${lvl.name.toUpperCase()}`, 3.2);
-  playSFX("levelup");
+  playSFX(lvl.isBoss ? "boss_roar" : "levelup");
   updateCombatHUD();
 }
 
@@ -1226,7 +1393,7 @@ function triggerReload() {
   const w = WEAPON_DEFS[ZGAME.weaponIdx];
   if (!w || w.type !== "gun" || ZGAME.reloading > 0 || ZGAME.ammo[w.id] === w.mag) return;
   ZGAME.reloading = w.reload;
-  playSFX("pickup");
+  playSFX("reload");
   updateCombatHUD();
 }
 
@@ -1254,6 +1421,7 @@ function damageZombie(z, dmg, hitPos, knockDir, knockAmt = 1.8, isHeadshot = fal
     z.alive = false;
     z.deathTimer = 1.6;
     z.hpBarBg.visible = false;
+    playSFX(z.lvlDef.isBoss ? "boss_roar" : "zdeath");
     ZGAME.kills++;
     if (isHeadshot) ZGAME.headshots++;
     ZGAME.combo++;
@@ -1316,7 +1484,7 @@ function checkVRPhysicalMeleeHit(hand, dt) {
     }
   }
   if (hitAny) {
-    playSFX(w.key === "saber" ? "saber" : w.key === "iron_rod" ? "rod" : "branch");
+    playSFX(w.key === "saber" ? "saber_clash" : w.key === "iron_rod" ? "rod" : "branch");
     pulseHaptics("right", 0.95, 110);
   }
 }
@@ -1645,6 +1813,15 @@ function updateZombieGame(dt, timeSec) {
     promptEl.style.display = "none";
   }
 
+  // Continuous subtle Lightsaber plasma hum when Saber is equipped + periodic nearby Zombie Groans!
+  updateSaberHum(ZGAME.active && !ZGAME.gameOver && !ZGAME.introPlaying && ZGAME.weaponIdx === 0);
+  ZGAME.groanTimer -= dt;
+  if (ZGAME.groanTimer <= 0 && ZGAME.zombies.some(z => z.alive)) {
+    ZGAME.groanTimer = 2.6 + Math.random() * 2.8;
+    const nearZ = ZGAME.zombies.find(z => z.alive && Math.hypot(z.root.position.x - px, z.root.position.z - pz) < 20);
+    if (nearZ) playSFX(nearZ.lvlDef.isBoss ? "boss_roar" : "zgroan");
+  }
+
   // Animate & Collect Campus Medkits (+35 HP)
   for (const mk of ZGAME.medkits) {
     if (!mk.active) continue;
@@ -1722,12 +1899,22 @@ function updateZombieGame(dt, timeSec) {
     }
     z.root.position.y = groundAt(z.root.position.x, z.root.position.z);
 
-    // Real 8-Frame Mixamo Skeletal Walk Animation + Attack Lunge & Swinging Faculty ID Card
-    z.phase += dt * (z.speed * 3.1);
-    updateWalkingHumanMorph(z);
-    const lunge = z.attackCd > 0.65 ? Math.sin((z.attackCd - 0.65) * 9) * 0.24 : 0;
-    z.torso.rotation.x = lunge;
-    z.idCardPivot.rotation.z = -Math.sin(z.phase * 1.1) * 0.20;
+    // Articulated Cartoon Human Walking Animation (Hips, Bending Knees, Reaching Arms, Swinging ID Card!)
+    z.phase += dt * (z.speed * 3.0);
+    const lHip = Math.sin(z.phase) * 0.62;
+    const rHip = -Math.sin(z.phase) * 0.62;
+    z.legs[0].hip.rotation.x = lHip;
+    z.legs[1].hip.rotation.x = rHip;
+    z.legs[0].knee.rotation.x = Math.max(0, -Math.cos(z.phase)) * 0.72;
+    z.legs[1].knee.rotation.x = Math.max(0, Math.cos(z.phase)) * 0.72;
+    z.torso.position.y = 0.86 + Math.abs(Math.sin(z.phase)) * 0.045;
+    z.torso.rotation.z = Math.sin(z.phase) * 0.07;
+    z.torso.rotation.x = 0.10 + Math.abs(Math.cos(z.phase)) * 0.05;
+    z.headGroup.rotation.z = Math.sin(z.phase * 1.2) * 0.12;
+    const lunge = z.attackCd > 0.65 ? Math.sin((z.attackCd - 0.65) * 9) * 0.55 : 0;
+    z.arms[0].sh.rotation.x = -1.18 + Math.sin(z.phase) * 0.18 - lunge;
+    z.arms[1].sh.rotation.x = -1.18 - Math.sin(z.phase) * 0.18 - lunge;
+    z.idCardPivot.rotation.z = -Math.sin(z.phase) * 0.22;
     z.idCardPivot.rotation.x = -0.14;
 
     // Billboard HP bar toward camera
