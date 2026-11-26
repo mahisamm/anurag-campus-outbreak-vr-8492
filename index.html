@@ -5870,6 +5870,346 @@ for (let [bx, by, bz] of [[-76.8, 1.6, 68.7], [-77.3, 1.9, 69.4], [-77.9, 1.4, 6
   }
 })();
 
+
+// ============================================================================
+// CAMPUS TOUR VIDEO REFERENCE UPGRADE (BAc9tc8UiO0 — ALL KEY LOCATIONS)
+// 1. Main Gate Blue Sliding Gate, Stone Monument & 5-Panel Sports Silhouette Mural (00:25-00:49)
+// 2. A-Block Central Courtyard Amphitheater Stage & Giant White Screen (01:29-01:45)
+// 3. G-Block / ECE Iconic TEDxAnuragU Entrance, Terracotta Lobby & Red Gazebo (15:21-18:17)
+// 4. Pharmacy Medicinal Garden Blue Archway & Raised Herb Beds (09:21-09:29)
+// 5. Cricket Ground Wrought-Iron Gate, Thatched Pitch Roller Shed & Mega Block Tower Crane (11:45-13:53)
+// 6. Placement Standees, Basketball Colored Pillars, Fitness Tires & West Transmission Pylon (02:25-04:09)
+// ============================================================================
+(function() {
+  // --- 1. MAIN GATE & ENTRANCE AVENUE UPGRADES (00:01 - 00:57) ---
+  // 1a. Rolled-Open Blue Steel Main Sliding Gates at Main Entrance (z = 72.1)
+  const gateBlueMat = new Jt({ color: 0x1e4b85, roughness: 0.42, metalness: 0.55 });
+  for (let side of [-1, 1]) {
+    let gx = -3 + side * 4.55;
+    he(0x1e4b85, gx, 1.15, 72.2, 2.2, 0.12, 0.14); // top rail
+    he(0x1e4b85, gx, 0.25, 72.2, 2.2, 0.12, 0.14); // bottom rail
+    for (let bar = -0.9; bar <= 0.91; bar += 0.26) {
+      let p = new et(new Ni(0.06, 1.9, 0.06), gateBlueMat);
+      p.position.set(gx + bar, 1.05, 72.2); Ht.add(p);
+    }
+  }
+  // 1b. Dark-Granite "ANURAG UNIVERSITY" Stone Monument Wall (Left of Gate, 00:33)
+  he(0x3a4048, -14.8, 1.15, 72.2, 6.2, 2.3, 0.72);
+  he(0xdce2e8, -14.8, 2.34, 72.2, 6.4, 0.14, 0.84);
+  ys(["ANURAG UNIVERSITY", "ESTD. 2002 · HYDERABAD"], -14.8, 1.32, 72.6, 5.4, 1.35, "#2b313a", "#f8fafc", 0);
+
+  // 1c. Vibrant 5-Panel Colorful Sports Silhouette Wall Mural beside Main Gate (00:25, 11:21)
+  (function() {
+    const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
+    const g = c.getContext("2d");
+    const panels = [
+      { bg: "#f97316", lbl: "VOLLEYBALL", icon: "volleyball" },
+      { bg: "#0d9488", lbl: "FOOTBALL", icon: "football" },
+      { bg: "#eab308", lbl: "ATHLETICS", icon: "run" },
+      { bg: "#2563eb", lbl: "CRICKET", icon: "cricket" },
+      { bg: "#dc2626", lbl: "BADMINTON", icon: "badminton" }
+    ];
+    const pw = 1024 / 5;
+    panels.forEach((p, idx) => {
+      const x0 = idx * pw;
+      g.fillStyle = p.bg; g.fillRect(x0, 0, pw, 256);
+      // Geometric diagonal light highlight
+      g.fillStyle = "rgba(255,255,255,0.14)";
+      g.beginPath(); g.moveTo(x0, 0); g.lineTo(x0 + pw * 0.65, 0); g.lineTo(x0, 220); g.closePath(); g.fill();
+      // Stylized bold athlete silhouette
+      const cx = x0 + pw * 0.52, cy = 112;
+      g.fillStyle = "#111827";
+      g.beginPath(); g.arc(cx, cy - 42, 16, 0, Math.PI * 2); g.fill(); // Head
+      g.lineWidth = 14; g.lineCap = "round"; g.strokeStyle = "#111827";
+      g.beginPath(); g.moveTo(cx, cy - 24); g.lineTo(cx - 4, cy + 28); g.stroke(); // Torso
+      // Dynamic limbs per sport
+      if (p.icon === "volleyball") {
+        g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx - 26, cy - 46); g.moveTo(cx, cy - 16); g.lineTo(cx + 28, cy - 52); g.stroke();
+        g.beginPath(); g.moveTo(cx - 4, cy + 28); g.lineTo(cx - 22, cy + 74); g.moveTo(cx - 4, cy + 28); g.lineTo(cx + 18, cy + 70); g.stroke();
+        g.fillStyle = "#ffffff"; g.beginPath(); g.arc(cx + 12, cy - 72, 13, 0, Math.PI * 2); g.fill();
+      } else if (p.icon === "football") {
+        g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx - 32, cy + 6); g.moveTo(cx, cy - 16); g.lineTo(cx + 30, cy - 28); g.stroke();
+        g.beginPath(); g.moveTo(cx - 4, cy + 28); g.lineTo(cx - 26, cy + 74); g.moveTo(cx - 4, cy + 28); g.lineTo(cx + 32, cy + 56); g.stroke();
+        g.fillStyle = "#ffffff"; g.beginPath(); g.arc(cx + 46, cy + 64, 12, 0, Math.PI * 2); g.fill();
+      } else if (p.icon === "run") {
+        g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx + 32, cy - 22); g.moveTo(cx, cy - 16); g.lineTo(cx - 30, cy + 12); g.stroke();
+        g.beginPath(); g.moveTo(cx - 4, cy + 28); g.lineTo(cx + 34, cy + 62); g.moveTo(cx - 4, cy + 28); g.lineTo(cx - 36, cy + 68); g.stroke();
+      } else if (p.icon === "cricket") {
+        g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx + 26, cy - 6); g.moveTo(cx, cy - 16); g.lineTo(cx + 18, cy + 12); g.stroke();
+        g.beginPath(); g.moveTo(cx - 4, cy + 28); g.lineTo(cx - 20, cy + 74); g.moveTo(cx - 4, cy + 28); g.lineTo(cx + 22, cy + 74); g.stroke();
+        g.strokeStyle = "#fde68a"; g.lineWidth = 10;
+        g.beginPath(); g.moveTo(cx + 22, cy + 2); g.lineTo(cx + 52, cy - 48); g.stroke(); // Bat
+      } else {
+        g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx + 26, cy - 48); g.moveTo(cx, cy - 16); g.lineTo(cx - 24, cy + 8); g.stroke();
+        g.beginPath(); g.moveTo(cx - 4, cy + 28); g.lineTo(cx - 18, cy + 74); g.moveTo(cx - 4, cy + 28); g.lineTo(cx + 24, cy + 72); g.stroke();
+        g.strokeStyle = "#ffffff"; g.lineWidth = 4;
+        g.beginPath(); g.moveTo(cx + 26, cy - 48); g.lineTo(cx + 42, cy - 72); g.stroke();
+        g.beginPath(); g.ellipse(cx + 48, cy - 82, 10, 14, 0.4, 0, Math.PI * 2); g.stroke(); // Racket
+      }
+      // Crisp white panel divider & bottom label
+      g.fillStyle = "rgba(0,0,0,0.28)"; g.fillRect(x0, 214, pw, 42);
+      g.fillStyle = "#ffffff"; g.font = "900 20px 'Segoe UI',sans-serif"; g.textAlign = "center";
+      g.fillText(p.lbl, x0 + pw * 0.5, 242);
+      if (idx > 0) { g.fillStyle = "#ffffff"; g.fillRect(x0 - 3, 0, 6, 256); }
+    });
+    const t = new dn(c); t.colorSpace = vt;
+    // Boundary wall with 5-panel mural just West of Main Gate (x = -24.5, z = 71.8)
+    he(0xf8fafc, -24.5, 1.45, 71.8, 12.6, 2.9, 0.45);
+    const muralFront = new et(new _i(12.2, 2.65), new Jt({ map: t, roughness: 0.48 }));
+    muralFront.position.set(-24.5, 1.48, 72.05); Ht.add(muralFront);
+    const muralBack = new et(new _i(12.2, 2.65), new Jt({ map: t, roughness: 0.48 }));
+    muralBack.rotation.y = Math.PI;
+    muralBack.position.set(-24.5, 1.48, 71.55); Ht.add(muralBack);
+  })();
+
+  // 1d. Main Entrance Avenue: Red-Painted Tree Trunks + Placement Achievement Boards (00:01, 00:41)
+  const redTrunkMat = new Jt({ color: 0xb91c1c, roughness: 0.72 });
+  const whiteBandMat = new Jt({ color: 0xf8fafc, roughness: 0.72 });
+  for (let az of [60, 50, 40, 30]) {
+    for (let ax of [-9.4, 3.4]) {
+      let bRed = new et(new pn(0.24, 0.27, 1.15, 10), redTrunkMat);
+      bRed.position.set(ax, 0.58, az); Ht.add(bRed);
+      let bWht = new et(new pn(0.23, 0.24, 0.16, 10), whiteBandMat);
+      bWht.position.set(ax, 1.22, az); Ht.add(bWht);
+    }
+  }
+  const placementStats = [
+    { z: 58, num: "282+", lbl: "TCS · CAPGEMINI" },
+    { z: 48, num: "159+", lbl: "COGNIZANT · ACCENTURE" },
+    { z: 38, num: "1800+", lbl: "CAMPUS OFFERS · 52 LPA" }
+  ];
+  for (const st of placementStats) {
+    he(0xdbe2ea, 4.6, 1.4, st.z, 0.12, 2.8, 0.12);
+    ys([st.num, st.lbl], 4.6, 2.25, st.z, 2.3, 1.15, "#b91c1c", "#ffffff", -Math.PI / 2);
+  }
+  // 1e. A-Block Front Plaza Digital Standee Kiosks & Topiary Bushes (00:49, 00:57)
+  for (let kx of [-10.2, 4.2]) {
+    he(0x111827, kx, 1.15, 18.8, 0.92, 2.15, 0.22);
+    he(0x334155, kx, 0.08, 18.8, 1.1, 0.16, 0.65);
+    ys(["ANURAG", "UNIVERSITY"], kx, 1.28, 18.93, 0.78, 1.45, "#0f172a", "#38bdf8", 0);
+    let topiary = new et(new fn(0.75, 10, 8), new Jt({ color: 0x2e6f28, roughness: 0.82 }));
+    topiary.position.set(kx + (kx < 0 ? -1.4 : 1.4), 0.75, 18.6); Ht.add(topiary);
+  }
+
+  // --- 2. A-BLOCK CENTRAL COURTYARD AMPHITHEATER STAGE & SCREEN (01:29 - 01:45) ---
+  // Elevated granite-trimmed performance stage on North edge of inner courtyard (x = -3, z = -11.0)
+  he(0x2d3238, -3, 0.45, -10.8, 12.6, 0.9, 3.8);
+  he(0xe2ddd2, -3, 0.93, -10.8, 12.8, 0.08, 4.0);
+  // Side steps up onto the stage
+  for (let s = 0; s < 4; s++) {
+    let sh = (4 - s) * 0.22;
+    he(0x475569, -9.6 - s * 0.35, sh * 0.5, -10.8, 0.36, sh, 2.2);
+    he(0x475569, 3.6 + s * 0.35, sh * 0.5, -10.8, 0.36, sh, 2.2);
+  }
+  // Terracotta-brick framed giant crisp white projection screen / backdrop wall!
+  he(0x9e3b33, -3, 3.4, -12.45, 11.8, 4.9, 0.48); // Red brick outer frame
+  he(0xfdfdfc, -3, 3.45, -12.18, 9.8, 4.05, 0.12); // Crisp bright white projection screen
+  he(0x9e3b33, -8.7, 3.4, -12.1, 0.75, 5.1, 0.75); // Left terracotta pillar
+  he(0x9e3b33, 2.7, 3.4, -12.1, 0.75, 5.1, 0.75);  // Right terracotta pillar
+  he(0x7c2d26, -3, 5.95, -12.15, 12.4, 0.32, 0.95); // Stage top coping beam
+  // Courtyard corner Royal Palms with red lower trunks (01:29, 01:37)
+  for (let [px, pz] of [[-14.5, 3.8], [8.5, 3.8], [-14.5, -9.8], [8.5, -9.8]]) {
+    entrancePalm(px, pz, 7.6, px + pz);
+    let rb = new et(new pn(0.17, 0.19, 1.0, 10), redTrunkMat);
+    rb.position.set(px, 0.55, pz); Ht.add(rb);
+  }
+
+  // --- 3. G-BLOCK / ECE ICONIC TEDxAnuragU ENTRANCE & RED GAZEBO (15:21, 16:33-18:17) ---
+  // Projecting double-height white portico on G-Block West Entrance (x = 29.5, z = 14.5)
+  he(0xf8fafc, 28.4, 3.5, 11.2, 0.72, 7.0, 0.72); // North portico column
+  he(0xf8fafc, 28.4, 3.5, 17.8, 0.72, 7.0, 0.72); // South portico column
+  he(0xf8fafc, 29.4, 7.05, 14.5, 3.2, 0.85, 7.8); // Portico crown beam
+  ys(["DEPT. OF ELECTRONICS & COMMUNICATION ENGINEERING"], 27.76, 7.08, 14.5, 7.2, 0.58, "#f8fafc", "#1e293b", -Math.PI / 2);
+  // Warm terracotta / red-sandstone lower lobby walls flanking the glass entrance (16:49, 17:05)
+  he(0xb34a3a, 30.2, 2.1, 10.6, 0.55, 4.2, 2.2);
+  he(0xb34a3a, 30.2, 2.1, 18.4, 0.55, 4.2, 2.2);
+  // Grand dark glass entrance + Iconic bold "TEDxAnuragU" banner! (15:21, 17:05)
+  he(0x142230, 30.15, 2.2, 14.5, 0.25, 4.4, 5.6);
+  (function() {
+    const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
+    const g = c.getContext("2d");
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, 1024, 256);
+    g.fillStyle = "#e62b1e"; g.fillRect(0, 0, 1024, 14); g.fillRect(0, 242, 1024, 14);
+    g.textBaseline = "middle";
+    g.font = "900 124px 'Segoe UI',Arial,sans-serif";
+    g.fillStyle = "#e62b1e"; g.fillText("TED", 82, 118);
+    g.font = "900 84px 'Segoe UI',Arial,sans-serif";
+    g.fillText("x", 334, 88);
+    g.font = "800 110px 'Segoe UI',Arial,sans-serif";
+    g.fillStyle = "#111827"; g.fillText("AnuragU", 398, 118);
+    g.font = "600 30px 'Segoe UI',sans-serif";
+    g.fillStyle = "#475569"; g.fillText("x = independently organized TED event  ·  SPACE RESEARCH CENTER", 90, 204);
+    const t = new dn(c); t.colorSpace = vt;
+    const tedSign = new et(new _i(5.8, 1.45), new Jt({ map: t, roughness: 0.35 }));
+    tedSign.rotation.y = -Math.PI / 2;
+    tedSign.position.set(29.95, 4.85, 14.5);
+    Ht.add(tedSign);
+  })();
+  // Satellite Design & Development Center for Space Research plaque (17:37)
+  ys(["SATELLITE DESIGN & DEVELOPMENT", "CENTER FOR SPACE RESEARCH"], 29.88, 2.3, 10.6, 1.95, 0.78, "#0f172a", "#38bdf8", -Math.PI / 2);
+  // Exterior granite entrance steps
+  for (let s = 0; s < 3; s++) {
+    let sh = (3 - s) * 0.16;
+    he(0x334155, 29.2 - s * 0.35, sh * 0.5, 14.5, 0.4, sh, 6.2);
+  }
+
+  // 3b. Covered Red-Roof Outdoor Campus Gazebo / Kiosk & Angled Display Panels (16:33, 18:17)
+  const gx = 24.5, gz = 26.5;
+  he(0x9e3b33, gx, 0.18, gz, 5.2, 0.36, 5.2); // Red-curbed stone terrace
+  he(0xd6cfc0, gx, 0.38, gz, 4.6, 0.08, 4.6); // Concrete floor
+  for (let [px, pz] of [[-2.0, -2.0], [2.0, -2.0], [-2.0, 2.0], [2.0, 2.0]]) {
+    he(0xf1f5f9, gx + px, 1.75, gz + pz, 0.18, 2.75, 0.18);
+  }
+  const gazRoof = new et(new oa(3.85, 1.45, 4), new Jt({ color: 0xb53c32, roughness: 0.52, metalness: 0.2 }));
+  gazRoof.rotation.y = Math.PI / 4;
+  gazRoof.position.set(gx, 3.85, gz); gazRoof.castShadow = true; Ht.add(gazRoof);
+  he(0x64748b, gx, 0.78, gz, 1.6, 0.12, 1.6); // Center table
+  // Blue & Red Campus Info Display Panels beside Gazebo (18:01, 18:17)
+  ys(["INNOVATION HUB", "ANURAG STARTUPS"], gx - 3.6, 1.55, gz + 0.5, 2.1, 1.25, "#1d4ed8", "#ffffff", -0.35);
+  ys(["NAAC A+ ACCREDITED", "NIRF TOP RANKED"], gx - 3.6, 1.55, gz - 2.1, 2.1, 1.25, "#b91c1c", "#ffffff", 0.35);
+
+  // --- 4. PHARMACY MEDICINAL GARDEN (09:21 - 09:29) ---
+  // Positioned cleanly in the green pocket north-east of D-Block & south-east of H-Block (x = -33.5, z = -31.5)
+  const mgX = -33.5, mgZ = -31.5;
+  // Iconic Royal-Blue Archway Signboard: "ANURAG SCHOOL OF PHARMACY — MEDICINAL GARDEN"
+  he(0x1e3a8a, mgX - 2.2, 1.85, mgZ + 5.2, 0.18, 3.7, 0.18);
+  he(0x1e3a8a, mgX + 2.2, 1.85, mgZ + 5.2, 0.18, 3.7, 0.18);
+  (function() {
+    const c = document.createElement("canvas"); c.width = 768; c.height = 192;
+    const g = c.getContext("2d");
+    g.fillStyle = "#1d4ed8"; g.fillRect(0, 0, 768, 192);
+    g.strokeStyle = "#ffffff"; g.lineWidth = 8; g.strokeRect(8, 8, 752, 176);
+    // White Mortar & Pestle Pharmacy Emblem on Left
+    g.fillStyle = "#ffffff";
+    g.beginPath(); g.arc(82, 108, 34, 0, Math.PI); g.fill();
+    g.fillRect(58, 138, 48, 10);
+    g.lineWidth = 10; g.lineCap = "round";
+    g.beginPath(); g.moveTo(88, 98); g.lineTo(114, 58); g.stroke();
+    g.textAlign = "center";
+    g.fillStyle = "#fde047"; g.font = "800 32px 'Segoe UI',sans-serif";
+    g.fillText("ANURAG SCHOOL OF PHARMACY", 435, 76);
+    g.fillStyle = "#ffffff"; g.font = "900 46px 'Segoe UI',sans-serif";
+    g.fillText("MEDICINAL GARDEN", 435, 142);
+    const t = new dn(c); t.colorSpace = vt;
+    const archF = new et(new _i(4.7, 1.18), new Jt({ map: t, roughness: 0.4 }));
+    archF.position.set(mgX, 3.15, mgZ + 5.32); Ht.add(archF);
+    const archB = new et(new _i(4.7, 1.18), new Jt({ map: t, roughness: 0.4 }));
+    archB.rotation.y = Math.PI; archB.position.set(mgX, 3.15, mgZ + 5.08); Ht.add(archB);
+  })();
+  // Red-soil raised garden beds, stone stepping slabs & lush medicinal herb rows
+  he(0x8d452c, mgX, 0.12, mgZ, 10.4, 0.24, 9.8); // Red soil bed
+  for (let sz = mgZ - 4.0; sz <= mgZ + 4.2; sz += 1.35) {
+    he(0xcbd5e1, mgX, 0.26, sz, 1.35, 0.08, 0.72); // Stone stepping slabs
+  }
+  const herbColors = [0x15803d, 0x4d7c0f, 0x16a34a, 0x2f855a];
+  for (let side of [-1, 1]) {
+    for (let hz = mgZ - 3.6; hz <= mgZ + 3.6; hz += 1.8) {
+      let hx = mgX + side * 2.8;
+      he(0x78350f, hx, 0.28, hz, 3.2, 0.2, 1.15);
+      for (let ox of [-0.9, 0, 0.9]) {
+        let herb = new et(new fn(0.42, 7, 6), new Jt({ color: herbColors[Math.abs(Math.round(hz + ox)) % 4], roughness: 0.85 }));
+        herb.scale.set(1.1, 0.75, 1.1); herb.position.set(hx + ox, 0.58, hz); Ht.add(herb);
+      }
+      // Mini white botanical label stake
+      he(0xf8fafc, hx - side * 1.45, 0.55, hz, 0.08, 0.45, 0.26);
+    }
+  }
+  // Low green iron perimeter fence posts around the garden
+  for (let fx = mgX - 5.2; fx <= mgX + 5.2; fx += 2.6) {
+    he(0x166534, fx, 0.6, mgZ - 4.9, 0.08, 1.2, 0.08);
+    if (Math.abs(fx - mgX) > 2.0) he(0x166534, fx, 0.6, mgZ + 4.9, 0.08, 1.2, 0.08);
+  }
+  he(0x166534, mgX, 1.05, mgZ - 4.9, 10.4, 0.06, 0.06);
+
+  // --- 5. CRICKET GROUND IRON GATE, THATCHED PITCH ROLLER SHED & TOWER CRANE (11:45 - 13:53) ---
+  // 5a. Wide Black Wrought-Iron Double Entrance Gate between White Pillars (11:45)
+  const cgX = 24.5, cgZ = -55.5;
+  he(0xf8fafc, cgX - 3.4, 1.45, cgZ, 0.78, 2.9, 0.78);
+  he(0xf8fafc, cgX + 3.4, 1.45, cgZ, 0.78, 2.9, 0.78);
+  he(0xcbd5e1, cgX - 3.4, 2.96, cgZ, 0.96, 0.16, 0.96);
+  he(0xcbd5e1, cgX + 3.4, 2.96, cgZ, 0.96, 0.16, 0.96);
+  // Open wrought-iron gate leaves angled welcomingly inward
+  for (let s of [-1, 1]) {
+    let lx = cgX + s * 2.5;
+    he(0x1e293b, lx, 1.15, cgZ - 0.95, 0.1, 2.1, 2.1, s * 0.45);
+  }
+  // 5b. Thatched-Roof Pitch Roller Shed + Green & Blue Cricket Pitch Roller (12:01, 12:09)
+  const rsX = 28.5, rsZ = -62.5;
+  for (let [px, pz] of [[-2.1, -1.5], [2.1, -1.5], [-2.1, 1.5], [2.1, 1.5]]) {
+    let post = new et(new pn(0.09, 0.1, 2.9, 8), new Jt({ color: 0x6b4423, roughness: 0.9 }));
+    post.position.set(rsX + px, 1.45, rsZ + pz); Ht.add(post);
+  }
+  // Golden-brown pitched thatch canopy roof
+  const thatchMat = new Jt({ color: 0xa67c37, roughness: 0.95 });
+  const thatchL = new et(new Ni(5.0, 0.24, 2.35), thatchMat);
+  thatchL.position.set(rsX, 3.25, rsZ - 0.95); thatchL.rotation.x = -0.34; Ht.add(thatchL);
+  const thatchR = new et(new Ni(5.0, 0.24, 2.35), thatchMat);
+  thatchR.position.set(rsX, 3.25, rsZ + 0.95); thatchR.rotation.x = 0.34; Ht.add(thatchR);
+  // Heavy Blue Steel Drum + Green Tractor Engine Cricket Pitch Roller parked inside!
+  const drum = new et(new pn(0.62, 0.62, 1.55, 18), new Jt({ color: 0x1d4ed8, roughness: 0.45, metalness: 0.55 }));
+  drum.rotation.x = Math.PI / 2; drum.position.set(rsX + 0.85, 0.64, rsZ); Ht.add(drum);
+  const rearDrum = new et(new pn(0.52, 0.52, 1.35, 16), new Jt({ color: 0x1e3a8a, roughness: 0.48, metalness: 0.5 }));
+  rearDrum.rotation.x = Math.PI / 2; rearDrum.position.set(rsX - 1.15, 0.54, rsZ); Ht.add(rearDrum);
+  he(0x16a34a, rsX - 0.15, 1.25, rsZ, 1.85, 0.78, 1.05); // Bright green engine hood
+  he(0x111827, rsX - 1.15, 1.45, rsZ, 0.55, 0.55, 0.62); // Operator seat
+  he(0x334155, rsX - 0.72, 1.78, rsZ, 0.08, 0.55, 0.08); // Steering column
+
+  // 5c. Tall Yellow-Steel Lattice Tower Crane beside 10-Story Expansion Mega Block (13:53)
+  const crX = 63.5, crZ = -12.5;
+  he(0x64748b, crX, 0.6, crZ, 3.6, 1.2, 3.6); // Concrete crane base
+  const craneYel = new Jt({ color: 0xeab308, roughness: 0.48, metalness: 0.45 });
+  for (let [ox, oz] of [[-0.65, -0.65], [0.65, -0.65], [-0.65, 0.65], [0.65, 0.65]]) {
+    let leg = new et(new Ni(0.16, 36.0, 0.16), craneYel);
+    leg.position.set(crX + ox, 19.0, crZ + oz); Ht.add(leg);
+  }
+  for (let cy = 3.5; cy <= 35.5; cy += 3.2) {
+    he(0xeab308, crX, cy, crZ, 1.42, 0.14, 1.42);
+  }
+  // Crane Operator Cabin + Horizontal Jib Arm + Counterweight + Hanging Cable
+  he(0xf8fafc, crX + 1.1, 35.8, crZ, 1.6, 2.1, 1.5);
+  he(0x1e293b, crX + 1.85, 36.0, crZ, 0.14, 1.1, 1.2); // Cab window
+  he(0xeab308, crX + 12.0, 37.4, crZ, 34.0, 1.15, 1.15); // Long horizontal jib reaching over Mega Block
+  he(0x475569, crX - 5.2, 37.2, crZ, 3.4, 1.65, 1.45); // Concrete counterweight blocks
+  he(0x1e293b, crX + 21.0, 29.5, crZ, 0.08, 15.0, 0.08); // Hanging hoist cable
+  he(0xef4444, crX + 21.0, 21.8, crZ, 0.65, 0.65, 0.35); // Red crane hook block
+
+  // --- 6. WEST GROUND PROPS, BASKETBALL PILLARS & TRANSMISSION PYLON (02:25 - 04:09) ---
+  // 6a. Red & White Placement Road Standee ("BE EVERYONE YOU DREAM TO BE · 52 LPA", 03:45)
+  he(0xf8fafc, -52.5, 1.15, 25.4, 4.4, 1.55, 0.22);
+  ys(["BE EVERYONE YOU DREAM TO BE", "1800+ OFFERS · 52 LPA HIGHEST"], -52.5, 1.25, 25.54, 4.1, 1.28, "#b91c1c", "#ffffff", 0);
+  ys(["BE EVERYONE YOU DREAM TO BE", "1800+ OFFERS · 52 LPA HIGHEST"], -52.5, 1.25, 25.26, 4.1, 1.28, "#b91c1c", "#ffffff", Math.PI);
+
+  // 6b. Bright Orange/Blue Architectural Pillars lining Basketball Court (02:25, 02:33)
+  const bPillars = [0xf97316, 0x2563eb, 0xe2d8c5, 0xf97316, 0x2563eb];
+  bPillars.forEach((col, i) => {
+    he(col, 83.2, 1.65, -109 + i * 5.5, 0.72, 3.3, 0.72);
+  });
+
+  // 6c. Black Fitness Tractor Tires on West Red-Dirt Sports Ground (03:13)
+  const tireMat = new Jt({ color: 0x17191c, roughness: 0.92 });
+  for (let [tx, tz] of [[-86.5, 23.0], [-84.2, 23.0], [-81.9, 23.0], [-85.3, 25.4]]) {
+    let tire = new et(new gn(0.58, 0.24, 10, 18), tireMat);
+    tire.rotation.x = Math.PI / 2; tire.position.set(tx, 0.24, tz); Ht.add(tire);
+  }
+
+  // 6d. Tall Lattice High-Voltage Steel Transmission Pylon on Far-West Horizon (04:01, 04:09)
+  const pyX = -124, pyZ = 44;
+  const pylonMat = new Jt({ color: 0x64748b, roughness: 0.55, metalness: 0.65 });
+  for (let [ox, oz] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) {
+    let leg = new et(new pn(0.12, 0.22, 34, 6), pylonMat);
+    leg.position.set(pyX + ox * 0.55, 17, pyZ + oz * 0.55);
+    leg.rotation.z = ox > 0 ? 0.045 : -0.045;
+    leg.rotation.x = oz > 0 ? -0.045 : 0.045;
+    Ht.add(leg);
+  }
+  for (let cy of [20, 26, 31.5]) {
+    let w = cy > 30 ? 8.5 : 11.5;
+    he(0x64748b, pyX, cy, pyZ, w, 0.35, 0.45);
+    he(0x94a3b8, pyX - w * 0.46, cy - 0.65, pyZ, 0.16, 1.1, 0.16);
+    he(0x94a3b8, pyX + w * 0.46, cy - 0.65, pyZ, 0.16, 1.1, 0.16);
+  }
+})();
+
 // ============================================================================
 // BUILDING 9: FAR-WEST MECHANICAL WORKSHOP & NORTHWEST PARKING SHEDS / GARDEN
 // ============================================================================
@@ -7005,6 +7345,10 @@ var ld = [
   ["D Block · Solar Roof & Street-Art Mural", -75.5, -4.8, -Math.PI / 2, 0.14, 0],
   ["C-Block · Iconic Street-Art Mural", -61.5, 13.8, Math.PI, 0.16, 0],
   ["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],
+  ["A-Block Courtyard Amphitheater Stage", -3.0, 2.5, 0.0, 0.08, 0],
+  ["G-Block · TEDxAnuragU Entrance", 19.5, 14.5, -Math.PI / 2, 0.10, 0],
+  ["Pharmacy Medicinal Garden", -33.5, -22.5, 0.0, 0.06, 0],
+  ["Cricket Gate & Pitch Roller Shed", 24.5, -48.5, 0.0, 0.06, 0],
   ["D Block · Aerial Solar Roof View", -75, -11.5, -Math.PI / 2, -0.28, 18],
   ["H Block · 6-Story Academic Tower", -76, -29.8, -Math.PI / 2, 0.18, 0],
   ["C Block · Civil Dept & Blue Pool Plaza", -53, 62, 0.25, 0.08, 0],
