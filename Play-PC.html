@@ -159,67 +159,128 @@ main button#walk:hover{filter:brightness(1.08)}
 #btn-explore-campus:hover{background:rgba(48,92,126,0.98)}
 #intro-overlay{
   position:fixed;inset:0;z-index:42;display:none;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 60%,rgba(14,165,233,0.06),rgba(2,6,14,0.48) 85%);
 }
 #intro-overlay.playing{display:block}
 .cine-bar{
-  position:fixed;left:0;right:0;height:10vh;background:#050910;
-  transition:transform .5s ease;pointer-events:none;
+  position:fixed;left:0;right:0;height:9.5vh;background:linear-gradient(180deg,#03070e,#070d18);
+  transition:transform .6s cubic-bezier(.2,.8,.2,1);pointer-events:none;
+  border-color:rgba(114,239,221,0.22);
 }
-#cine-top{top:0}
-#cine-bot{bottom:0}
+#cine-top{top:0;border-bottom:1px solid rgba(114,239,221,0.22)}
+#cine-bot{bottom:0;border-top:1px solid rgba(114,239,221,0.22)}
+#intro-progress-track{
+  position:fixed;left:0;right:0;bottom:9.5vh;height:3px;background:rgba(255,255,255,0.1);z-index:44;
+}
+#intro-progress-fill{
+  height:100%;width:0%;background:linear-gradient(90deg,#ef4444,#f59e0b,#38bdf8,#72efdd);
+  box-shadow:0 0 12px rgba(114,239,221,0.9);transition:width .08s linear;
+}
 #intro-story-box{
-  position:fixed;left:50%;bottom:13vh;transform:translateX(-50%);
-  width:min(760px,90vw);padding:16px 26px;border-radius:14px;text-align:center;
-  background:linear-gradient(160deg,rgba(8,18,30,0.88),rgba(24,10,16,0.86));
-  border:1px solid rgba(114,239,221,0.45);box-shadow:0 14px 40px rgba(0,0,0,0.65);
-  backdrop-filter:blur(10px);
+  position:fixed;left:50%;bottom:12.5vh;transform:translateX(-50%);
+  width:min(840px,92vw);padding:20px 28px 18px;border-radius:16px;text-align:center;
+  background:linear-gradient(155deg,rgba(7,15,26,0.92),rgba(26,10,16,0.88));
+  border:1px solid rgba(114,239,221,0.45);
+  box-shadow:0 18px 55px rgba(0,0,0,0.75),inset 0 1px 0 rgba(255,255,255,0.12);
+  backdrop-filter:blur(14px);overflow:hidden;
 }
-#intro-kicker{font:800 12px/1.2 system-ui;color:#fbbf24;letter-spacing:2.2px;text-transform:uppercase;margin-bottom:5px}
-#intro-headline{font:800 clamp(18px,2.5vw,28px)/1.2 Georgia,serif;color:#ffffff;letter-spacing:0.6px;margin:0}
-#intro-sub{font:600 13px/1.4 system-ui;color:#a5d8ee;margin-top:6px}
+#intro-story-box::after{
+  content:'';position:absolute;top:0;left:-60%;width:45%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(114,239,221,0.12),transparent);
+  animation:introSheen 3.2s ease-in-out infinite;pointer-events:none;
+}
+@keyframes introSheen{0%{left:-60%}60%,100%{left:125%}}
+@keyframes beatReveal{
+  0%{opacity:0;transform:translateY(10px) scale(0.96);filter:blur(4px)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+.beat-anim{animation:beatReveal .55s cubic-bezier(.2,.85,.25,1) both}
+#intro-crest{
+  display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;
+  background:rgba(239,68,68,0.16);border:1px solid rgba(251,191,36,0.5);
+  margin-bottom:8px;
+}
+#intro-crest-badge{
+  background:linear-gradient(135deg,#ef4444,#f59e0b);color:#fff;font:900 11px system-ui;
+  padding:2px 7px;border-radius:5px;letter-spacing:1px;
+}
+#intro-kicker{font:800 11.5px/1.2 system-ui;color:#fde047;letter-spacing:2.6px;text-transform:uppercase}
+#intro-headline{
+  font:900 clamp(21px,2.9vw,34px)/1.12 Georgia,serif;color:#ffffff;letter-spacing:1.1px;margin:2px 0 0;
+  text-shadow:0 0 24px rgba(56,189,248,0.45),0 3px 12px rgba(0,0,0,0.85);
+}
+#intro-divider{
+  width:110px;height:2.5px;margin:9px auto 9px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,#ef4444,#fbbf24,#38bdf8,transparent);
+}
+#intro-sub{font:600 13.5px/1.45 system-ui;color:#cfeaf7;max-width:680px;margin:0 auto}
+#intro-cols{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;text-align:left;
+}
+.intro-col{
+  background:rgba(255,255,255,0.045);border:1px solid rgba(114,239,221,0.22);
+  border-radius:10px;padding:8px 11px;
+}
+.intro-col-lbl{font:800 10px/1.2 system-ui;color:#72efdd;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:3px}
+.intro-col-txt{font:600 11.5px/1.35 system-ui;color:#e2f1fa}
+@media (max-width:680px){#intro-cols{grid-template-columns:1fr}}
 #btn-skip-intro{
-  position:fixed;right:22px;bottom:2.8vh;z-index:44;pointer-events:auto;
-  padding:8px 18px;border-radius:8px;border:1px solid rgba(114,239,221,0.55);
-  background:rgba(15,32,48,0.92);color:#e0f7fa;font:700 12.5px system-ui;cursor:pointer;
+  position:fixed;right:22px;bottom:2.4vh;z-index:45;pointer-events:auto;
+  padding:9px 20px;border-radius:10px;border:1px solid rgba(114,239,221,0.6);
+  background:linear-gradient(135deg,rgba(15,32,48,0.95),rgba(20,46,66,0.95));
+  color:#e0f7fa;font:800 12.5px system-ui;letter-spacing:0.6px;cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,0.5);
 }
 #btn-skip-intro:hover{background:#0ea5e9;color:#04151f}
 .intro-active #combat-hud,.intro-active #top-left-hud,.intro-active #minimap-wrap,.intro-active #crosshair,.intro-active #hint{opacity:0 !important;pointer-events:none !important}
+body.zombie-mode #top-left-hud{top:108px !important;opacity:0.92}
 #wave-banner{
   position:fixed;top:14px;left:50%;transform:translateX(-50%);
-  padding:8px 22px;border-radius:12px;text-align:center;
-  background:linear-gradient(135deg,rgba(15,24,36,0.92),rgba(32,14,18,0.92));
-  border:1px solid rgba(255,95,95,0.5);box-shadow:0 8px 26px rgba(0,0,0,0.55);
-  backdrop-filter:blur(10px);
+  padding:9px 20px;border-radius:14px;text-align:center;min-width:min(440px,46vw);
+  background:linear-gradient(145deg,rgba(10,18,30,0.93),rgba(32,12,18,0.92));
+  border:1px solid rgba(255,95,95,0.55);box-shadow:0 10px 30px rgba(0,0,0,0.58);
+  backdrop-filter:blur(12px);
 }
-#wave-title{font:800 15px/1.2 'Segoe UI',system-ui,sans-serif;color:#ff6b6b;letter-spacing:1px;text-transform:uppercase}
-#wave-sub{font:600 12px/1.3 'Segoe UI',system-ui,sans-serif;color:#e2f1fa;margin-top:2px}
+#wave-title{font:900 14.5px/1.2 'Segoe UI',system-ui,sans-serif;color:#ff6b6b;letter-spacing:1.3px;text-transform:uppercase}
+#wave-cols{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;
+  padding-top:6px;border-top:1px solid rgba(255,255,255,0.12);
+}
+.wave-col{display:flex;flex-direction:column;align-items:center}
+.wave-col-k{font:700 9.5px/1.1 system-ui;color:#94a3b8;letter-spacing:1.1px;text-transform:uppercase}
+.wave-col-v{font:900 13.5px/1.25 'Consolas',monospace;color:#f8fafc;margin-top:2px;font-variant-numeric:tabular-nums}
+#wave-sub{display:none}
 #boss-bar-wrap{
-  position:fixed;top:76px;left:50%;transform:translateX(-50%);width:min(460px,62vw);
-  display:none;background:rgba(16,10,14,0.9);border:1px solid rgba(245,158,11,0.7);
+  position:fixed;top:92px;left:50%;transform:translateX(-50%);width:min(460px,62vw);
+  display:none;background:rgba(16,10,14,0.92);border:1px solid rgba(245,158,11,0.75);
   border-radius:10px;padding:7px 12px;box-shadow:0 8px 24px rgba(0,0,0,0.65);
 }
 #boss-bar-label{font:800 12px system-ui;color:#fbbf24;letter-spacing:1.2px;display:flex;justify-content:space-between;margin-bottom:5px}
 #boss-bar-bg{height:12px;background:rgba(255,255,255,0.12);border-radius:6px;overflow:hidden}
 #boss-bar-fill{height:100%;width:100%;background:linear-gradient(90deg,#dc2626,#f59e0b);transition:width .12s}
 #top-hp-bar{
-  position:fixed;top:52px;left:16px;z-index:26;width:255px;
-  padding:8px 12px;border-radius:12px;
-  background:rgba(12,20,30,0.92);border:1px solid rgba(248,113,113,0.52);
-  box-shadow:0 8px 22px rgba(0,0,0,0.48);backdrop-filter:blur(10px);
+  position:fixed;top:14px;left:16px;z-index:36;width:278px;
+  padding:10px 14px;border-radius:14px;
+  background:linear-gradient(145deg,rgba(14,18,28,0.95),rgba(36,12,18,0.92));
+  border:1.5px solid rgba(255,77,109,0.7);
+  box-shadow:0 10px 28px rgba(0,0,0,0.58),0 0 18px rgba(255,59,92,0.2);
+  backdrop-filter:blur(12px);
 }
-#top-hp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
-#top-hp-left{display:flex;align-items:center;gap:7px}
+#top-hp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+#top-hp-left{display:flex;align-items:center;gap:8px}
 #heart-icon{
-  font-size:18px;line-height:1;color:#ff3b5c;
-  text-shadow:0 0 10px rgba(255,59,92,0.85);
-  display:inline-block;animation:heartPulse 1.4s ease-in-out infinite;
+  font-size:22px;line-height:1;color:#ff2e55;
+  text-shadow:0 0 14px rgba(255,46,85,0.95);
+  display:inline-block;animation:heartPulse 1.25s ease-in-out infinite;
 }
-#top-hp-bar.low-hp #heart-icon{animation:heartPulse 0.45s ease-in-out infinite;color:#ff1e38}
-#top-hp-hearts{font-size:13px;letter-spacing:2px;color:#ff4d6d;text-shadow:0 0 6px rgba(255,77,109,0.6)}
-#top-hp-num{font:800 12.5px 'Consolas',monospace;color:#fef2f2}
-#top-hp-track{height:10px;background:rgba(255,255,255,0.14);border-radius:6px;overflow:hidden}
-#top-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ef4444,#f97316,#22c55e);transition:width .14s}
-@keyframes heartPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+#top-hp-bar.low-hp{border-color:#ff1e38;box-shadow:0 0 26px rgba(255,30,56,0.55)}
+#top-hp-bar.low-hp #heart-icon{animation:heartPulse 0.42s ease-in-out infinite;color:#ff1e38}
+#top-hp-hearts{font-size:16px;letter-spacing:2.5px;color:#ff4d6d;text-shadow:0 0 8px rgba(255,77,109,0.75)}
+#top-hp-num{font:900 13.5px 'Consolas',monospace;color:#fff1f2;font-variant-numeric:tabular-nums}
+#top-hp-track{height:11px;background:rgba(255,255,255,0.14);border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.5)}
+#top-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ef4444,#f97316,#22c55e);transition:width .14s;box-shadow:0 0 10px rgba(34,197,94,0.45)}
+#top-hp-meta{display:flex;justify-content:space-between;font:700 10px system-ui;color:#fda4af;letter-spacing:0.9px;margin-top:5px;text-transform:uppercase}
+@keyframes heartPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.24)}}
 #vitals-hud{
   position:fixed;left:16px;bottom:48px;width:250px;
   background:rgba(10,20,30,0.9);border:1px solid rgba(114,239,221,0.35);
@@ -321,10 +382,16 @@ main button#walk:hover{filter:brightness(1.08)}
       <span id="top-hp-num">100 / 100</span>
     </div>
     <div id="top-hp-track"><div id="top-hp-fill"></div></div>
+    <div id="top-hp-meta"><span id="top-hp-status">VITALITY · OPTIMAL</span><span id="top-hp-shield-mini">SHIELD 100%</span></div>
   </div>
   <div id="wave-banner">
-    <div id="wave-title">LEVEL 1 · LAB ASSISTANTS</div>
-    <div id="wave-sub">Zombies Remaining: 6 · Score: 0</div>
+    <div id="wave-title">ENTER ANURAG UNIVERSITY GATE</div>
+    <div id="wave-sub">Walk forward inside the campus to begin Phase 1 (2:00 Survival)!</div>
+    <div id="wave-cols">
+      <div class="wave-col"><span class="wave-col-k">PHASE TIMER</span><span class="wave-col-v" id="wc-timer">2:00</span></div>
+      <div class="wave-col"><span class="wave-col-k">HOSTILES / KILLS</span><span class="wave-col-v" id="wc-kills">0 / 0</span></div>
+      <div class="wave-col"><span class="wave-col-k">SCORE</span><span class="wave-col-v" id="wc-score">0</span></div>
+    </div>
   </div>
   <div id="boss-bar-wrap">
     <div id="boss-bar-label"><span>CEO · EXECUTIVE BOSS</span><span id="boss-hp-text">1200 / 1200</span></div>
@@ -372,10 +439,17 @@ main button#walk:hover{filter:brightness(1.08)}
 <div id="intro-overlay">
   <div id="cine-top" class="cine-bar"></div>
   <div id="cine-bot" class="cine-bar"></div>
+  <div id="intro-progress-track"><div id="intro-progress-fill"></div></div>
   <div id="intro-story-box">
-    <div id="intro-kicker">ANURAG UNIVERSITY · EMERGENCY BROADCAST</div>
+    <div id="intro-crest"><span id="intro-crest-badge">AU</span><span id="intro-kicker">ANURAG UNIVERSITY · EMERGENCY BROADCAST</span></div>
     <h2 id="intro-headline">WELCOME TO ANURAG UNIVERSITY</h2>
+    <div id="intro-divider"></div>
     <div id="intro-sub">Venkatapur Campus · Aerial Reconnaissance</div>
+    <div id="intro-cols">
+      <div class="intro-col"><div class="intro-col-lbl">01 · SURVIVAL MISSION</div><div class="intro-col-txt">Walk through the Main Gate, survive 5 escalating 2-min phases &amp; defeat THE CEO.</div></div>
+      <div class="intro-col"><div class="intro-col-lbl">02 · TACTICAL ARSENAL</div><div class="intro-col-txt">Lightsaber [1], Pistol [2], Rifle [3], Shotgun [4] &amp; pickable Rods/Branches [E].</div></div>
+      <div class="intro-col"><div class="intro-col-lbl">03 · VR &amp; PC DEFENSE</div><div class="intro-col-txt">Left-Trigger / RMB raises Cyan Energy Shield · Space / Y to Jump · Swing in VR!</div></div>
+    </div>
   </div>
   <button id="btn-skip-intro">Skip Intro [Space]</button>
 </div>
@@ -9435,33 +9509,130 @@ const INTRO_BEATS = [
 
 function createVRStoryBanner() {
   if (ZGAME.vrStoryBanner) return ZGAME.vrStoryBanner;
-  const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
-  const g = c.getContext("2d");
-  g.fillStyle = "rgba(8,18,30,0.92)"; g.fillRect(0, 0, 1024, 256);
-  g.strokeStyle = "#72efdd"; g.lineWidth = 6; g.strokeRect(6, 6, 1012, 244);
-  g.fillStyle = "#fbbf24"; g.font = "bold 28px sans-serif"; g.textAlign = "center";
-  g.fillText("WELCOME TO ANURAG UNIVERSITY", 512, 68);
-  g.fillStyle = "#ffffff"; g.font = "bold 42px sans-serif";
-  g.fillText("SAVE YOURSELF FROM THE INFECTED FACULTY!", 512, 138);
-  g.fillStyle = "#a5d8ee"; g.font = "26px sans-serif";
-  g.fillText("Press A to Skip  ·  Swing Saber / Fire Guns / Right-Trigger for Shield", 512, 206);
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 320;
   const tex = new dn(c); tex.colorSpace = vt;
-  const mesh = new et(new _i(3.8, 0.95), new Yi({ map: tex, transparent: true, side: Gt }));
-  mesh.position.set(0, 2.0, -4.2);
+  const mesh = new et(new _i(4.0, 1.25), new Yi({ map: tex, transparent: true, side: Gt, depthTest: false }));
+  mesh.position.set(0, 1.95, -4.1);
+  mesh.renderOrder = 25;
+  mesh.userData = { canvas: c, ctx: c.getContext("2d"), tex, lastBeat: -1 };
   xt.add(mesh);
   ZGAME.vrStoryBanner = mesh;
   return mesh;
 }
 
+function redrawVRStoryBanner(beat, progress) {
+  const mesh = createVRStoryBanner();
+  const { ctx: g, tex } = mesh.userData;
+  g.clearRect(0, 0, 1024, 320);
+  const grad = g.createLinearGradient(0, 0, 1024, 320);
+  grad.addColorStop(0, "rgba(7,15,28,0.94)");
+  grad.addColorStop(1, "rgba(30,10,18,0.92)");
+  g.fillStyle = grad; g.fillRect(0, 0, 1024, 320);
+  g.strokeStyle = "#72efdd"; g.lineWidth = 5; g.strokeRect(5, 5, 1014, 310);
+  // Glowing AU Crest badge
+  g.fillStyle = "#ef4444"; g.fillRect(36, 26, 62, 34);
+  g.fillStyle = "#ffffff"; g.font = "900 22px sans-serif"; g.textAlign = "center";
+  g.fillText("AU", 67, 51);
+  g.fillStyle = "#fde047"; g.font = "800 24px sans-serif"; g.textAlign = "left";
+  g.fillText(beat.kicker, 114, 51);
+  // Headline
+  g.textAlign = "center";
+  g.fillStyle = "#ffffff"; g.font = "900 44px Georgia,serif";
+  g.fillText(beat.head, 512, 134);
+  // Accent divider
+  const dGrad = g.createLinearGradient(260, 0, 764, 0);
+  dGrad.addColorStop(0, "rgba(239,68,68,0)"); dGrad.addColorStop(0.5, "#fbbf24"); dGrad.addColorStop(1, "rgba(56,189,248,0)");
+  g.fillStyle = dGrad; g.fillRect(260, 154, 504, 4);
+  // Subtitle
+  g.fillStyle = "#cfeaf7"; g.font = "600 23px sans-serif";
+  g.fillText(beat.sub.slice(0, 78), 512, 202);
+  g.fillStyle = "#72efdd"; g.font = "700 20px sans-serif";
+  g.fillText("Press A to Skip  ·  L-Trigger: Energy Shield  ·  Swing Saber / R-Trigger: Fire", 512, 252);
+  // Live cinema progress bar
+  g.fillStyle = "rgba(255,255,255,0.16)"; g.fillRect(40, 286, 944, 10);
+  g.fillStyle = "#38bdf8"; g.fillRect(40, 286, Math.max(8, 944 * progress), 10);
+  tex.needsUpdate = true;
+}
+
+// Head-Locked VR Top-Left Floating Heart Health Visor HUD (attached to VR camera Mi!)
+function createVRTopLeftHealthHUD() {
+  if (ZGAME.vrTopLeftHud) return ZGAME.vrTopLeftHud;
+  const c = document.createElement("canvas"); c.width = 512; c.height = 192;
+  const tex = new dn(c); tex.colorSpace = vt;
+  const mesh = new et(new _i(0.24, 0.09), new Yi({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
+  // Positioned cleanly in the upper-left corner of the Meta Quest 3 VR field of view!
+  mesh.position.set(-0.24, 0.165, -0.72);
+  mesh.rotation.set(0.06, 0.22, 0);
+  mesh.renderOrder = 30;
+  mesh.visible = false;
+  mesh.userData = { canvas: c, ctx: c.getContext("2d"), tex, lastKey: "" };
+  Mi.add(mesh);
+  ZGAME.vrTopLeftHud = mesh;
+  return mesh;
+}
+
+function updateVRTopLeftHealthHUD() {
+  const hud = createVRTopLeftHealthHUD();
+  const show = Boolean(Ye.xr.isPresenting && ZGAME.active && !ZGAME.introPlaying && !ZGAME.gameOver);
+  hud.visible = show;
+  if (!show) return;
+  const hpInt = Math.ceil(ZGAME.hp);
+  const shInt = Math.ceil(ZGAME.shield);
+  const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
+  const timerStr = !ZGAME.campusEntered ? "GATE" : (lvl.isBoss ? "BOSS" : formatTimer(ZGAME.phaseTimer));
+  const key = `${hpInt}|${shInt}|${timerStr}|${ZGAME.kills}`;
+  if (hud.userData.lastKey === key) return;
+  hud.userData.lastKey = key;
+
+  const { ctx: g, tex } = hud.userData;
+  g.clearRect(0, 0, 512, 192);
+  // Glassmorphic dark panel with glowing crimson border
+  const low = ZGAME.hp <= 35;
+  g.fillStyle = low ? "rgba(48,10,18,0.92)" : "rgba(10,16,28,0.88)";
+  g.fillRect(6, 6, 500, 180);
+  g.strokeStyle = low ? "#ff1e38" : "rgba(255,77,109,0.88)";
+  g.lineWidth = 6; g.strokeRect(6, 6, 500, 180);
+
+  // Big Glowing Heart + 5 RPG Hearts + Numeric HP
+  const filled = Math.max(0, Math.min(5, Math.ceil(ZGAME.hp / 20)));
+  g.fillStyle = "#ff2e55"; g.font = "900 44px sans-serif"; g.textAlign = "left";
+  g.fillText("♥", 22, 58);
+  g.fillStyle = "#ff4d6d"; g.font = "900 34px sans-serif";
+  g.fillText("♥".repeat(filled) + "♡".repeat(5 - filled), 68, 54);
+  g.fillStyle = "#fff1f2"; g.font = "900 30px Consolas,monospace"; g.textAlign = "right";
+  g.fillText(`${hpInt}/${ZGAME.maxHp}`, 488, 54);
+
+  // Smooth Gradient HP Bar
+  const hpPct = Math.max(0, Math.min(1, ZGAME.hp / ZGAME.maxHp));
+  g.fillStyle = "rgba(255,255,255,0.16)"; g.fillRect(22, 74, 466, 22);
+  const hpGrad = g.createLinearGradient(22, 0, 488, 0);
+  hpGrad.addColorStop(0, "#ef4444"); hpGrad.addColorStop(0.5, "#f97316"); hpGrad.addColorStop(1, "#22c55e");
+  g.fillStyle = hpGrad; g.fillRect(22, 74, Math.max(4, 466 * hpPct), 22);
+
+  // Cyan Shield Mini Bar
+  const shPct = Math.max(0, Math.min(1, ZGAME.shield / 100));
+  g.fillStyle = "rgba(255,255,255,0.14)"; g.fillRect(22, 110, 466, 12);
+  g.fillStyle = "#38bdf8"; g.fillRect(22, 110, Math.max(2, 466 * shPct), 12);
+
+  // Clean 3-Column Bottom Status Row: SHIELD | TIMER | KILLS
+  g.font = "800 22px Consolas,monospace";
+  g.textAlign = "left"; g.fillStyle = "#72efdd"; g.fillText(`SHD ${shInt}%`, 22, 162);
+  g.textAlign = "center"; g.fillStyle = "#fde047"; g.fillText(`TIME ${timerStr}`, 262, 162);
+  g.textAlign = "right"; g.fillStyle = "#f8fafc"; g.fillText(`KILLS ${ZGAME.kills}`, 488, 162);
+  tex.needsUpdate = true;
+}
+
 function startStoryIntro() {
   ZGAME.introPlaying = true;
   ZGAME.introTime = 0;
+  ZGAME.lastIntroBeatIdx = -1;
   document.body.classList.add("intro-active");
   if (kt("intro-overlay")) kt("intro-overlay").classList.add("playing");
   // Hide 1st-person hands during aerial flyover
   fpHands.forEach(a => (a.root.visible = false));
   if (Ye.xr.isPresenting) {
     createVRStoryBanner().visible = true;
+    redrawVRStoryBanner(INTRO_BEATS[0], 0);
   }
   playSFX("levelup");
 }
@@ -9486,6 +9657,7 @@ function finishStoryIntro() {
     Mi.rotation.set(0, 0, 0);
   }
   syncWeaponVisuals();
+  updateVRTopLeftHealthHUD();
   playSFX("saber");
   showToast("ENTER THE CAMPUS GATE TO START LEVEL 1!", 2.8);
 }
@@ -9497,12 +9669,30 @@ function updateStoryIntro(dt) {
   ZGAME.introTime += dt;
   const t = Math.min(1, ZGAME.introTime / ZGAME.introDur);
 
-  // Update cinematic story captions
-  let beat = INTRO_BEATS[0];
-  for (const b of INTRO_BEATS) { if (ZGAME.introTime >= b.t) beat = b; }
-  if (kt("intro-kicker")) kt("intro-kicker").textContent = beat.kicker;
-  if (kt("intro-headline")) kt("intro-headline").textContent = beat.head;
-  if (kt("intro-sub")) kt("intro-sub").textContent = beat.sub;
+  // Update cinematic story captions with kinetic beat reveal + live progress bar!
+  let beatIdx = 0;
+  for (let i = 0; i < INTRO_BEATS.length; i++) { if (ZGAME.introTime >= INTRO_BEATS[i].t) beatIdx = i; }
+  const beat = INTRO_BEATS[beatIdx];
+  if (kt("intro-progress-fill")) kt("intro-progress-fill").style.width = `${(t * 100).toFixed(1)}%`;
+  if (ZGAME.lastIntroBeatIdx !== beatIdx) {
+    ZGAME.lastIntroBeatIdx = beatIdx;
+    if (kt("intro-kicker")) kt("intro-kicker").textContent = beat.kicker;
+    if (kt("intro-headline")) {
+      const hl = kt("intro-headline");
+      hl.textContent = beat.head;
+      hl.classList.remove("beat-anim");
+      void hl.offsetWidth;
+      hl.classList.add("beat-anim");
+    }
+    if (kt("intro-sub")) {
+      const sb = kt("intro-sub");
+      sb.textContent = beat.sub;
+      sb.classList.remove("beat-anim");
+      void sb.offsetWidth;
+      sb.classList.add("beat-anim");
+    }
+  }
+  if (Ye.xr.isPresenting) redrawVRStoryBanner(beat, t);
 
   // Target First-Person Spawn (Main Gate facing A-Block)
   const [_, endX, endZ, endYaw, endPitch = 0.07] = ld[0];
@@ -9604,6 +9794,7 @@ function startZombieGame(playIntro = false) {
 
 function stopZombieGame() {
   ZGAME.active = false;
+  if (ZGAME.vrTopLeftHud) ZGAME.vrTopLeftHud.visible = false;
   clearZombiesAndFX();
   for (const p of ZGAME.pickups) Ht.remove(p.root);
   ZGAME.pickups.length = 0;
@@ -10024,25 +10215,30 @@ function updateCombatHUD() {
   const aliveCount = ZGAME.zombies.filter(z => z.alive).length;
   if (!ZGAME.campusEntered) {
     kt("wave-title").textContent = "ENTER ANURAG UNIVERSITY GATE";
-    kt("wave-sub").textContent = "Walk forward inside the campus to begin Phase 1 (2:00 Survival)!";
+    if (kt("wc-timer")) kt("wc-timer").textContent = "WALK IN";
+    if (kt("wc-kills")) kt("wc-kills").textContent = `0 / 0`;
+    if (kt("wc-score")) kt("wc-score").textContent = `${ZGAME.score}`;
   } else {
     kt("wave-title").textContent = lvl.isBoss ? "FINAL BOSS · DEFEAT THE CEO" : `LEVEL ${lvl.level} · ${lvl.name.toUpperCase()}`;
-    kt("wave-sub").textContent = lvl.isBoss
-      ? `Active Enemies: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`
-      : `SURVIVE: ${formatTimer(ZGAME.phaseTimer)} · Active: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`;
+    if (kt("wc-timer")) kt("wc-timer").textContent = lvl.isBoss ? "BOSS FIGHT" : formatTimer(ZGAME.phaseTimer);
+    if (kt("wc-kills")) kt("wc-kills").textContent = `${aliveCount} / ${ZGAME.kills}`;
+    if (kt("wc-score")) kt("wc-score").textContent = `${ZGAME.score}`;
   }
   const hpPct = Math.max(0, (ZGAME.hp / ZGAME.maxHp) * 100);
   const hpTxt = `${Math.ceil(ZGAME.hp)} / ${ZGAME.maxHp}`;
   kt("hp-val").textContent = hpTxt;
   kt("hp-fill").style.width = `${hpPct}%`;
-  // Top-Left Heart Health Bar update!
+  // Top-Left Heart Health Bar update (PC + VR Visor)!
   if (kt("top-hp-num")) kt("top-hp-num").textContent = hpTxt;
   if (kt("top-hp-fill")) kt("top-hp-fill").style.width = `${hpPct}%`;
   if (kt("top-hp-hearts")) {
     const filled = Math.max(0, Math.min(5, Math.ceil(ZGAME.hp / 20)));
     kt("top-hp-hearts").textContent = "♥".repeat(filled) + "♡".repeat(5 - filled);
   }
+  if (kt("top-hp-status")) kt("top-hp-status").textContent = ZGAME.hp <= 35 ? "CRITICAL · FIND MEDKIT!" : (ZGAME.hp <= 65 ? "VITALITY · CAUTION" : "VITALITY · OPTIMAL");
+  if (kt("top-hp-shield-mini")) kt("top-hp-shield-mini").textContent = `SHIELD ${Math.ceil(ZGAME.shield)}%`;
   if (kt("top-hp-bar")) kt("top-hp-bar").classList.toggle("low-hp", ZGAME.hp <= 35);
+  updateVRTopLeftHealthHUD();
   kt("shield-val").textContent = `${Math.ceil(ZGAME.shield)}%${ZGAME.shieldBlocking ? " · BLOCKING" : ""}`;
   kt("shield-fill").style.width = `${ZGAME.shield}%`;
 
