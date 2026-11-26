@@ -130,14 +130,25 @@ main button#walk:hover{filter:brightness(1.08)}
 }
 #end-overlay{
   position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;
-  background:rgba(6,12,20,0.78);backdrop-filter:blur(8px);pointer-events:auto;
+  background:rgba(6,12,20,0.68);backdrop-filter:blur(4px);pointer-events:auto;
+}
+#end-overlay.won-mode{
+  background:radial-gradient(circle at center,rgba(10,24,40,0.22),rgba(6,12,20,0.52));
+  backdrop-filter:none;align-items:flex-end;padding-bottom:7vh;
 }
 #end-card{
-  width:min(420px,90vw);padding:26px 28px;border-radius:16px;text-align:center;
-  background:linear-gradient(160deg,rgba(14,28,42,0.98),rgba(24,16,24,0.96));
-  border:1px solid rgba(114,239,221,0.5);box-shadow:0 20px 55px rgba(0,0,0,0.7);
+  width:min(520px,92vw);padding:26px 28px;border-radius:16px;text-align:center;
+  background:linear-gradient(160deg,rgba(14,28,42,0.92),rgba(24,16,24,0.90));
+  border:1px solid rgba(114,239,221,0.55);box-shadow:0 20px 55px rgba(0,0,0,0.7);
 }
-#end-title{font:800 26px/1.2 system-ui;color:#ff6b6b;margin:0 0 8px}
+#end-title{font:900 28px/1.15 system-ui;color:#ff6b6b;margin:0 0 8px}
+#end-overlay.won-mode #end-title{
+  font:900 clamp(44px,6.5vw,76px)/1.05 Georgia,serif;
+  color:#fde047;letter-spacing:3px;
+  text-shadow:0 0 28px rgba(250,204,21,0.85),0 4px 16px rgba(0,0,0,0.85);
+}
+#end-sub{font:800 15px/1.3 system-ui;color:#72efdd;letter-spacing:1.4px;margin-bottom:8px;display:none}
+#end-overlay.won-mode #end-sub{display:block}
 #end-stats{font:600 14px/1.7 system-ui;color:#d6edf8;margin:12px 0 20px}
 #btn-restart-game{
   padding:11px 26px;border-radius:10px;border:none;cursor:pointer;
@@ -317,6 +328,7 @@ main button#walk:hover{filter:brightness(1.08)}
   <div id="end-overlay">
     <div id="end-card">
       <h2 id="end-title">OVERRUN!</h2>
+      <div id="end-sub">ANURAG UNIVERSITY IS SAVED · CELEBRATE!</div>
       <div id="end-stats"></div>
       <button id="btn-restart-game">Play Again [R]</button>
     </div>
@@ -7567,16 +7579,37 @@ function playSFX(kind) {
     gain.gain.setValueAtTime(0.24, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
     osc.connect(gain); osc.start(now); osc.stop(now + 0.25);
-  } else if (kind === "levelup" || kind === "pickup") {
-    const freqs = kind === "levelup" ? [440, 554, 659, 880] : [520, 740];
+  } else if (kind === "firework") {
+    // Realistic Firework Burst Boom + Sparkling Crackle!
+    const dur = 0.42;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      const env = Math.exp(-i / (d.length * 0.28));
+      const crackle = (i > d.length * 0.25 && Math.random() < 0.08) ? 1.8 : 1.0;
+      d[i] = (Math.random() * 2 - 1) * env * crackle;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const filt = ctx.createBiquadFilter(); filt.type = "lowpass";
+    filt.frequency.setValueAtTime(1600, now);
+    filt.frequency.exponentialRampToValueAtTime(320, now + dur);
+    gain.gain.setValueAtTime(0.32, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    src.connect(filt); filt.connect(gain); src.start(now);
+    const boom = ctx.createOscillator(), bg = ctx.createGain();
+    boom.type = "sine"; boom.frequency.setValueAtTime(115, now); boom.frequency.exponentialRampToValueAtTime(34, now + 0.22);
+    bg.gain.setValueAtTime(0.35, now); bg.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+    boom.connect(bg); bg.connect(ctx.destination); boom.start(now); boom.stop(now + 0.25);
+  } else if (kind === "levelup" || kind === "pickup" || kind === "victory") {
+    const freqs = kind === "victory" ? [523, 659, 784, 1046, 784, 1046] : kind === "levelup" ? [440, 554, 659, 880] : [520, 740];
     freqs.forEach((frq, idx) => {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = "triangle"; o.frequency.value = frq;
-      g.gain.setValueAtTime(0.13, now + idx * 0.08);
-      g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.22);
+      g.gain.setValueAtTime(0.15, now + idx * 0.11);
+      g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.11 + 0.30);
       o.connect(g); g.connect(ctx.destination);
-      o.start(now + idx * 0.08); o.stop(now + idx * 0.08 + 0.24);
+      o.start(now + idx * 0.11); o.stop(now + idx * 0.11 + 0.32);
     });
   }
 }
@@ -7745,6 +7778,9 @@ const ZGAME = {
   introDur: 10.5,
   introDoneOnce: false,
   vrStoryBanner: null,
+  vrWinBanner: null,
+  fireworks: [],
+  fireworkTimer: 0,
   hp: 100,
   maxHp: 100,
   shield: 100,
@@ -8219,6 +8255,91 @@ function clearZombiesAndFX() {
   ZGAME.projectiles.length = 0;
   for (const pt of ZGAME.particles) Ht.remove(pt.mesh);
   ZGAME.particles.length = 0;
+  for (const fw of ZGAME.fireworks) Ht.remove(fw.mesh);
+  ZGAME.fireworks.length = 0;
+  if (ZGAME.vrWinBanner) ZGAME.vrWinBanner.visible = false;
+}
+
+// Spectacular 3D Campus Victory Fireworks & Giant 3D "YOU WON!" Sky Banner (PC + Meta Quest 3!)
+const FW_COLORS = [0xfde047, 0x22d3ee, 0xff4d6d, 0x4ade80, 0xc084fc, 0xfb923c, 0xffffff];
+const fwSparkGeo = new fn(0.16, 6, 6);
+function launchCampusFirework() {
+  // Launch rockets from around A-Block Plaza, Courtyard, Volleyball Courts & Main Gate!
+  const spots = [[-3, 18], [-22, 20], [18, 20], [-14, 38], [12, 38], [-3, 4], [28, 8], [-30, 10]];
+  const [sx, sz] = spots[Math.floor(Math.random() * spots.length)];
+  const col = FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)];
+  const rocket = new et(new pn(0.08, 0.12, 0.75, 6), new Yi({ color: col }));
+  rocket.position.set(sx + (Math.random() - 0.5) * 10, groundAt(sx, sz) + 1.2, sz + (Math.random() - 0.5) * 10);
+  Ht.add(rocket);
+  ZGAME.fireworks.push({
+    mesh: rocket,
+    vy: 22 + Math.random() * 10,
+    targetY: 22 + Math.random() * 15,
+    color: col
+  });
+}
+
+function explodeFirework(pos, color) {
+  playSFX("firework");
+  const col2 = FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)];
+  const mat1 = new Yi({ color });
+  const mat2 = new Yi({ color: col2 });
+  for (let i = 0; i < 34; i++) {
+    const m = new et(fwSparkGeo, i % 3 === 0 ? mat2 : mat1);
+    m.position.copy(pos);
+    Ht.add(m);
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const spd = 7.5 + Math.random() * 9.5;
+    ZGAME.particles.push({
+      mesh: m,
+      vel: new A(Math.sin(phi) * Math.cos(theta) * spd, Math.cos(phi) * spd + 2.5, Math.sin(phi) * Math.sin(theta) * spd),
+      life: 1.15 + Math.random() * 0.55
+    });
+  }
+  spawnShockwave(new A(pos.x, pos.y, pos.z), color, 7.5);
+}
+
+function show3DWinSkyBanner() {
+  if (!ZGAME.vrWinBanner) {
+    const c = document.createElement("canvas"); c.width = 1024; c.height = 384;
+    const g = c.getContext("2d");
+    g.fillStyle = "rgba(8,18,32,0.88)"; g.fillRect(0, 0, 1024, 384);
+    g.strokeStyle = "#fde047"; g.lineWidth = 10; g.strokeRect(8, 8, 1008, 368);
+    g.fillStyle = "#fde047"; g.font = "900 132px Georgia,serif"; g.textAlign = "center";
+    g.fillText("YOU WON!", 512, 178);
+    g.fillStyle = "#72efdd"; g.font = "bold 42px sans-serif";
+    g.fillText("ANURAG UNIVERSITY IS SAVED!", 512, 262);
+    g.fillStyle = "#ffffff"; g.font = "bold 28px sans-serif";
+    g.fillText("ALL 6 PHASES & THE CEO DEFEATED · PRESS R / B TO PLAY AGAIN", 512, 332);
+    const tex = new dn(c); tex.colorSpace = vt;
+    const mesh = new et(new _i(16, 6), new Yi({ map: tex, transparent: true, side: Gt }));
+    mesh.position.set(-3, 15.5, 18);
+    Ht.add(mesh);
+    ZGAME.vrWinBanner = mesh;
+  }
+  ZGAME.vrWinBanner.visible = true;
+}
+
+function updateVictoryFireworks(dt) {
+  if (!ZGAME.victory) return;
+  ZGAME.fireworkTimer -= dt;
+  if (ZGAME.fireworkTimer <= 0) {
+    ZGAME.fireworkTimer = 0.42 + Math.random() * 0.45;
+    launchCampusFirework();
+  }
+  for (let i = ZGAME.fireworks.length - 1; i >= 0; i--) {
+    const fw = ZGAME.fireworks[i];
+    fw.mesh.position.y += fw.vy * dt;
+    if (fw.mesh.position.y >= fw.targetY) {
+      explodeFirework(fw.mesh.position.clone(), fw.color);
+      Ht.remove(fw.mesh);
+      ZGAME.fireworks.splice(i, 1);
+    }
+  }
+  if (ZGAME.vrWinBanner && ZGAME.vrWinBanner.visible) {
+    ZGAME.vrWinBanner.lookAt(xt.position.x, 15.5, xt.position.z);
+  }
 }
 
 function formatTimer(sec) {
@@ -8735,11 +8856,19 @@ function triggerShieldBash() {
 function showEndScreen(won) {
   const ov = kt("end-overlay");
   if (!ov) return;
-  kt("end-title").textContent = won ? "CAMPUS SAVED · VICTORY!" : "OVERRUN BY FACULTY ZOMBIES";
-  kt("end-title").style.color = won ? "#4ade80" : "#ff6b6b";
+  ov.classList.toggle("won-mode", !!won);
+  kt("end-title").textContent = won ? "YOU WON!" : "OVERRUN BY FACULTY ZOMBIES";
+  kt("end-title").style.color = won ? "#fde047" : "#ff6b6b";
   const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
-  kt("end-stats").innerHTML = `Level Reached: <b>Level ${lvl.level} (${lvl.name})</b><br>Total Kills: <b>${ZGAME.kills}</b> · Headshots: <b>${ZGAME.headshots}</b><br>Best Kill Streak: <b>${ZGAME.bestCombo}x</b><br>Final Score: <b style="color:#fde047">${ZGAME.score}</b>`;
+  kt("end-stats").innerHTML = `Phase Reached: <b>Level ${lvl.level} (${lvl.name})</b><br>Total Kills: <b>${ZGAME.kills}</b> · Headshots: <b>${ZGAME.headshots}</b><br>Best Kill Streak: <b>${ZGAME.bestCombo}x</b><br>Final Score: <b style="color:#fde047">${ZGAME.score}</b>`;
   ov.style.display = "flex";
+  if (won) {
+    // Launch immediate celebratory campus fireworks volley + 3D sky banner!
+    show3DWinSkyBanner();
+    ZGAME.fireworkTimer = 0.2;
+    for (let k = 0; k < 4; k++) launchCampusFirework();
+    playSFX("victory");
+  }
 }
 if (kt("btn-restart-game")) kt("btn-restart-game").onclick = () => { startZombieGame(); cd(); };
 
@@ -8838,7 +8967,7 @@ function getVRRightAimRay() {
 function updateZombieGame(dt, timeSec) {
   if (!ZGAME.active) return;
   if (ZGAME.introPlaying) { updateStoryIntro(dt); return; }
-  if (!En && !Ye.xr.isPresenting) return;
+  if (!En && !Ye.xr.isPresenting && !ZGAME.victory) return;
 
   if (ZGAME.toastTimer > 0) {
     ZGAME.toastTimer -= dt;
@@ -9159,6 +9288,9 @@ function updateZombieGame(dt, timeSec) {
       ZGAME.projectiles.splice(i, 1);
     }
   }
+
+  // Update 3D Campus Victory Fireworks if player has won!
+  if (ZGAME.victory) updateVictoryFireworks(dt);
 
   // Update Particles, Shell Casings, Saber Trails & Tracers
   for (let i = ZGAME.particles.length - 1; i >= 0; i--) {
