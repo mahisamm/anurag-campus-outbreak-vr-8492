@@ -6221,12 +6221,100 @@ for (let [bx, by, bz] of [[-76.8, 1.6, 68.7], [-77.3, 1.9, 69.4], [-77.9, 1.4, 6
     he(0x1f2937, -51, sh * 0.5, 14.0 + s * 0.35, 8.2, sh, 0.38);
   }
 
-  // C-Block Front Basketball Court Mosaic "ANURAG UNIVERSITY" Wall & Colored Pillars (wO 06:52, 07:12)
-  he(0xd6d1c4, -46.5, 1.3, 56.5, 11.2, 2.6, 0.5);
-  ys(["ANURAG UNIVERSITY", "SPORTS & RECREATION PLAZA"], -46.5, 1.45, 56.2, 8.6, 1.55, "#e7e2d4", "#1e293b", Math.PI);
-  [0xf97316, 0x2563eb, 0xdc2626, 0xeab308].forEach((col, i) => {
-    he(col, -54.5 + i * 3.8, 1.85, 54.8, 0.62, 3.7, 0.62);
-  });
+  // C-Block Front Basketball Court (x = -45.5, z = 52.0, 9.8m x 15.2m — wO 06:52, 07:02, 07:12!)
+  (function() {
+    const cx = -45.5, cz = 52.0, cw = 9.8, cd = 15.2;
+    // 1. Crisp High-Res Painted Basketball Court Surface (Center AU Logo, 3-Point Arcs, Keys & Yellow Free-Throw Circles!)
+    const c = document.createElement("canvas"); c.width = 512; c.height = 768;
+    const g = c.getContext("2d");
+    g.fillStyle = "#1565a8"; g.fillRect(0, 0, 512, 768);
+    // Subtle weathered court concrete texture
+    g.fillStyle = "rgba(255,255,255,0.035)";
+    for (let i = 0; i < 600; i++) g.fillRect((i * 83) % 512, (i * 127) % 768, 12, 4);
+    // Outer white boundary & center half-court line
+    g.strokeStyle = "#ffffff"; g.lineWidth = 8;
+    g.strokeRect(18, 18, 476, 732);
+    g.beginPath(); g.moveTo(18, 384); g.lineTo(494, 384); g.stroke();
+    // Center circle with crisp AU logo (matching wO 07:02 & 07:12!)
+    g.fillStyle = "#f1f5f9";
+    g.beginPath(); g.arc(256, 384, 62, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#e11d48"; g.lineWidth = 6; g.stroke();
+    g.fillStyle = "#1e3a8a"; g.font = "900 54px 'Segoe UI',sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText("AU", 256, 386);
+    // Both ends: Paint Key, Golden-Yellow Free-Throw Semicircle & 3-Point Arc!
+    for (let end of [0, 1]) {
+      const yBase = end === 0 ? 18 : 750;
+      const dir = end === 0 ? 1 : -1;
+      // Red/terracotta paint key
+      g.fillStyle = "#b91c1c";
+      g.fillRect(184, end === 0 ? 18 : 750 - 152, 144, 152);
+      g.strokeStyle = "#ffffff"; g.lineWidth = 6;
+      g.strokeRect(184, end === 0 ? 18 : 750 - 152, 144, 152);
+      // Iconic golden-yellow free-throw semicircle (wO 07:02!)
+      g.fillStyle = "#eab308";
+      g.beginPath();
+      g.arc(256, yBase + dir * 152, 54, end === 0 ? 0 : Math.PI, end === 0 ? Math.PI : Math.PI * 2);
+      g.fill(); g.stroke();
+      // White 3-point arc
+      g.beginPath();
+      g.arc(256, yBase + dir * 48, 192, end === 0 ? 0.14 * Math.PI : 1.14 * Math.PI, end === 0 ? 0.86 * Math.PI : 1.86 * Math.PI);
+      g.stroke();
+    }
+    const courtTex = new dn(c); courtTex.colorSpace = vt;
+    const courtMesh = new et(new _i(cw, cd), new Jt({ map: courtTex, roughness: 0.72 }));
+    courtMesh.rotation.x = -Math.PI / 2;
+    courtMesh.position.set(cx, 0.242, cz);
+    courtMesh.receiveShadow = true;
+    Ht.add(courtMesh);
+
+    // 2. Two Detailed Blue Steel Curved-Neck Basketball Hoops (North z = 43.8 & South z = 60.2, facing inward!)
+    const poleBlue = new Jt({ color: 0x1d4ed8, roughness: 0.35, metalness: 0.65 });
+    const rimOrange = new Jt({ color: 0xea580c, roughness: 0.35, metalness: 0.55 });
+    const glassBackMat = new Jt({ color: 0xe2f4ff, transparent: true, opacity: 0.52, roughness: 0.08, metalness: 0.35 });
+    const netWhite = new Jt({ color: 0xf8fafc, roughness: 0.85, wireframe: true });
+    for (let dir of [-1, 1]) {
+      const hz = cz + dir * 8.15; // Just behind each baseline on the red apron
+      // Heavy blue steel upright post + black safety padding
+      let post = new et(new pn(0.11, 0.13, 3.65, 12), poleBlue);
+      post.position.set(cx, 1.85, hz); post.castShadow = true; Ht.add(post);
+      let pad = new et(new pn(0.16, 0.16, 1.6, 10), new Jt({ color: 0x111827, roughness: 0.85 }));
+      pad.position.set(cx, 1.05, hz); Ht.add(pad);
+      // Overhead boom arm extending inward over the baseline
+      let boom = new et(new Ni(0.14, 0.14, 1.45), poleBlue);
+      boom.position.set(cx, 3.55, hz - dir * 0.68); Ht.add(boom);
+      // Tempered glass backboard + crisp white perimeter frame & orange shooter's square
+      const bz = hz - dir * 1.38;
+      let board = new et(new Ni(1.85, 1.12, 0.07), glassBackMat);
+      board.position.set(cx, 3.45, bz); Ht.add(board);
+      he(0xffffff, cx, 4.02, bz, 1.9, 0.06, 0.09);
+      he(0xffffff, cx, 2.88, bz, 1.9, 0.06, 0.09);
+      he(0xffffff, cx - 0.92, 3.45, bz, 0.06, 1.16, 0.09);
+      he(0xffffff, cx + 0.92, 3.45, bz, 0.06, 1.16, 0.09);
+      he(0xea580c, cx, 3.22, bz - dir * 0.04, 0.56, 0.42, 0.02);
+      // Bright orange steel basketball rim + hanging white net!
+      const rz = bz - dir * 0.34;
+      let rim = new et(new gn(0.24, 0.025, 8, 18), rimOrange);
+      rim.rotation.x = Math.PI / 2; rim.position.set(cx, 3.05, rz); Ht.add(rim);
+      let net = new et(new pn(0.23, 0.14, 0.44, 12, 3, true), netWhite);
+      net.position.set(cx, 2.82, rz); Ht.add(net);
+    }
+
+    // 3. Orange Basketball resting near center court
+    let bball = new et(new fn(0.15, 12, 10), new Jt({ color: 0xea580c, roughness: 0.65 }));
+    bball.position.set(cx + 0.8, 0.39, cz + 0.5); bball.castShadow = true; Ht.add(bball);
+
+    // 4. Stepped Concrete Viewing Gallery + Mosaic "ANURAG UNIVERSITY" Wall cleanly BEHIND South baseline (z = 63.4)
+    for (let st = 0; st < 3; st++) {
+      he(0xcbd5e1, cx, 0.16 + st * 0.22, 61.6 + st * 0.48, 12.6, 0.24, 0.48);
+    }
+    he(0xd6d1c4, cx, 1.45, 63.4, 12.2, 2.6, 0.5);
+    ys(["ANURAG UNIVERSITY", "BASKETBALL & SPORTS PLAZA"], cx, 1.6, 63.1, 9.2, 1.55, "#e7e2d4", "#1e293b", Math.PI);
+
+    // 5. Iconic Colorful Orange/Blue/Red/Yellow Architectural Pillars cleanly along the EAST sideline (x = -37.2, off the court!)
+    [0xf97316, 0x2563eb, 0xdc2626, 0xeab308].forEach((col, i) => {
+      he(col, -37.2, 1.85, 45.8 + i * 4.1, 0.62, 3.7, 0.62);
+    });
+  })();
 
   // Cricket Stadium Wide Red-Clay Circular Athletics Running Track (nK 01:08 aerial!)
   const trackRing = new et(new xa(27.2, 33.5, 48), new Jt({ color: 0xb85d38, roughness: 0.92, side: Gt }));
