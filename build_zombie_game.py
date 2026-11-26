@@ -12,17 +12,17 @@ SRC_HTML = os.path.join(ROOT, "Play-PC.html")
 BACKUP_HTML = os.path.join(ROOT, "Play-PC-Explorer-Backup.html")
 ASSETS_JSON = os.path.join(ROOT, "zombie_assets.json")
 MURAL_JPG = os.path.join(ROOT, "dblock_mural_real.jpg")
-THROWBALL_MURAL_JPG = os.path.join(ROOT, "throwball_mural_real.jpg")
+CBLOCK_MURAL_JPG = os.path.join(ROOT, "cblock_mural_real.jpg")
 
 dblock_mural_uri = ""
 if os.path.exists(MURAL_JPG):
     with open(MURAL_JPG, "rb") as mf:
         dblock_mural_uri = "data:image/jpeg;base64," + base64.b64encode(mf.read()).decode("ascii")
 
-throwball_mural_uri = ""
-if os.path.exists(THROWBALL_MURAL_JPG):
-    with open(THROWBALL_MURAL_JPG, "rb") as mf:
-        throwball_mural_uri = "data:image/jpeg;base64," + base64.b64encode(mf.read()).decode("ascii")
+cblock_mural_uri = ""
+if os.path.exists(CBLOCK_MURAL_JPG):
+    with open(CBLOCK_MURAL_JPG, "rb") as mf:
+        cblock_mural_uri = "data:image/jpeg;base64," + base64.b64encode(mf.read()).decode("ascii")
 
 # Make sure we always patch from the clean original Explorer backup if it exists
 if not os.path.exists(BACKUP_HTML):
@@ -3411,19 +3411,19 @@ THROWBALL_COURT_JS = f'''
   he(0xb91c1c, cx + 5.8, 2.30, cz - cd/2 - 1.6, 0.38, 0.24, 0.98); // Red top crown cap
   ys(["AU CAMPUS", "D-BLOCK  >", "THROWBALL", "A-BLOCK  <"], cx + 5.62, 1.22, cz - cd/2 - 1.6, 0.82, 1.65, "#1f242b", "#f8fafc", -Math.PI / 2);
 
-  // Yellow-Framed Street-Art Mural on the Adjacent East End Wall of B-Block (visible across Throwball Court!)
-  const tbUri = "{throwball_mural_uri}";
-  if (tbUri) {{
-    const mc = document.createElement("canvas"); mc.width = 384; mc.height = 512;
+  // Iconic Full-Wall Street-Art Mural on C-Block North Wall (x = -61.5, z = 23.88, facing NORTH straight toward B-Block!)
+  const cbUri = "{cblock_mural_uri}";
+  if (cbUri) {{
+    const mc = document.createElement("canvas"); mc.width = 512; mc.height = 640;
     const mg = mc.getContext("2d");
-    mg.fillStyle = "#e6d85c"; mg.fillRect(0, 0, 384, 512);
+    mg.fillStyle = "#dfd2a6"; mg.fillRect(0, 0, 512, 640);
     const mt = new dn(mc); mt.colorSpace = vt;
-    const mim = new Image(); mim.src = tbUri;
-    mim.onload = () => {{ mg.drawImage(mim, 0, 0, 384, 512); mt.needsUpdate = true; }};
-    const tbMural = new et(new _i(7.6, 10.2), new Jt({{ map: mt, roughness: 0.52 }}));
-    tbMural.rotation.y = Math.PI / 2;
-    tbMural.position.set(-36.68, 5.4, 8.2);
-    Ht.add(tbMural);
+    const mim = new Image(); mim.src = cbUri;
+    mim.onload = () => {{ mg.drawImage(mim, 0, 0, 512, 640); mt.needsUpdate = true; }};
+    const cbMural = new et(new _i(8.45, 10.9), new Jt({{ map: mt, roughness: 0.48 }}));
+    cbMural.rotation.y = Math.PI; // Faces -Z (North, straight towards B-Block!)
+    cbMural.position.set(-61.5, 5.45, 23.88);
+    Ht.add(cbMural);
   }}
 }})();
 '''
@@ -3561,10 +3561,10 @@ if AB_PATHWAY_JS not in html:
         1
     )
 
-# Add "A-Block & B/D-Block Palm Pathway" viewpoint to ld[] stops!
+# Add "A-Block & B/D-Block Palm Pathway" and "C-Block Mural (Facing B-Block)" viewpoints to ld[] stops!
 html = html.replace(
     '["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],',
-    '["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],\n  ["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],',
+    '["D Block · Throwball Court", -54.5, 29.5, -0.68, 0.08, 0],\n  ["C-Block · Iconic Street-Art Mural", -61.5, 13.8, Math.PI, 0.16, 0],\n  ["A-Block & B/D-Block Palm Pathway", -31.2, 13.5, 0.0, 0.06, 0],',
     1
 )
 
