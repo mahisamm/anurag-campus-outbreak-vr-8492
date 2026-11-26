@@ -201,6 +201,25 @@ main button#walk:hover{filter:brightness(1.08)}
 #boss-bar-label{font:800 12px system-ui;color:#fbbf24;letter-spacing:1.2px;display:flex;justify-content:space-between;margin-bottom:5px}
 #boss-bar-bg{height:12px;background:rgba(255,255,255,0.12);border-radius:6px;overflow:hidden}
 #boss-bar-fill{height:100%;width:100%;background:linear-gradient(90deg,#dc2626,#f59e0b);transition:width .12s}
+#top-hp-bar{
+  position:fixed;top:52px;left:16px;z-index:26;width:255px;
+  padding:8px 12px;border-radius:12px;
+  background:rgba(12,20,30,0.92);border:1px solid rgba(248,113,113,0.52);
+  box-shadow:0 8px 22px rgba(0,0,0,0.48);backdrop-filter:blur(10px);
+}
+#top-hp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+#top-hp-left{display:flex;align-items:center;gap:7px}
+#heart-icon{
+  font-size:18px;line-height:1;color:#ff3b5c;
+  text-shadow:0 0 10px rgba(255,59,92,0.85);
+  display:inline-block;animation:heartPulse 1.4s ease-in-out infinite;
+}
+#top-hp-bar.low-hp #heart-icon{animation:heartPulse 0.45s ease-in-out infinite;color:#ff1e38}
+#top-hp-hearts{font-size:13px;letter-spacing:2px;color:#ff4d6d;text-shadow:0 0 6px rgba(255,77,109,0.6)}
+#top-hp-num{font:800 12.5px 'Consolas',monospace;color:#fef2f2}
+#top-hp-track{height:10px;background:rgba(255,255,255,0.14);border-radius:6px;overflow:hidden}
+#top-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ef4444,#f97316,#22c55e);transition:width .14s}
+@keyframes heartPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
 #vitals-hud{
   position:fixed;left:16px;bottom:48px;width:250px;
   background:rgba(10,20,30,0.9);border:1px solid rgba(114,239,221,0.35);
@@ -293,6 +312,16 @@ main button#walk:hover{filter:brightness(1.08)}
 <div id="screen-flash"></div>
 <div id="hit-marker"></div>
 <div id="combat-hud">
+  <div id="top-hp-bar">
+    <div id="top-hp-row">
+      <div id="top-hp-left">
+        <span id="heart-icon">♥</span>
+        <span id="top-hp-hearts">♥♥♥♥♥</span>
+      </div>
+      <span id="top-hp-num">100 / 100</span>
+    </div>
+    <div id="top-hp-track"><div id="top-hp-fill"></div></div>
+  </div>
   <div id="wave-banner">
     <div id="wave-title">LEVEL 1 · LAB ASSISTANTS</div>
     <div id="wave-sub">Zombies Remaining: 6 · Score: 0</div>
@@ -7215,7 +7244,7 @@ window.onkeydown = (r) => {
     if (r.code === "KeyF") { ZGAME.keyShieldDown = true; return; }
     if (r.code === "Space") {
       if (ZGAME.introPlaying) { finishStoryIntro(); return; }
-      if (ZGAME.jumpY === 0) { ZGAME.jumpVel = 7.2; return; }
+      triggerPlayerJump(); return;
     }
     if (r.code === "KeyR") { if (ZGAME.gameOver || ZGAME.victory) { startZombieGame(); cd(); } else { triggerReload(); } return; }
     if (r.code === "KeyX" && (ZGAME.gameOver || ZGAME.victory)) { enterExploreMode(); return; }
@@ -7259,8 +7288,9 @@ function updateWristDisplay(){
     ctx.fillStyle="#0b1824";ctx.fillRect(0,0,512,256);
     ctx.fillStyle="#ff6b6b";ctx.font="bold 30px sans-serif";
     ctx.fillText(ZGAME.gameOver?"OVERRUN! PRESS B":`LVL ${lvl.level}: ${lvl.badge}  ${timerStr}`,16,42,480);
-    ctx.fillStyle="#4ade80";ctx.font="bold 28px sans-serif";
-    ctx.fillText(`HP: ${Math.ceil(ZGAME.hp)}   SHIELD: ${Math.ceil(ZGAME.shield)}%`,16,92,480);
+    ctx.fillStyle="#ff4d6d";ctx.font="bold 28px sans-serif";
+    const hHearts = "♥".repeat(Math.max(0, Math.min(5, Math.ceil(ZGAME.hp / 20))));
+    ctx.fillText(`${hHearts} ${Math.ceil(ZGAME.hp)}   SHIELD: ${Math.ceil(ZGAME.shield)}%`,16,92,480);
     ctx.fillStyle="#72efdd";ctx.font="bold 26px sans-serif";
     ctx.fillText(`${w.name}`,16,142,480);
     ctx.fillStyle="#fde047";ctx.font="bold 28px monospace";
@@ -7373,6 +7403,10 @@ function syncControllerHands(frame,space,sources){
         if(hand.source===source && pressed && !hand.buttonDown){
           if(ZGAME.gameOver || ZGAME.victory) enterExploreMode();
           else { const tm=kt("time-mode"); tm.selectedIndex=(tm.selectedIndex+1)%tm.options.length; tm.dispatchEvent(new Event("change")); }
+        }
+        // Y button: Jump in VR!
+        if(hand.source===source && upper && !hand.upperDown){
+          triggerPlayerJump();
         }
       }
       hand.trigDown=trigDown; hand.gripDown=gripDown;
@@ -7589,6 +7623,21 @@ function playSFX(kind) {
     gain.gain.setValueAtTime(0.24, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
     osc.connect(gain); osc.start(now); osc.stop(now + 0.25);
+  } else if (kind === "jump" || kind === "land") {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    if (kind === "jump") {
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(420, now + 0.14);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    } else {
+      osc.frequency.setValueAtTime(115, now);
+      osc.frequency.exponentialRampToValueAtTime(42, now + 0.12);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    }
+    osc.connect(gain); osc.start(now); osc.stop(now + 0.17);
   } else if (kind === "firework") {
     // Realistic Firework Burst Boom + Sparkling Crackle!
     const dur = 0.42;
@@ -8966,6 +9015,17 @@ function damagePlayer(amount) {
   updateCombatHUD();
 }
 
+function triggerPlayerJump() {
+  if (!ZGAME.active || ZGAME.introPlaying || ZGAME.gameOver || ZGAME.jumpY > 0.02) return;
+  ZGAME.jumpVel = 7.6;
+  playSFX("jump");
+  pulseHaptics("left", 0.35, 45);
+  pulseHaptics("right", 0.35, 45);
+  const px = Ye.xr.isPresenting ? oi.x : xt.position.x;
+  const pz = Ye.xr.isPresenting ? oi.z : xt.position.z;
+  spawnBurst(new A(px, groundAt(px, pz) + 0.08, pz), 0xcbd5e1, 6, 2.4);
+}
+
 function updateCombatHUD() {
   if (!ZGAME.active) return;
   const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
@@ -8979,8 +9039,18 @@ function updateCombatHUD() {
       ? `Active Enemies: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`
       : `SURVIVE: ${formatTimer(ZGAME.phaseTimer)} · Active: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`;
   }
-  kt("hp-val").textContent = `${Math.ceil(ZGAME.hp)} / ${ZGAME.maxHp}`;
-  kt("hp-fill").style.width = `${(ZGAME.hp / ZGAME.maxHp) * 100}%`;
+  const hpPct = Math.max(0, (ZGAME.hp / ZGAME.maxHp) * 100);
+  const hpTxt = `${Math.ceil(ZGAME.hp)} / ${ZGAME.maxHp}`;
+  kt("hp-val").textContent = hpTxt;
+  kt("hp-fill").style.width = `${hpPct}%`;
+  // Top-Left Heart Health Bar update!
+  if (kt("top-hp-num")) kt("top-hp-num").textContent = hpTxt;
+  if (kt("top-hp-fill")) kt("top-hp-fill").style.width = `${hpPct}%`;
+  if (kt("top-hp-hearts")) {
+    const filled = Math.max(0, Math.min(5, Math.ceil(ZGAME.hp / 20)));
+    kt("top-hp-hearts").textContent = "♥".repeat(filled) + "♡".repeat(5 - filled);
+  }
+  if (kt("top-hp-bar")) kt("top-hp-bar").classList.toggle("low-hp", ZGAME.hp <= 35);
   kt("shield-val").textContent = `${Math.ceil(ZGAME.shield)}%${ZGAME.shieldBlocking ? " · BLOCKING" : ""}`;
   kt("shield-fill").style.width = `${ZGAME.shield}%`;
 
@@ -9105,12 +9175,22 @@ function updateZombieGame(dt, timeSec) {
   }
   if (ZGAME.shake > 0) ZGAME.shake = Math.max(0, ZGAME.shake - dt * 1.4);
 
-  // PC Jump Physics
-  if (!Ye.xr.isPresenting && bo.value === "zombie") {
+  // Jump Physics with Takeoff & Landing Effects (Works on BOTH PC Space & Meta Quest 3 Y button!)
+  if (bo.value === "zombie") {
     if (ZGAME.jumpY > 0 || ZGAME.jumpVel !== 0) {
       ZGAME.jumpY += ZGAME.jumpVel * dt;
       ZGAME.jumpVel -= 19.5 * dt;
-      if (ZGAME.jumpY <= 0) { ZGAME.jumpY = 0; ZGAME.jumpVel = 0; }
+      if (ZGAME.jumpY <= 0) {
+        ZGAME.jumpY = 0;
+        ZGAME.jumpVel = 0;
+        ZGAME.shake = Math.max(ZGAME.shake, 0.055);
+        playSFX("land");
+        pulseHaptics("left", 0.45, 55);
+        pulseHaptics("right", 0.45, 55);
+        const lpx = Ye.xr.isPresenting ? oi.x : xt.position.x;
+        const lpz = Ye.xr.isPresenting ? oi.z : xt.position.z;
+        spawnShockwave(new A(lpx, groundAt(lpx, lpz), lpz), 0x94a3b8, 1.8);
+      }
     }
   }
   const targetDeploy = ZGAME.shieldBlocking ? 1.0 : 0.0;
@@ -9556,7 +9636,7 @@ Ye.setAnimationLoop((r,frame) => {
   }
 
   const newGround=groundAt(oi.x,oi.z);
-  if(!ZGAME.introPlaying) xt.position.y=followGround?newGround:Math.max(xt.position.y,newGround);
+  if(!ZGAME.introPlaying) xt.position.y=(followGround?newGround:Math.max(xt.position.y,newGround))+(Ye.xr.isPresenting&&ZGAME.active?ZGAME.jumpY:0);
   let isWalking = moveMag > 0.05 && xt.position.y < 0.5;
   let strideRate = isSprint ? 12.5 : 8.5;
   if (moveMag > 0.05) {
