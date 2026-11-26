@@ -942,8 +942,8 @@ function createFacultyZombie(lvlDef, x, z) {
       upper.position.set(0, -0.32, 0);
       sh.add(upper);
     }
-    // Natural outstretched zombie arm pose (bringing A-pose arms smoothly forward!)
-    sh.rotation.set(-1.12, 0, side[0] * 0.48);
+    // Swing A-pose arms (+X/-X) forward toward +Z so both arms reach straight out toward the player!
+    sh.rotation.set(-0.22, -side[0] * 1.28, -side[0] * 0.42);
     root.add(sh);
     arms.push(sh);
   }
@@ -1568,9 +1568,9 @@ function updateZombieGame(dt, timeSec) {
     z.idCardPivot.rotation.z = -Math.sin(z.phase) * 0.22;
     z.idCardPivot.rotation.x = -0.18;
 
-    const lunge = z.attackCd > 0.65 ? Math.sin((z.attackCd - 0.65) * 9) * 0.5 : 0;
-    z.arms[0].rotation.x = -1.12 + Math.sin(z.phase) * 0.16 - lunge;
-    z.arms[1].rotation.x = -1.12 - Math.sin(z.phase) * 0.16 - lunge;
+    const lunge = z.attackCd > 0.65 ? Math.sin((z.attackCd - 0.65) * 9) * 0.45 : 0;
+    z.arms[0].rotation.z = 0.42 + Math.sin(z.phase) * 0.14 + lunge;
+    z.arms[1].rotation.z = -0.42 - Math.sin(z.phase) * 0.14 - lunge;
 
     // Billboard HP bar toward camera
     if (z.hpBarBg.visible) {
