@@ -3420,9 +3420,11 @@ THROWBALL_COURT_JS = f'''
     const mt = new dn(mc); mt.colorSpace = vt;
     const mim = new Image(); mim.src = cbUri;
     mim.onload = () => {{ mg.drawImage(mim, 0, 0, 512, 640); mt.needsUpdate = true; }};
-    const cbMural = new et(new _i(8.45, 10.9), new Jt({{ map: mt, roughness: 0.48 }}));
+    // Clean plastered mural backing slab sitting flush in front of pilasters so ZERO ledges clip the painting!
+    he(0xdfd2a6, -61.5, 5.45, 23.74, 8.56, 10.95, 0.44);
+    const cbMural = new et(new _i(8.48, 10.9), new Jt({{ map: mt, roughness: 0.48 }}));
     cbMural.rotation.y = Math.PI; // Faces -Z (North, straight towards B-Block!)
-    cbMural.position.set(-61.5, 5.45, 23.88);
+    cbMural.position.set(-61.5, 5.45, 23.50);
     Ht.add(cbMural);
   }}
 }})();
