@@ -726,6 +726,8 @@ const ZGAME = {
   gameOver: false,
   victory: false,
   waveDelay: 0,
+  phaseTimer: 120,
+  spawnTimer: 2.5,
   bossSummonedMinions: false,
   vrPrevRightPos: new A(),
   vrPrevTipPos: new A(),
@@ -1135,16 +1137,33 @@ function clearZombiesAndFX() {
   ZGAME.particles.length = 0;
 }
 
+function formatTimer(sec) {
+  const s = Math.max(0, Math.ceil(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${r < 10 ? "0" : ""}${r}`;
+}
+
 function spawnZombieWave(levelIdx) {
   ZGAME.levelIdx = levelIdx;
   ZGAME.bossSummonedMinions = false;
   const lvl = ZOMBIE_LEVELS[levelIdx];
+  ZGAME.phaseTimer = lvl.isBoss ? 0 : 120; // 2 minutes (120s) to survive each phase 1-5; Boss phase until CEO is defeated!
+  ZGAME.spawnTimer = 2.8;
+
+  // Respawn campus medkits each phase so players can scavenge across campus
+  for (const mk of ZGAME.medkits) { mk.active = true; mk.root.visible = true; }
+
   const px = xt.position.x, pz = xt.position.z;
-  for (let i = 0; i < lvl.count; i++) {
-    const [sx, sz] = findZombieSpawnAround(px, pz, lvl.isBoss ? 22 : 16, lvl.isBoss ? 28 : 34);
+  const initialCount = lvl.isBoss ? 1 : Math.min(5, lvl.count);
+  for (let i = 0; i < initialCount; i++) {
+    const [sx, sz] = findZombieSpawnAround(px, pz, lvl.isBoss ? 22 : 16, lvl.isBoss ? 28 : 30);
     ZGAME.zombies.push(createFacultyZombie(lvl, sx, sz));
   }
-  showToast(lvl.isBoss ? "FINAL BOSS: THE CEO HAS ARRIVED!" : `LEVEL ${lvl.level}: ${lvl.name.toUpperCase()}`, 3.2);
+  showToast(
+    lvl.isBoss ? "FINAL BOSS: DEFEAT THE CEO!" : `LEVEL ${lvl.level}: ${lvl.name.toUpperCase()} · SURVIVE 2:00!`,
+    3.2
+  );
   playSFX(lvl.isBoss ? "boss_roar" : "levelup");
   updateCombatHUD();
 }
@@ -1649,8 +1668,10 @@ function updateCombatHUD() {
   if (!ZGAME.active) return;
   const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
   const aliveCount = ZGAME.zombies.filter(z => z.alive).length;
-  kt("wave-title").textContent = lvl.isBoss ? "FINAL BOSS · THE CEO" : `LEVEL ${lvl.level} · ${lvl.name.toUpperCase()}`;
-  kt("wave-sub").textContent = `Zombies Left: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`;
+  kt("wave-title").textContent = lvl.isBoss ? "FINAL BOSS · DEFEAT THE CEO" : `LEVEL ${lvl.level} · ${lvl.name.toUpperCase()}`;
+  kt("wave-sub").textContent = lvl.isBoss
+    ? `Active Enemies: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`
+    : `SURVIVE: ${formatTimer(ZGAME.phaseTimer)} · Active: ${aliveCount} · Kills: ${ZGAME.kills} · Score: ${ZGAME.score}`;
   kt("hp-val").textContent = `${Math.ceil(ZGAME.hp)} / ${ZGAME.maxHp}`;
   kt("hp-fill").style.width = `${(ZGAME.hp / ZGAME.maxHp) * 100}%`;
   kt("shield-val").textContent = `${Math.ceil(ZGAME.shield)}%${ZGAME.shieldBlocking ? " · BLOCKING" : ""}`;
@@ -1992,24 +2013,66 @@ function updateZombieGame(dt, timeSec) {
     }
   }
 
-  // Wave Progression (Level 1 -> 2 -> 3 -> 4 -> 5 -> CEO Boss -> Victory!)
-  if (aliveCount === 0 && !ZGAME.gameOver && !ZGAME.victory) {
-    if (ZGAME.waveDelay <= 0) {
-      if (ZGAME.levelIdx + 1 >= ZOMBIE_LEVELS.length) {
+  // Continuous Horde Spawning & 2-Minute Phase Survival Progression!
+  if (!ZGAME.gameOver && !ZGAME.victory) {
+    const curLvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
+    if (ZGAME.waveDelay > 0) {
+      ZGAME.waveDelay -= dt;
+      if (ZGAME.waveDelay <= 0) {
+        spawnZombieWave(ZGAME.levelIdx + 1);
+      }
+    } else if (!curLvl.isBoss) {
+      // Levels 1-5: 2-minute survival timer + continuous zombie reinforcements!
+      const prevSec = Math.ceil(ZGAME.phaseTimer);
+      ZGAME.phaseTimer = Math.max(0, ZGAME.phaseTimer - dt);
+      if (Math.ceil(ZGAME.phaseTimer) !== prevSec) updateCombatHUD();
+
+      // Keep spawning fresh zombies around the player so they NEVER stop coming!
+      ZGAME.spawnTimer -= dt;
+      const maxActive = Math.min(10, 5 + curLvl.level);
+      if (ZGAME.spawnTimer <= 0) {
+        ZGAME.spawnTimer = Math.max(1.8, 3.6 - curLvl.level * 0.3);
+        if (aliveCount < maxActive) {
+          const batch = aliveCount < 3 ? 2 : 1;
+          for (let b = 0; b < batch; b++) {
+            const [sx, sz] = findZombieSpawnAround(px, pz, 15, 29);
+            ZGAME.zombies.push(createFacultyZombie(curLvl, sx, sz));
+          }
+          updateCombatHUD();
+        }
+      }
+
+      // Phase survived when 2:00 timer hits 0:00!
+      if (ZGAME.phaseTimer <= 0) {
+        // Clear remaining zombies from finished phase cleanly
+        for (const z of ZGAME.zombies) {
+          if (z.alive) { z.alive = false; z.deathTimer = 0.6; z.hpBarBg.visible = false; }
+        }
+        ZGAME.waveDelay = 3.2;
+        ZGAME.hp = Math.min(ZGAME.maxHp, ZGAME.hp + 35);
+        ZGAME.shield = 100;
+        const nextLvl = ZOMBIE_LEVELS[ZGAME.levelIdx + 1];
+        showToast(`LEVEL ${curLvl.level} SURVIVED! +35 HP · NEXT: ${nextLvl ? nextLvl.name.toUpperCase() : "CEO BOSS"}!`, 3.0);
+        playSFX("levelup");
+        updateCombatHUD();
+      }
+    } else {
+      // Boss Level (Level 6 - THE CEO): Keep spawning occasional faculty backup while CEO is alive!
+      const bossAlive = ZGAME.zombies.some(z => z.alive && z.lvlDef.isBoss);
+      if (!bossAlive) {
         ZGAME.victory = true;
         playSFX("levelup");
         showEndScreen(true);
         document.exitPointerLock?.();
       } else {
-        ZGAME.waveDelay = 3.2;
-        ZGAME.hp = Math.min(ZGAME.maxHp, ZGAME.hp + 25);
-        showToast(`LEVEL ${ZGAME.levelIdx + 1} CLEARED! +25 HP · NEXT WAVE INCOMING...`, 2.8);
-        playSFX("levelup");
-      }
-    } else {
-      ZGAME.waveDelay -= dt;
-      if (ZGAME.waveDelay <= 0) {
-        spawnZombieWave(ZGAME.levelIdx + 1);
+        ZGAME.spawnTimer -= dt;
+        if (ZGAME.spawnTimer <= 0 && aliveCount < 5) {
+          ZGAME.spawnTimer = 8.5;
+          const minionTier = ZOMBIE_LEVELS[Math.floor(Math.random() * 3)];
+          const [sx, sz] = findZombieSpawnAround(px, pz, 16, 26);
+          ZGAME.zombies.push(createFacultyZombie(minionTier, sx, sz));
+          updateCombatHUD();
+        }
       }
     }
   }
@@ -2151,13 +2214,14 @@ WRIST_REPLACE = """function updateWristDisplay(){
     const alive=ZGAME.zombies.filter(z=>z.alive).length;
     const w=WEAPON_DEFS[ZGAME.weaponIdx];
     const ammoStr=ZGAME.reloading>0?"RELOAD":(w.mag===Infinity?"INF":ZGAME.ammo[w.id]+"/"+w.mag);
-    const key=`${Math.ceil(ZGAME.hp)}-${Math.ceil(ZGAME.shield)}-${lvl.level}-${alive}-${w.id}-${ammoStr}-${ZGAME.gameOver}`;
+    const timerStr = lvl.isBoss ? "BOSS" : formatTimer(ZGAME.phaseTimer);
+    const key=`${Math.ceil(ZGAME.hp)}-${Math.ceil(ZGAME.shield)}-${lvl.level}-${timerStr}-${alive}-${w.id}-${ammoStr}-${ZGAME.gameOver}`;
     if(wristDisplay.last===key)return;
     wristDisplay.last=key;
     const ctx=wristDisplay.ctx;
     ctx.fillStyle="#0b1824";ctx.fillRect(0,0,512,256);
     ctx.fillStyle="#ff6b6b";ctx.font="bold 30px sans-serif";
-    ctx.fillText(ZGAME.gameOver?"OVERRUN! PRESS B":`LVL ${lvl.level}: ${lvl.badge} (${alive})`,16,42,480);
+    ctx.fillText(ZGAME.gameOver?"OVERRUN! PRESS B":`LVL ${lvl.level}: ${lvl.badge}  ${timerStr}`,16,42,480);
     ctx.fillStyle="#4ade80";ctx.font="bold 28px sans-serif";
     ctx.fillText(`HP: ${Math.ceil(ZGAME.hp)}   SHIELD: ${Math.ceil(ZGAME.shield)}%`,16,92,480);
     ctx.fillStyle="#72efdd";ctx.font="bold 26px sans-serif";
