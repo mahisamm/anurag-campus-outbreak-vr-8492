@@ -2,6 +2,7 @@
 Injects the Blender 5.3 zombie/weapon assets and the full 6-level First-Person & Meta Quest 3 VR
 Zombie Outbreak game engine into Play-PC.html (creating a backup of the original Explorer first).
 """
+import base64
 import json
 import os
 import shutil
@@ -10,6 +11,12 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC_HTML = os.path.join(ROOT, "Play-PC.html")
 BACKUP_HTML = os.path.join(ROOT, "Play-PC-Explorer-Backup.html")
 ASSETS_JSON = os.path.join(ROOT, "zombie_assets.json")
+MURAL_JPG = os.path.join(ROOT, "dblock_mural_real.jpg")
+
+dblock_mural_uri = ""
+if os.path.exists(MURAL_JPG):
+    with open(MURAL_JPG, "rb") as mf:
+        dblock_mural_uri = "data:image/jpeg;base64," + base64.b64encode(mf.read()).decode("ascii")
 
 # Make sure we always patch from the clean original Explorer backup if it exists
 if not os.path.exists(BACKUP_HTML):
@@ -606,7 +613,26 @@ function playSFX(kind) {
   const gain = ctx.createGain();
   gain.connect(ctx.destination);
 
-  if (kind === "saber" || kind === "saber_clash") {
+  if (kind === "saber_ignite") {
+    // Slow dramatic 1.25s Lightsaber Ignition Rise!
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), filt = ctx.createBiquadFilter();
+    o1.type = "sawtooth"; o2.type = "triangle";
+    o1.frequency.setValueAtTime(62, now);
+    o1.frequency.exponentialRampToValueAtTime(195, now + 0.45);
+    o1.frequency.linearRampToValueAtTime(118, now + 1.2);
+    o2.frequency.setValueAtTime(95, now);
+    o2.frequency.exponentialRampToValueAtTime(280, now + 0.55);
+    o2.frequency.linearRampToValueAtTime(155, now + 1.2);
+    filt.type = "bandpass"; filt.frequency.setValueAtTime(240, now);
+    filt.frequency.exponentialRampToValueAtTime(920, now + 0.65);
+    filt.frequency.linearRampToValueAtTime(420, now + 1.2);
+    filt.Q.value = 1.8;
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.22, now + 0.25);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
+    o1.connect(filt); o2.connect(filt); filt.connect(gain);
+    o1.start(now); o2.start(now); o1.stop(now + 1.28); o2.stop(now + 1.28);
+  } else if (kind === "saber" || kind === "saber_clash") {
     // Rich Lightsaber Plasma Whoosh + Sizzle Clash
     const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), filt = ctx.createBiquadFilter();
     o1.type = "sawtooth"; o2.type = "square";
@@ -1720,8 +1746,8 @@ function selectWeapon(idx) {
   ZGAME.reloading = 0;
   ZGAME.weaponDrawAnim = 1.0;
   if (idx === 0) {
-    ZGAME.saberIgnite = 0.02;
-    playSFX("saber");
+    ZGAME.saberIgnite = 0.01;
+    playSFX("saber_ignite");
   } else {
     playSFX("pickup");
   }
@@ -2195,13 +2221,18 @@ function updateZombieGame(dt, timeSec) {
   if (ZGAME.trailTimer > 0) ZGAME.trailTimer = Math.max(0, ZGAME.trailTimer - dt);
   if (ZGAME.shieldBashAnim > 0) ZGAME.shieldBashAnim = Math.max(0, ZGAME.shieldBashAnim - dt * 3.2);
 
-  // Smooth, steady Lightsaber Telescoping Ignition (clean & realistic — zero jitter!)
+  // Slow, Smooth, Cinematic Lightsaber Launch/Ignition (~1.4 seconds steady extension!)
   const wantSaber = ZGAME.active && ZGAME.weaponIdx === 0 && !ZGAME.introPlaying;
-  ZGAME.saberIgnite = so.lerp(ZGAME.saberIgnite, wantSaber ? 1 : 0, Math.min(1, dt * 11));
+  if (wantSaber) {
+    ZGAME.saberIgnite = Math.min(1, ZGAME.saberIgnite + dt * 0.72);
+  } else {
+    ZGAME.saberIgnite = Math.max(0, ZGAME.saberIgnite - dt * 2.2);
+  }
+  const easedIgnite = ZGAME.saberIgnite * ZGAME.saberIgnite * (3 - 2 * ZGAME.saberIgnite);
   for (const arm of [...fpHands, ...Array.from(trackedHands.values()).map(h => h.arm)]) {
     const sg = arm.weaponModels?.[0];
     if (sg && sg.userData.bladePivot) {
-      sg.userData.bladePivot.scale.set(1, Math.max(0.001, ZGAME.saberIgnite), 1);
+      sg.userData.bladePivot.scale.set(1, Math.max(0.001, easedIgnite), 1);
     }
   }
   if (ZGAME.muzzleTimer > 0) {
@@ -3008,6 +3039,100 @@ html = html.replace(
     '    let showFP = povMode === "1st" && !Ye.xr.isPresenting && !ZGAME.introPlaying;',
     1
 )
+
+# 7l. Photorealistic D-Block (School of Humanities & Science) Architectural & Graphics Upgrade!
+DBLOCK_OLD = '''// D-Block Projecting West Stairwell Tower with Iconic Giant Street-Art Mural (Unobstructed!)
+gr.push([-67.6, -8.2, -65.0, -1.4, "D Block (CVSR Engineering & Solar Roof)"]);
+he(C_WALL_WHITE, -66.2, dBlockH * 0.44, -4.8, 2.2, dBlockH * 0.88, 6.2);
+var muralPlane = new et(new _i(5.8, dBlockH * 0.84), new Jt({ map: muralTex, roughness: 0.55 }));
+muralPlane.rotation.y = -Math.PI / 2;
+muralPlane.position.set(-67.35, dBlockH * 0.44, -4.8);
+Ht.add(muralPlane);
+ys(["D BLOCK · ECE & EEE", "CVSR SOLAR ROOF & ART MURAL"], -67.36, dBlockH * 0.94, -4.8, 5.8, 1.05, "#1f4762", "#f7f4ea", -Math.PI / 2);'''
+
+if DBLOCK_OLD not in html:
+    DBLOCK_OLD = DBLOCK_OLD.replace("\n", "\r\n")
+assert DBLOCK_OLD in html, "Could not find D-Block anchor!"
+
+DBLOCK_UPGRADE_JS = f'''// D-BLOCK (SCHOOL OF HUMANITIES & SCIENCE) — HIGH-DETAIL ARCHITECTURAL UPGRADE FROM REAL PHOTO!
+var realDBlockMuralTex = muralTex;
+(function() {{
+  const uri = "{dblock_mural_uri}";
+  if (!uri) return;
+  const c = document.createElement("canvas"); c.width = 512; c.height = 512;
+  const g = c.getContext("2d");
+  g.fillStyle = "#9aa5a0"; g.fillRect(0, 0, 512, 512);
+  const t = new dn(c); t.colorSpace = vt;
+  const im = new Image(); im.src = uri;
+  im.onload = () => {{ g.drawImage(im, 0, 0, 512, 512); t.needsUpdate = true; }};
+  realDBlockMuralTex = t;
+}})();
+
+// 1. Right-Side Projecting Mural Wing (Upper Giant "YOUR FUTURE LOOKS Bright" Mural + Ground Glass Lobby!)
+gr.push([-67.6, -9.8, -65.0, -2.6, "D Block · School of Humanities & Science"]);
+he(C_WALL_WHITE, -66.2, dBlockH * 0.72, -6.2, 2.3, dBlockH * 0.56, 7.0);
+// Real Perspective-Corrected "YOUR FUTURE LOOKS Bright" VR-Goggles Mural!
+var muralPlane = new et(new _i(6.8, dBlockH * 0.54), new Jt({{ map: realDBlockMuralTex, roughness: 0.48 }}));
+muralPlane.rotation.y = -Math.PI / 2;
+muralPlane.position.set(-67.38, dBlockH * 0.72, -6.2);
+Ht.add(muralPlane);
+// Ground-Floor Floor-to-Ceiling Glass Lobby + "Explore. Collaborate. Learn." Blue Fascia Banner!
+he(0x16222c, -66.2, 2.4, -6.2, 2.0, 4.8, 6.6);
+var dLobbyGlass = new et(new _i(6.2, 4.4), new Jt({{ color: 0x3b6078, roughness: 0.14, metalness: 0.35, transparent: true, opacity: 0.72 }}));
+dLobbyGlass.rotation.y = -Math.PI / 2;
+dLobbyGlass.position.set(-67.25, 2.35, -6.2);
+Ht.add(dLobbyGlass);
+he(C_WALL_WHITE, -67.30, 2.4, -9.45, 0.38, 4.8, 0.42);
+he(C_WALL_WHITE, -67.30, 2.4, -2.95, 0.38, 4.8, 0.42);
+ys(["Explore. Collaborate. Learn."], -67.32, 2.15, -6.2, 5.8, 0.52, "#1e3a6e", "#f8fafc", -Math.PI / 2);
+
+// 2. Left-Side Double-Height Crisp White Entrance Portico ("SCHOOL OF HUMANITIES & SCIENCE")
+he(C_WALL_WHITE, -68.4, 7.6, -13.4, 5.2, 1.05, 7.2); // Portico top lintel slab
+he(0x2c333a, -68.4, 7.05, -13.4, 4.9, 0.12, 6.8);    // Recessed dark soffit ceiling
+he(C_WALL_WHITE, -70.6, 3.6, -10.1, 0.65, 7.2, 0.65); // Right front pillar
+he(C_WALL_WHITE, -70.6, 3.6, -16.7, 0.65, 7.2, 0.65); // Left front pillar
+ys(["SCHOOL OF HUMANITIES & SCIENCE"], -71.02, 7.6, -13.4, 6.8, 0.82, "#f1f3f5", "#1c242b", -Math.PI / 2);
+
+// 3. Wide Granite Entrance Steps + Wheelchair Ramp
+for (let st = 0; st < 5; st++) {{
+  he(0x9ca3af, -69.5 - st * 0.45, 0.14 * (5 - st) * 0.5, -13.4, 0.55, 0.14 * (5 - st), 7.6);
+}}
+he(0xb0b7c0, -70.4, 0.34, -10.4, 2.6, 0.12, 1.2); // Ramp surface
+
+// 4. Iconic Green Grass Patch + 3D "#AU" Monument (RED "#" + WHITE "AU" on Dark Base!)
+he(0x4b7838, -69.8, 0.05, -6.2, 4.2, 0.10, 6.2); // Front lawn strip
+he(0x1f2429, -70.6, 0.22, -6.2, 0.45, 0.26, 3.6); // Dark plinth base
+// 3D Red "#" Hash Symbol
+var redHashMat = new Jt({{ color: 0xdc2626, roughness: 0.35, metalness: 0.15 }});
+var whiteAuMat = new Jt({{ color: 0xf8fafc, roughness: 0.32, metalness: 0.12 }});
+for (let hz of [-7.45, -7.05]) {{
+  let bar = new et(new Ni(0.18, 1.25, 0.16), redHashMat); bar.position.set(-70.6, 0.98, hz); bar.rotation.x = 0.12; Ht.add(bar);
+}}
+for (let hy of [0.76, 1.16]) {{
+  let bar = new et(new Ni(0.18, 0.16, 0.85), redHashMat); bar.position.set(-70.6, hy, -7.25); Ht.add(bar);
+}}
+// 3D White "A"
+let aL = new et(new Ni(0.20, 1.48, 0.18), whiteAuMat); aL.position.set(-70.6, 1.05, -6.38); aL.rotation.x = 0.24; Ht.add(aL);
+let aR = new et(new Ni(0.20, 1.48, 0.18), whiteAuMat); aR.position.set(-70.6, 1.05, -5.88); aR.rotation.x = -0.24; Ht.add(aR);
+let aBar = new et(new Ni(0.20, 0.16, 0.55), whiteAuMat); aBar.position.set(-70.6, 0.82, -6.13); Ht.add(aBar);
+// 3D White "U"
+let uL = new et(new Ni(0.20, 1.38, 0.18), whiteAuMat); uL.position.set(-70.6, 1.08, -5.25); Ht.add(uL);
+let uR = new et(new Ni(0.20, 1.38, 0.18), whiteAuMat); uR.position.set(-70.6, 1.08, -4.65); Ht.add(uR);
+let uBot = new et(new Ni(0.20, 0.20, 0.78), whiteAuMat); uBot.position.set(-70.6, 0.44, -4.95); Ht.add(uBot);
+
+// 5. Dual Vertical Flagpole Banner ("Be MORE THAN ONE" Red | "AU ANURAG UNIVERSITY" Navy)
+let bPole = new et(new pn(0.055, 0.065, 4.2, 12), new Jt({{ color: 0xcbd5e1, roughness: 0.25, metalness: 0.85 }}));
+bPole.position.set(-71.3, 2.1, -9.8); Ht.add(bPole);
+ys(["Be", "MORE", "THAN", "ONE"], -71.3, 2.65, -10.35, 0.92, 2.15, "#b91c1c", "#ffffff", -Math.PI / 2);
+ys(["AU", "ANURAG", "UNIVERSITY"], -71.3, 2.65, -9.25, 0.92, 2.15, "#1e293b", "#ffffff", -Math.PI / 2);
+
+// 6. Yellow & Black Striped Road Curb along D-Block Front
+for (let cz = -17.5; cz <= -2.5; cz += 0.9) {{
+  let isY = Math.round(cz * 2) % 2 === 0;
+  he(isY ? 0xeab308 : 0x18181b, -72.2, 0.11, cz, 0.34, 0.22, 0.88);
+}}'''
+
+html = html.replace(DBLOCK_OLD, DBLOCK_UPGRADE_JS, 1)
 
 with open(SRC_HTML, "w", encoding="utf-8") as f:
     f.write(html)
