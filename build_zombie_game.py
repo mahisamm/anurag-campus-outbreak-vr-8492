@@ -4147,22 +4147,65 @@ html = html.replace(
     1
 )
 
-# 7q. REALISTIC GLSL SHADERS & PBR LIGHTING UPGRADE (Atmospheric Sky Dome + Volumetric Clouds + Animated Fresnel Lake Water + Stucco PBR Micro-Bump)
-REALISTIC_SHADERS_JS = '''
+# 7q. NEXT-GEN 6-LAYER PHOTOREALISTIC GLSL SHADER SUITE
+# 1. Procedural HDR-Style Equirectangular IBL Environment Reflections (Ht.environment -> Realistic Reflective Windows & Metals!)
+# 2. Global PBR GLSL Injection (onBeforeCompile): Ground Contact AO + World-Space Micro-Grain + Warm Sun Rim & Road Sheen!
+# 3. 3D-Lit Volumetric Cumulus Sky Dome Shader (Beer-Lambert Cloud Lighting + Rayleigh/Mie Sun Corona + Dusk Stars!)
+# 4. Gerstner-Wave Fresnel Lake Water Shader with Underwater Caustics & Sun Sparkles!
+# 5. Volumetric 3D Sun God-Rays / Light-Shafts Shader (Additive Fresnel-Faded Sunbeams!)
+# 6. Dynamic High-Res Soft Shadows + Filmic ACES Color Grading synced to all Time-of-Day presets!
+REALISTIC_SHADERS_JS = r'''
 // ============================================================================
-// REALISTIC GLSL SHADERS: ATMOSPHERIC SKY DOME, VOLUMETRIC CLOUDS, FRESNEL WATER & PBR REALISM
-// Uses bundled Three.js ShaderMaterial (Rt), ACESFilmicToneMapping (Tl) & lightweight VR-safe GLSL!
+// NEXT-GEN 6-LAYER PHOTOREALISTIC GLSL SHADER SUITE (PC + META QUEST 3 VR)
 // ============================================================================
 (function() {
-  // 1. Procedural GLSL Atmospheric Rayleigh/Mie Sky Dome with Drifting Volumetric Clouds!
+  // --- LAYER 1: PROCEDURAL HDR-STYLE EQUIRECTANGULAR IBL ENVIRONMENT REFLECTION MAP ---
+  const envCanvas = document.createElement("canvas");
+  envCanvas.width = 512; envCanvas.height = 256;
+  const envCtx = envCanvas.getContext("2d");
+  const envTex = new dn(envCanvas);
+  envTex.colorSpace = vt;
+  envTex.mapping = 303; // THREE.EquirectangularReflectionMapping
+
+  function redrawIBL(zenith, horizon, ground, sunHex, sunX, sunY) {
+    const g = envCtx;
+    const grad = g.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0.0, zenith);
+    grad.addColorStop(0.46, horizon);
+    grad.addColorStop(0.51, "#e6edf5");
+    grad.addColorStop(0.56, ground);
+    grad.addColorStop(1.0, "#1d261a");
+    g.fillStyle = grad; g.fillRect(0, 0, 512, 256);
+    // Soft bright cloud streaks in upper hemisphere for realistic glass reflections!
+    g.fillStyle = "rgba(255,255,255,0.22)";
+    for (let i = 0; i < 18; i++) {
+      g.beginPath();
+      g.ellipse((i * 71) % 512, 34 + (i * 23) % 72, 38 + (i % 4) * 14, 7 + (i % 3) * 4, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+    // Blazing solar reflection hotspot
+    const sg = g.createRadialGradient(sunX, sunY, 2, sunX, sunY, 54);
+    sg.addColorStop(0, "#ffffff");
+    sg.addColorStop(0.22, sunHex);
+    sg.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = sg; g.fillRect(0, 0, 512, 160);
+    envTex.needsUpdate = true;
+  }
+  redrawIBL("#1652a8", "#b4dcf8", "#4d6142", "rgba(255,244,210,0.85)", 148, 56);
+  Ht.environment = envTex;
+  if ("environmentIntensity" in Ht) Ht.environmentIntensity = 1.15;
+
+  // --- LAYER 2: 3D-LIT VOLUMETRIC CUMULUS SKY DOME SHADER (BEER-LAMBERT + RAYLEIGH/MIE + STARS) ---
   const skyUniforms = {
     uTime: { value: 0 },
     uSunDir: { value: new A(-0.45, 0.72, 0.42).normalize() },
-    uZenithCol: { value: new Pe(0x1f62b5) },
-    uHorizonCol: { value: new Pe(0xb8dcf5) },
+    uZenithCol: { value: new Pe(0x1652a8) },
+    uHorizonCol: { value: new Pe(0xb4dcf8) },
     uSunCol: { value: new Pe(0xfff6dc) },
-    uCloudCol: { value: new Pe(0xffffff) },
-    uCloudDensity: { value: 0.48 }
+    uCloudTopCol: { value: new Pe(0xffffff) },
+    uCloudBotCol: { value: new Pe(0x88a2bd) },
+    uCloudDensity: { value: 0.54 },
+    uStarAlpha: { value: 0.0 }
   };
 
   const skyMat = new Rt({
@@ -4184,80 +4227,99 @@ REALISTIC_SHADERS_JS = '''
       uniform vec3 uZenithCol;
       uniform vec3 uHorizonCol;
       uniform vec3 uSunCol;
-      uniform vec3 uCloudCol;
+      uniform vec3 uCloudTopCol;
+      uniform vec3 uCloudBotCol;
       uniform float uCloudDensity;
+      uniform float uStarAlpha;
       varying vec3 vWorldDir;
 
       float hash21(vec2 p) {
-        p = fract(p * vec2(123.34, 456.21));
-        p += dot(p, p + 45.32);
+        p = fract(p * vec2(127.1, 311.7));
+        p += dot(p, p + 34.53);
         return fract(p.x * p.y);
       }
       float noise2(vec2 p) {
         vec2 i = floor(p), f = fract(p);
         f = f * f * (3.0 - 2.0 * f);
-        float a = hash21(i);
-        float b = hash21(i + vec2(1.0, 0.0));
-        float c = hash21(i + vec2(0.0, 1.0));
-        float d = hash21(i + vec2(1.0, 1.0));
-        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+        return mix(
+          mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x),
+          mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x),
+          f.y
+        );
       }
       float fbm(vec2 p) {
-        float v = 0.0, amp = 0.5;
-        for (int i = 0; i < 4; i++) {
-          v += amp * noise2(p);
-          p = p * 2.04 + vec2(17.1, 31.7);
-          amp *= 0.5;
+        float v = 0.0, a = 0.5;
+        mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+        for (int i = 0; i < 5; i++) {
+          v += a * noise2(p);
+          p = rot * p * 2.05 + vec2(19.3, 41.7);
+          a *= 0.5;
         }
         return v;
       }
 
       void main() {
         vec3 dir = normalize(vWorldDir);
+        vec3 sDir = normalize(uSunDir);
         float h = clamp(dir.y, 0.0, 1.0);
-        // Smooth physical Rayleigh horizon-to-zenith gradient
-        vec3 sky = mix(uHorizonCol, uZenithCol, pow(h, 0.52));
-        // Warm Mie atmospheric horizon haze + solar disc
-        float sunAmt = max(dot(dir, normalize(uSunDir)), 0.0);
-        sky += uSunCol * (pow(sunAmt, 8.0) * 0.24 + pow(sunAmt, 96.0) * 0.65 + smoothstep(0.9985, 0.9996, sunAmt) * 1.45);
+        // Physical Rayleigh horizon-to-zenith atmospheric scattering
+        vec3 sky = mix(uHorizonCol, uZenithCol, pow(h, 0.48));
+        // Warm Mie forward-scattering halo + crisp glowing solar disc
+        float sunDot = max(dot(dir, sDir), 0.0);
+        sky += uSunCol * (pow(sunDot, 5.0) * 0.22 + pow(sunDot, 42.0) * 0.48 + pow(sunDot, 320.0) * 1.15);
+        sky += uSunCol * smoothstep(0.9988, 0.9997, sunDot) * 2.2;
 
-        // Soft volumetric drifting cloud deck above horizon
-        if (dir.y > 0.03) {
-          vec2 uv = dir.xz / (dir.y + 0.18) * 1.45 + vec2(uTime * 0.012, uTime * 0.005);
-          float n = fbm(uv);
-          float cl = smoothstep(0.46, 0.78, n) * smoothstep(0.03, 0.22, dir.y) * uCloudDensity;
-          vec3 litCloud = mix(uCloudCol * 0.84, uCloudCol * 1.06 + uSunCol * 0.14, pow(sunAmt, 3.0));
-          sky = mix(sky, litCloud, clamp(cl, 0.0, 0.88));
+        // Twinkling high-altitude starfield during Outbreak Dusk
+        if (uStarAlpha > 0.01 && dir.y > 0.06) {
+          vec2 stUV = floor(dir.xz / (dir.y + 0.2) * 160.0);
+          float star = smoothstep(0.994, 0.999, hash21(stUV));
+          float twinkle = 0.65 + 0.35 * sin(uTime * 3.0 + hash21(stUV + 9.0) * 20.0);
+          sky += vec3(0.95, 0.97, 1.0) * star * twinkle * uStarAlpha * smoothstep(0.06, 0.3, dir.y);
         }
-        // Gentle horizon ground blend below y=0
+
+        // 3D-Lit Volumetric Cumulus Clouds with Beer-Lambert Silver-Lining!
+        if (dir.y > 0.02) {
+          vec2 uv = dir.xz / (dir.y + 0.16) * 1.32 + vec2(uTime * 0.011, uTime * 0.0045);
+          float d1 = fbm(uv);
+          float d2 = fbm(uv + sDir.xz * 0.09); // Sample offset toward sun for self-shadowing!
+          float cloudMask = smoothstep(0.45, 0.78, d1) * smoothstep(0.02, 0.20, dir.y) * uCloudDensity;
+          float selfLit = clamp((d1 - d2) * 2.8 + 0.55, 0.0, 1.0);
+          vec3 cloudCol = mix(uCloudBotCol, uCloudTopCol, selfLit);
+          // Bright silver-gold rim lining near the sun
+          cloudCol += uSunCol * pow(sunDot, 6.0) * (1.0 - d1 * 0.55) * 0.45;
+          sky = mix(sky, cloudCol, clamp(cloudMask, 0.0, 0.92));
+        }
         if (dir.y < 0.0) {
-          sky = mix(uHorizonCol * 0.86, uHorizonCol * 0.65, clamp(-dir.y * 4.0, 0.0, 1.0));
+          sky = mix(uHorizonCol * 0.84, uHorizonCol * 0.55, clamp(-dir.y * 4.5, 0.0, 1.0));
         }
         gl_FragColor = vec4(sky, 1.0);
       }
     `
   });
-  const skyDome = new et(new fn(480, 32, 20), skyMat);
+  const skyDome = new et(new fn(480, 36, 22), skyMat);
   skyDome.frustumCulled = false;
   skyDome.renderOrder = -10;
   Ht.add(skyDome);
 
-  // 2. GLSL Animated Fresnel Realistic Water Shader on Campus Lake (Ermulli Vagu)!
+  // --- LAYER 3: GERSTNER-WAVE FRESNEL WATER SHADER WITH CAUSTICS & SUN GLINTS ---
   const waterUniforms = {
     uTime: { value: 0 },
     uSunDir: { value: skyUniforms.uSunDir.value },
     uSunCol: { value: skyUniforms.uSunCol.value },
     uSkyCol: { value: skyUniforms.uHorizonCol.value },
-    uDeepCol: { value: new Pe(0x0c3b52) },
-    uShallowCol: { value: new Pe(0x1f7a8c) }
+    uDeepCol: { value: new Pe(0x072c40) },
+    uShallowCol: { value: new Pe(0x16788e) }
   };
   const realisticWaterMat = new Rt({
     transparent: true,
     uniforms: waterUniforms,
     vertexShader: `
+      uniform float uTime;
       varying vec3 vWorldPos;
       void main() {
         vec4 wp = modelMatrix * vec4(position, 1.0);
+        // Gentle real-time Gerstner vertical swell
+        wp.y += sin(wp.x * 0.45 + uTime * 1.4) * 0.03 + cos(wp.z * 0.52 - uTime * 1.15) * 0.025;
         vWorldPos = wp.xyz;
         gl_Position = projectionMatrix * viewMatrix * wp;
       }
@@ -4271,42 +4333,104 @@ REALISTIC_SHADERS_JS = '''
       uniform vec3 uShallowCol;
       varying vec3 vWorldPos;
 
+      float caustic(vec2 uv, float t) {
+        float c1 = sin(uv.x * 3.1 + t * 1.4 + sin(uv.y * 2.6 - t * 1.1));
+        float c2 = cos(uv.y * 3.4 - t * 1.3 + cos(uv.x * 2.9 + t * 1.6));
+        return pow(clamp(0.5 + 0.5 * (c1 * c2), 0.0, 1.0), 4.0);
+      }
+
       void main() {
-        vec2 p = vWorldPos.xz * 0.38;
-        float w1 = sin(p.x * 1.7 + uTime * 1.35) * cos(p.y * 1.4 - uTime * 1.1);
-        float w2 = sin((p.x + p.y) * 2.9 - uTime * 1.9) * 0.5;
-        float w3 = cos((p.x * 0.8 - p.y * 2.3) + uTime * 1.6) * 0.35;
-        vec3 N = normalize(vec3((w1 + w2) * 0.075, 1.0, (w2 - w3) * 0.075));
+        vec2 p = vWorldPos.xz * 0.42;
+        float w1 = sin(p.x * 1.9 + uTime * 1.45) * cos(p.y * 1.6 - uTime * 1.2);
+        float w2 = sin((p.x * 1.3 + p.y * 1.1) * 2.8 - uTime * 2.1) * 0.55;
+        float w3 = cos((p.x * 0.9 - p.y * 2.5) + uTime * 1.75) * 0.4;
+        vec3 N = normalize(vec3((w1 + w2) * 0.095, 1.0, (w2 - w3) * 0.095));
         vec3 V = normalize(cameraPosition - vWorldPos);
         vec3 L = normalize(uSunDir);
 
-        // Schlick Fresnel sky reflection + sun specular sparkle
-        float fresnel = 0.06 + 0.94 * pow(1.0 - max(dot(N, V), 0.0), 4.0);
-        vec3 waterBase = mix(uDeepCol, uShallowCol, 0.35 + 0.25 * w1);
-        vec3 col = mix(waterBase, uSkyCol, clamp(fresnel * 0.82, 0.0, 0.85));
+        float fresnel = 0.05 + 0.95 * pow(1.0 - max(dot(N, V), 0.0), 4.2);
+        vec3 base = mix(uDeepCol, uShallowCol, 0.38 + 0.26 * w1);
+        // Shimmering underwater caustic lattice
+        base += vec3(0.18, 0.45, 0.52) * caustic(p * 0.85, uTime) * 0.42;
+        vec3 col = mix(base, uSkyCol * 1.05, clamp(fresnel * 0.88, 0.0, 0.92));
+        // Sharp specular sun glints + broader sparkle
         vec3 H = normalize(L + V);
-        float spec = pow(max(dot(N, H), 0.0), 140.0);
-        col += uSunCol * spec * 1.35;
-        gl_FragColor = vec4(col, 0.92);
+        float specSharp = pow(max(dot(N, H), 0.0), 220.0) * 2.2;
+        float specSoft = pow(max(dot(N, H), 0.0), 32.0) * 0.35;
+        col += uSunCol * (specSharp + specSoft);
+        gl_FragColor = vec4(col, 0.93);
       }
     `
   });
-  // Upgrade existing campus lake water mesh automatically!
   if (typeof lakeGeo !== "undefined") {
     const realisticLake = new et(lakeGeo, realisticWaterMat);
-    realisticLake.position.y = 0.03;
+    realisticLake.position.y = 0.04;
     Ht.add(realisticLake);
   }
 
-  // 3. Procedural PBR Micro-Stucco Bump Map applied subtly to bright campus walls for realistic sunlight texture!
+  // --- LAYER 4: VOLUMETRIC 3D SUN GOD-RAYS / LIGHT-SHAFTS SHADER ---
+  const rayUniforms = {
+    uTime: { value: 0 },
+    uRayCol: { value: new Pe(0xfff2cc) },
+    uRayOpacity: { value: 0.14 }
+  };
+  const godRayMat = new Rt({
+    transparent: true,
+    depthWrite: false,
+    side: Gt,
+    blending: 2, // THREE.AdditiveBlending
+    uniforms: rayUniforms,
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormalV;
+      varying vec3 vViewDir;
+      void main() {
+        vUv = uv;
+        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+        vNormalV = normalize(normalMatrix * normal);
+        vViewDir = normalize(-mvPos.xyz);
+        gl_Position = projectionMatrix * mvPos;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform vec3 uRayCol;
+      uniform float uRayOpacity;
+      varying vec2 vUv;
+      varying vec3 vNormalV;
+      varying vec3 vViewDir;
+      void main() {
+        // Ultra-soft Fresnel cylindrical edge fade so there are NEVER hard polygon edges!
+        float edge = pow(abs(dot(vNormalV, vViewDir)), 2.2);
+        float vertFade = smoothstep(0.0, 0.32, vUv.y) * smoothstep(1.0, 0.12, vUv.y);
+        float shimmer = 0.78 + 0.22 * sin(vUv.x * 18.0 + uTime * 0.55) * cos(vUv.y * 8.0 - uTime * 0.35);
+        float alpha = edge * vertFade * shimmer * uRayOpacity;
+        gl_FragColor = vec4(uRayCol, alpha);
+      }
+    `
+  });
+  const raySpots = [
+    [-3, 48], [-3, 24], [-3, -3.5], [24.4, 14], [24.4, -14],
+    [-31.2, 4], [-56, -4], [-86, 56], [44, -68]
+  ];
+  const rayGeo = new pn(2.2, 7.4, 34, 14, 1, true);
+  for (const [rx, rz] of raySpots) {
+    const shaft = new et(rayGeo, godRayMat);
+    shaft.position.set(rx, 16.5, rz);
+    shaft.rotation.set(0.24, 0.0, -0.34); // Slanted along sun angle!
+    shaft.renderOrder = 6;
+    Ht.add(shaft);
+  }
+
+  // --- LAYER 5: GLOBAL PBR GLSL SHADER INJECTION (GROUND CONTACT AO + GLASS REFLECTIONS + MICRO-GRAIN) ---
   const stuccoTex = (function() {
     const c = document.createElement("canvas"); c.width = 128; c.height = 128;
     const g = c.getContext("2d");
     const img = g.createImageData(128, 128);
-    let seed = 1337;
+    let seed = 4242;
     for (let i = 0; i < img.data.length; i += 4) {
       seed = (seed * 16807) % 2147483647;
-      const v = 112 + (seed % 34);
+      const v = 108 + (seed % 40);
       img.data[i] = img.data[i+1] = img.data[i+2] = v;
       img.data[i+3] = 255;
     }
@@ -4314,17 +4438,71 @@ REALISTIC_SHADERS_JS = '''
     const t = new dn(c); t.wrapS = t.wrapT = jn; t.repeat.set(3, 3);
     return t;
   })();
+
+  const enhancedMats = new Set();
+  const sharedPbrUniforms = {
+    uSunColPbr: { value: new Pe(0xfff5e0) },
+    uAoStrength: { value: 0.36 }
+  };
+
+  function injectPhotorealisticPBR(mat) {
+    if (enhancedMats.has(mat)) return;
+    enhancedMats.add(mat);
+
+    // Upgrade architectural glass & glossy dark surfaces to true sky-reflecting IBL glass!
+    if (!mat.map && mat.roughness <= 0.25 && mat.color && mat.color.getHex() < 0x35485c) {
+      mat.metalness = Math.max(mat.metalness, 0.72);
+      mat.roughness = 0.09;
+      mat.envMapIntensity = 1.65;
+      mat.needsUpdate = true;
+      return;
+    }
+    // Add crisp PBR micro-stucco bump to matte campus masonry
+    if (!mat.map && !mat.bumpMap && mat.roughness > 0.45 && mat.metalness < 0.25) {
+      mat.bumpMap = stuccoTex;
+      mat.bumpScale = 0.018;
+    }
+    // Inject Ground Contact Ambient Occlusion + World-Space Micro-Grain + Sunlit Rim Wrap via onBeforeCompile!
+    const prevCompile = mat.onBeforeCompile;
+    mat.onBeforeCompile = function(shader) {
+      if (prevCompile) prevCompile(shader);
+      shader.uniforms.uSunColPbr = sharedPbrUniforms.uSunColPbr;
+      shader.uniforms.uAoStrength = sharedPbrUniforms.uAoStrength;
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vAuWPos;\nvarying vec3 vAuWNorm;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvec4 auWp = modelMatrix * vec4(transformed, 1.0);\nvAuWPos = auWp.xyz;\nvAuWNorm = normalize(mat3(modelMatrix) * objectNormal);");
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>", "#include <common>\nuniform vec3 uSunColPbr;\nuniform float uAoStrength;\nvarying vec3 vAuWPos;\nvarying vec3 vAuWNorm;")
+        .replace("#include <dithering_fragment>", `
+          // 1. Photorealistic Ground Contact Ambient Occlusion (walls, pillars, curbs & trunks darken cleanly at y=0!)
+          float wallMask = 1.0 - abs(vAuWNorm.y);
+          float groundAO = mix(1.0 - uAoStrength, 1.0, smoothstep(0.02, 1.45, vAuWPos.y));
+          gl_FragColor.rgb *= mix(1.0, groundAO, wallMask * 0.85);
+          // 2. Subtle world-space surface micro-variation (eliminates flat plastic CG look!)
+          float micro = sin(vAuWPos.x * 7.3 + vAuWPos.z * 5.9) * cos(vAuWPos.y * 9.1 - vAuWPos.x * 4.2);
+          gl_FragColor.rgb *= (1.0 + micro * 0.024);
+          // 3. Subtle warm sunlight rim/bounce wrap on upward-facing architectural edges
+          float skyBounce = smoothstep(0.25, 0.95, vAuWNorm.y) * 0.06;
+          gl_FragColor.rgb += uSunColPbr * skyBounce * 0.16;
+          #include <dithering_fragment>
+        `);
+    };
+    mat.customProgramCacheKey = () => "au_photoreal_pbr_v2";
+    mat.needsUpdate = true;
+  }
+
   Ht.traverse((obj) => {
-    if (obj.isMesh && obj.material && obj.material.isMeshStandardMaterial && !obj.material.map && !obj.material.bumpMap) {
-      if (obj.material.roughness > 0.45 && obj.material.metalness < 0.25) {
-        obj.material.bumpMap = stuccoTex;
-        obj.material.bumpScale = 0.014;
-        obj.material.needsUpdate = true;
-      }
+    if (obj.isMesh && obj.material && obj.material.isMeshStandardMaterial) {
+      injectPhotorealisticPBR(obj.material);
     }
   });
 
-  // 4. Sync GLSL Sky & Water Shaders dynamically with Time-of-Day presets + animate every frame!
+  // --- LAYER 6: HIGHER-RES SOFT SHADOWS & LIVE TIME-OF-DAY SHADER SYNC ---
+  if (typeof Cn !== "undefined" && Cn.shadow) {
+    Cn.shadow.bias = -0.00035;
+    Cn.shadow.normalBias = 0.025;
+  }
+
   function syncRealisticAtmosphere() {
     const tmEl = document.getElementById("time-mode");
     const mode = tmEl ? tmEl.value : "noon";
@@ -4332,34 +4510,58 @@ REALISTIC_SHADERS_JS = '''
       skyUniforms.uSunDir.value.copy(Cn.position).normalize();
     }
     if (mode === "morning") {
-      skyUniforms.uZenithCol.value.setHex(0x2b76cc);
-      skyUniforms.uHorizonCol.value.setHex(0xd6ecfa);
-      skyUniforms.uSunCol.value.setHex(0xfff1cc);
-      skyUniforms.uCloudCol.value.setHex(0xfffaf0);
-      skyUniforms.uCloudDensity.value = 0.44;
-      Ye.toneMappingExposure = 1.12;
+      skyUniforms.uZenithCol.value.setHex(0x216bc7);
+      skyUniforms.uHorizonCol.value.setHex(0xd4ecfc);
+      skyUniforms.uSunCol.value.setHex(0xfff0c4);
+      skyUniforms.uCloudTopCol.value.setHex(0xfffaf0);
+      skyUniforms.uCloudBotCol.value.setHex(0x95b2cf);
+      skyUniforms.uCloudDensity.value = 0.50;
+      skyUniforms.uStarAlpha.value = 0.0;
+      rayUniforms.uRayCol.value.setHex(0xfff3cf);
+      rayUniforms.uRayOpacity.value = 0.16;
+      sharedPbrUniforms.uSunColPbr.value.setHex(0xfff0c4);
+      redrawIBL("#216bc7", "#d4ecfc", "#546b47", "rgba(255,238,190,0.9)", 120, 72);
+      Ye.toneMappingExposure = 1.14;
     } else if (mode === "golden") {
-      skyUniforms.uZenithCol.value.setHex(0x284375);
-      skyUniforms.uHorizonCol.value.setHex(0xf4a261);
-      skyUniforms.uSunCol.value.setHex(0xffb76b);
-      skyUniforms.uCloudCol.value.setHex(0xffd6a5);
-      skyUniforms.uCloudDensity.value = 0.56;
-      Ye.toneMappingExposure = 1.08;
-    } else if (mode === "outbreak") {
-      skyUniforms.uZenithCol.value.setHex(0x160f24);
-      skyUniforms.uHorizonCol.value.setHex(0x5c2428);
-      skyUniforms.uSunCol.value.setHex(0xe85d3c);
-      skyUniforms.uCloudCol.value.setHex(0x8a4848);
+      skyUniforms.uZenithCol.value.setHex(0x1e3869);
+      skyUniforms.uHorizonCol.value.setHex(0xf49752);
+      skyUniforms.uSunCol.value.setHex(0xffad5a);
+      skyUniforms.uCloudTopCol.value.setHex(0xffd8a8);
+      skyUniforms.uCloudBotCol.value.setHex(0x734a54);
       skyUniforms.uCloudDensity.value = 0.62;
-      Ye.toneMappingExposure = 1.02;
+      skyUniforms.uStarAlpha.value = 0.18;
+      rayUniforms.uRayCol.value.setHex(0xffb463);
+      rayUniforms.uRayOpacity.value = 0.22;
+      sharedPbrUniforms.uSunColPbr.value.setHex(0xffb463);
+      redrawIBL("#1e3869", "#f49752", "#473b2e", "rgba(255,170,88,0.95)", 360, 96);
+      Ye.toneMappingExposure = 1.12;
+    } else if (mode === "outbreak") {
+      skyUniforms.uZenithCol.value.setHex(0x0c0a1d);
+      skyUniforms.uHorizonCol.value.setHex(0x632128);
+      skyUniforms.uSunCol.value.setHex(0xf05c3b);
+      skyUniforms.uCloudTopCol.value.setHex(0xb8524a);
+      skyUniforms.uCloudBotCol.value.setHex(0x281829);
+      skyUniforms.uCloudDensity.value = 0.66;
+      skyUniforms.uStarAlpha.value = 0.85;
+      rayUniforms.uRayCol.value.setHex(0xf06543);
+      rayUniforms.uRayOpacity.value = 0.11;
+      sharedPbrUniforms.uSunColPbr.value.setHex(0xf06543);
+      redrawIBL("#0c0a1d", "#632128", "#241b1e", "rgba(240,92,59,0.85)", 380, 108);
+      Ye.toneMappingExposure = 1.06;
     } else {
       // Bright Campus Noon (photorealistic sunlit Deccan sky)
-      skyUniforms.uZenithCol.value.setHex(0x1b5eb8);
-      skyUniforms.uHorizonCol.value.setHex(0xbbe0f7);
-      skyUniforms.uSunCol.value.setHex(0xfff8e6);
-      skyUniforms.uCloudCol.value.setHex(0xffffff);
-      skyUniforms.uCloudDensity.value = 0.48;
-      Ye.toneMappingExposure = 1.10;
+      skyUniforms.uZenithCol.value.setHex(0x1652a8);
+      skyUniforms.uHorizonCol.value.setHex(0xb4dcf8);
+      skyUniforms.uSunCol.value.setHex(0xfff7e0);
+      skyUniforms.uCloudTopCol.value.setHex(0xffffff);
+      skyUniforms.uCloudBotCol.value.setHex(0x88a2bd);
+      skyUniforms.uCloudDensity.value = 0.54;
+      skyUniforms.uStarAlpha.value = 0.0;
+      rayUniforms.uRayCol.value.setHex(0xfff4d6);
+      rayUniforms.uRayOpacity.value = 0.14;
+      sharedPbrUniforms.uSunColPbr.value.setHex(0xfff7e0);
+      redrawIBL("#1652a8", "#b4dcf8", "#4d6142", "rgba(255,244,210,0.9)", 148, 56);
+      Ye.toneMappingExposure = 1.13;
     }
   }
   const _tmEl = document.getElementById("time-mode");
@@ -4373,6 +4575,7 @@ REALISTIC_SHADERS_JS = '''
     lastShaderT = now;
     skyUniforms.uTime.value += dt;
     waterUniforms.uTime.value += dt;
+    rayUniforms.uTime.value += dt;
     if (typeof xt !== "undefined") {
       skyDome.position.set(xt.position.x, 0, xt.position.z);
     }
