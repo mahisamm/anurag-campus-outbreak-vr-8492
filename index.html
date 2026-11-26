@@ -5616,45 +5616,144 @@ he(0xd94b58, -45.5, 0.14, 52.0, 11.4, 0.1, 17.2);
 he(0x1368aa, -45.5, 0.19, 52.0, 9.8, 0.08, 15.2);
 
 // ============================================================================
-// BUILDING 8: APJ ABDUL KALAM AUDITORIUM / INDOOR SPORTS COMPLEX (FAR SW)
+// BUILDING 8: DR. APJ ABDUL KALAM HALL — PHOTO-ACCURATE HIGH-DETAIL UPGRADE
 // ============================================================================
-gr.push([-115, 51, -83, 69, "APJ Abdul Kalam Auditorium & Indoor Stadium"]);
-he(C_WALL_WHITE, -100, 4.8, 61.5, 28.0, 9.6, 15.5);
-he(0xf7f7f4, -99, 2.3, 52.2, 30.0, 4.6, 4.2);
-he(C_ROOF_SLAB, -99, 4.68, 52.2, 30.4, 0.2, 4.5);
-for (let i = 0; i < 6; i++) {
-  let wx = -109.5 + i * 3.8;
-  addDarkGlass(wx, 2.45, 50.06, 2.85, 1.65, 0.08);
-}
-he(0xb8b4ac, -111.5, 0.45, 49.4, 3.2, 0.9, 1.8);
-addDarkGlass(-111.5, 2.2, 50.06, 2.2, 2.5, 0.08);
+gr.push([-115, 51, -83, 69.5, "Dr. APJ Abdul Kalam Hall"]);
+// Procedural corrugated terracotta-red metal roof texture
+var kalamCorrugTex = (function() {
+  const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+  const g = c.getContext("2d");
+  for (let x = 0; x < 256; x += 8) {
+    g.fillStyle = "#8e2d24"; g.fillRect(x, 0, 4, 128);
+    g.fillStyle = "#b84438"; g.fillRect(x + 4, 0, 2, 128);
+    g.fillStyle = "#6c1f18"; g.fillRect(x + 6, 0, 2, 128);
+  }
+  const t = new dn(c); t.colorSpace = vt; t.wrapS = t.wrapT = jn; t.repeat.set(14, 2);
+  return t;
+})();
 
-var audRoof = new et(
-  new pn(8.2, 8.2, 28.4, 24, 1, false, 0, Math.PI),
-  new Jt({ color: C_ROOF_RED, roughness: 0.65, metalness: 0.12 })
-);
+// 1. Crisp White Stucco Auditorium Body + Curved Corrugated Terracotta Barrel-Vault Roof
+he(0xf3f4f2, -100, 3.1, 60.5, 28.0, 6.2, 18.6);
+var kalamRoofMat = new Jt({ map: kalamCorrugTex, roughness: 0.52, metalness: 0.22 });
+var audRoof = new et(new pn(9.4, 9.4, 28.4, 28, 1, false, 0, Math.PI), kalamRoofMat);
 audRoof.rotation.z = Math.PI / 2;
-audRoof.scale.set(0.52, 1, 1);
-audRoof.position.set(-100, 9.5, 61.5);
+audRoof.scale.set(0.38, 1, 1);
+audRoof.position.set(-100, 6.15, 60.5);
 audRoof.castShadow = true;
 Ht.add(audRoof);
+// Corrugated red end gable tympanum facing the front courtyard (East, x = -85.95)
+var kalamGable = new et(new pn(9.2, 9.2, 0.25, 24, 1, false, 0, Math.PI), kalamRoofMat);
+kalamGable.rotation.z = Math.PI / 2;
+kalamGable.scale.set(0.37, 1, 1);
+kalamGable.position.set(-85.95, 6.15, 60.5);
+Ht.add(kalamGable);
+// Clean white parapet cornice trim
+he(0xe5e7eb, -85.9, 6.18, 60.5, 0.32, 0.24, 18.9);
 
-for (let czCanopy of [54.5, 64.5]) {
-  let can = new et(
-    new pn(2.2, 2.2, 5.5, 16, 1, false, 0, Math.PI),
-    new Jt({ color: C_ROOF_RED, roughness: 0.68 })
-  );
-  can.rotation.z = Math.PI / 2;
-  can.scale.set(0.55, 1, 1);
-  can.position.set(-83.5, 4.2, czCanopy);
-  Ht.add(can);
+// 2. Raised Metallic 3D Silver Signage: "Dr. APJ ABDUL KALAM / HALL"
+(function() {
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
+  const g = c.getContext("2d");
+  g.fillStyle = "#f3f4f2"; g.fillRect(0, 0, 1024, 256);
+  g.textAlign = "center";
+  // Soft wall drop-shadow for 3D raised steel letters
+  g.fillStyle = "rgba(30,38,48,0.42)"; g.font = "900 72px 'Segoe UI',sans-serif";
+  g.fillText("Dr. APJ ABDUL KALAM", 518, 114);
+  g.fillText("HALL", 518, 198);
+  // Brushed silver metallic letters
+  const grad = g.createLinearGradient(0, 45, 0, 200);
+  grad.addColorStop(0, "#eef2f6"); grad.addColorStop(0.5, "#94a3b8"); grad.addColorStop(1, "#cbd5e1");
+  g.fillStyle = grad;
+  g.fillText("Dr. APJ ABDUL KALAM", 512, 108);
+  g.fillText("HALL", 512, 192);
+  g.strokeStyle = "#475569"; g.lineWidth = 2;
+  g.strokeText("Dr. APJ ABDUL KALAM", 512, 108);
+  g.strokeText("HALL", 512, 192);
+  const t = new dn(c); t.colorSpace = vt;
+  const sign = new et(new _i(7.8, 1.95), new Jt({ map: t, roughness: 0.35, metalness: 0.45 }));
+  sign.rotation.y = Math.PI / 2;
+  sign.position.set(-85.92, 4.55, 57.6);
+  Ht.add(sign);
+})();
+
+// 3. Three Wide Horizontal White-Framed Sliding Windows (Center-Right Facade)
+var kalamWinGlass = new Jt({ color: 0x16222c, roughness: 0.14, metalness: 0.42 });
+var kalamFrameMat = new Jt({ color: 0xf8fafc, roughness: 0.38, metalness: 0.25 });
+for (let wz of [61.2, 58.0, 54.8]) {
+  let wg = new et(new Ni(0.12, 1.65, 2.55), kalamWinGlass); wg.position.set(-85.94, 2.25, wz); Ht.add(wg);
+  // White aluminum perimeter frame + center sliding mullion
+  he(0xf8fafc, -85.88, 3.08, wz, 0.14, 0.09, 2.66);
+  he(0xf8fafc, -85.88, 1.42, wz, 0.14, 0.09, 2.66);
+  he(0xf8fafc, -85.88, 2.25, wz - 1.29, 0.14, 1.72, 0.09);
+  he(0xf8fafc, -85.88, 2.25, wz + 1.29, 0.14, 1.72, 0.09);
+  he(0xf8fafc, -85.88, 2.25, wz, 0.14, 1.68, 0.07);
 }
-he(0xcac4b8, -80.5, 0.09, 59.5, 11.5, 0.1, 18.0);
-for (let pz of [54.5, 59.5, 64.5]) {
-  fr(rd, 0x7b756d, -78.5, 0.35, pz, 0.95, 0.6, 0.95);
-  fr(nd, 0x456b34, -78.5, 0.95, pz, 0.85, 0.75, 0.85);
+
+// 4. Left Entrance Wing: Curved Terracotta Canopy, Teak Double Doors, Kalam Portrait Plaque & Dark Granite Steps
+var steelMat = new Jt({ color: 0xd8dee4, roughness: 0.35, metalness: 0.65 });
+// Curved red metal canopy over left entrance (z = 62.6 .. 69.6)
+var entCanopy = new et(new pn(2.15, 2.15, 7.2, 18, 1, false, 0, Math.PI), kalamRoofMat);
+entCanopy.rotation.x = Math.PI / 2;
+entCanopy.scale.set(1.0, 1.0, 0.36);
+entCanopy.position.set(-83.9, 4.25, 66.1);
+entCanopy.castShadow = true;
+Ht.add(entCanopy);
+// Matching right-wing curved red canopy (z = 51.4 .. 53.6)
+var rCanopy = new et(new pn(2.15, 2.15, 2.4, 14, 1, false, 0, Math.PI), kalamRoofMat);
+rCanopy.rotation.x = Math.PI / 2;
+rCanopy.scale.set(1.0, 1.0, 0.36);
+rCanopy.position.set(-83.9, 4.25, 52.5);
+Ht.add(rCanopy);
+
+// Slender white steel columns + open steel pergola frame bridging across center facade!
+for (let pz of [69.4, 66.0, 62.7, 59.4, 56.1, 53.4]) {
+  he(0xdce2e8, -81.95, 2.55, pz, 0.16, 5.1, 0.16);
+  // Diagonal brace tying column cleanly back into upper white facade
+  he(0xdce2e8, -83.95, 4.95, pz, 4.0, 0.14, 0.14);
 }
-ys(["APJ ABDUL KALAM AUDITORIUM", "INDOOR SPORTS COMPLEX"], -85.8, 6.2, 59.5, 8.2, 1.4, "#7d291f", "#ffffff", Math.PI / 2);
+// Continuous horizontal white steel top beam connecting all columns
+he(0xdce2e8, -81.95, 5.05, 61.4, 0.18, 0.18, 16.4);
+
+// Two Grand Teak-Wood Double Entrance Doors + Framed Dr. APJ Abdul Kalam Portrait Plaque
+var teakMat = new Jt({ color: 0x6b3e26, roughness: 0.58, metalness: 0.08 });
+for (let dz of [64.6, 67.6]) {
+  he(0x3a2012, -85.94, 2.25, dz, 0.18, 2.85, 2.15); // Dark wood outer frame
+  let dL = new et(new Ni(0.14, 2.65, 0.92), teakMat); dL.position.set(-85.88, 2.22, dz - 0.50); Ht.add(dL);
+  let dR = new et(new Ni(0.14, 2.65, 0.92), teakMat); dR.position.set(-85.88, 2.22, dz + 0.50); Ht.add(dR);
+}
+// Framed Dr. Kalam tribute plaque above main door
+ys(["Dr. APJ ABDUL KALAM", "DREAM · TRANSFORM"], -85.88, 3.98, 64.6, 1.55, 0.62, "#f8fafc", "#1e293b", Math.PI / 2);
+
+// Covered Dark-Granite Veranda + 5 Wide Dark-Granite Entrance Steps with Terracotta Side Cheeks
+he(0x2d3238, -83.9, 0.42, 66.1, 4.1, 0.84, 7.2);
+for (let st = 0; st < 5; st++) {
+  let hStep = (5 - st) * 0.15;
+  he(0x282d33, -81.6 + st * 0.34, hStep * 0.5, 66.1, 0.38, hStep, 7.2);
+}
+he(0xa64b42, -80.9, 0.38, 62.45, 1.8, 0.76, 0.22); // Terracotta step cheek
+he(0xa64b42, -80.9, 0.38, 69.75, 1.8, 0.76, 0.22);
+
+// 5. Terracotta-Edged Raised Green Planter Bed under Windows + Lush Lime-Green Spider Grass Tufts
+he(0xa64b42, -83.9, 0.24, 57.2, 4.1, 0.48, 10.6);
+he(0x3b6e28, -83.9, 0.49, 57.2, 3.7, 0.08, 10.1);
+var spiderGrassMat = new Jt({ color: 0x7cb342, roughness: 0.82 });
+for (let gz = 52.8; gz <= 61.8; gz += 1.05) {
+  for (let gx of [-84.9, -83.3]) {
+    let tuft = new et(new fn(0.42, 7, 6), spiderGrassMat);
+    tuft.scale.set(1.15, 0.62, 1.15);
+    tuft.position.set(gx + (Math.random() - 0.5) * 0.3, 0.68, gz + (Math.random() - 0.5) * 0.25);
+    Ht.add(tuft);
+  }
+}
+
+// 6. Scored Cream-Beige Concrete Courtyard + Blooming Pink Bougainvillea Bush on Left Edge
+he(0xd6cfc0, -76.8, 0.06, 60.5, 13.5, 0.12, 20.0);
+let bougLeaf = new et(new fn(1.15, 10, 8), new Jt({ color: 0x2f6b28, roughness: 0.85 }));
+bougLeaf.position.set(-77.5, 1.2, 69.2); Ht.add(bougLeaf);
+let bougPinkMat = new Jt({ color: 0xd81b60, roughness: 0.65 });
+for (let [bx, by, bz] of [[-76.8, 1.6, 68.7], [-77.3, 1.9, 69.4], [-77.9, 1.4, 68.6], [-76.6, 1.1, 69.3]]) {
+  let fl = new et(new fn(0.42, 8, 6), bougPinkMat); fl.position.set(bx, by, bz); Ht.add(fl);
+}
 
 // ============================================================================
 // BUILDING 9: FAR-WEST MECHANICAL WORKSHOP & NORTHWEST PARKING SHEDS / GARDEN
