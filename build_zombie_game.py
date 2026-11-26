@@ -65,10 +65,13 @@ EXTRA_CSS = """
 #end-sub{font:800 15px/1.3 system-ui;color:#72efdd;letter-spacing:1.4px;margin-bottom:8px;display:none}
 #end-overlay.won-mode #end-sub{display:block}
 #end-stats{font:600 14px/1.7 system-ui;color:#d6edf8;margin:12px 0 20px}
-#btn-restart-game{
-  padding:11px 26px;border-radius:10px;border:none;cursor:pointer;
-  background:linear-gradient(135deg,#0ea5e9,#14b8a6);color:#04151f;font:800 15px system-ui;
+#end-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+#btn-restart-game,#btn-explore-campus{
+  padding:11px 22px;border-radius:10px;border:none;cursor:pointer;font:800 14.5px system-ui;
 }
+#btn-restart-game{background:linear-gradient(135deg,#0ea5e9,#14b8a6);color:#04151f}
+#btn-explore-campus{background:rgba(30,58,82,0.95);color:#e2f4ff;border:1px solid rgba(114,239,221,0.5)}
+#btn-explore-campus:hover{background:rgba(48,92,126,0.98)}
 #intro-overlay{
   position:fixed;inset:0;z-index:42;display:none;pointer-events:none;
 }
@@ -245,10 +248,13 @@ COMBAT_HUD_HTML = """
   <div id="center-toast"></div>
   <div id="end-overlay">
     <div id="end-card">
-      <h2 id="end-title">OVERRUN!</h2>
+      <h2 id="end-title">YOU DIED!</h2>
       <div id="end-sub">ANURAG UNIVERSITY IS SAVED · CELEBRATE!</div>
       <div id="end-stats"></div>
-      <button id="btn-restart-game">Play Again [R]</button>
+      <div id="end-actions">
+        <button id="btn-restart-game">Restart Game [R]</button>
+        <button id="btn-explore-campus">Explore Campus [X]</button>
+      </div>
     </div>
   </div>
 </div>
@@ -864,6 +870,7 @@ const ZGAME = {
   introDoneOnce: false,
   vrStoryBanner: null,
   vrWinBanner: null,
+  vrDeathBanner: null,
   fireworks: [],
   fireworkTimer: 0,
   hp: 100,
@@ -1343,6 +1350,7 @@ function clearZombiesAndFX() {
   for (const fw of ZGAME.fireworks) Ht.remove(fw.mesh);
   ZGAME.fireworks.length = 0;
   if (ZGAME.vrWinBanner) ZGAME.vrWinBanner.visible = false;
+  if (ZGAME.vrDeathBanner) ZGAME.vrDeathBanner.visible = false;
 }
 
 // Spectacular 3D Campus Victory Fireworks & Giant 3D "YOU WON!" Sky Banner (PC + Meta Quest 3!)
@@ -1507,12 +1515,19 @@ function finishStoryIntro() {
   if (ZGAME.vrStoryBanner) ZGAME.vrStoryBanner.visible = false;
   // Snap cleanly to 1st-Person Player Start at Main Gate facing A-Block
   xo(0);
-  if (povMode !== "1st") { povMode = "1st"; updateCameraPOV(); }
-  Mi.position.set(0, 0, 0);
-  Mi.rotation.set(0, 0, 0);
+  if (Ye.xr.isPresenting) {
+    // In Meta Quest 3 local-floor VR, headset tracks real standing height — keep camPivot at 0!
+    camPivot.position.set(0, 0, 0);
+    camPivot.rotation.set(0, 0, 0);
+    Mi.position.set(0, 0, 0);
+  } else {
+    if (povMode !== "1st") { povMode = "1st"; updateCameraPOV(); }
+    Mi.position.set(0, 0, 0);
+    Mi.rotation.set(0, 0, 0);
+  }
   syncWeaponVisuals();
   playSFX("saber");
-  showToast("LEVEL 1: LAB ASSISTANTS — SURVIVE!", 2.6);
+  showToast("ENTER THE CAMPUS GATE TO START LEVEL 1!", 2.8);
 }
 
 if (kt("btn-skip-intro")) kt("btn-skip-intro").onclick = () => finishStoryIntro();
@@ -1938,24 +1953,72 @@ function triggerShieldBash() {
   updateCombatHUD();
 }
 
+function showVRDeathBanner() {
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 448;
+  const g = c.getContext("2d");
+  g.fillStyle = "rgba(18,6,10,0.94)"; g.fillRect(0, 0, 1024, 448);
+  g.strokeStyle = "#ef4444"; g.lineWidth = 10; g.strokeRect(8, 8, 1008, 432);
+  g.fillStyle = "#ff4d4d"; g.font = "900 120px Georgia,serif"; g.textAlign = "center";
+  g.fillText("YOU DIED!", 512, 152);
+  const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
+  g.fillStyle = "#f8fafc"; g.font = "bold 34px sans-serif";
+  g.fillText(`PHASE ${lvl.level} (${lvl.badge})  ·  KILLS: ${ZGAME.kills}  ·  SCORE: ${ZGAME.score}`, 512, 232);
+  g.fillStyle = "#0ea5e9"; g.fillRect(72, 286, 410, 100);
+  g.fillStyle = "#04151f"; g.font = "900 34px sans-serif";
+  g.fillText("[B] RESTART GAME", 277, 348);
+  g.fillStyle = "#1e3a52"; g.fillRect(542, 286, 410, 100);
+  g.strokeStyle = "#72efdd"; g.lineWidth = 4; g.strokeRect(542, 286, 410, 100);
+  g.fillStyle = "#e2f4ff"; g.font = "900 34px sans-serif";
+  g.fillText("[X] EXPLORE CAMPUS", 747, 348);
+  const tex = new dn(c); tex.colorSpace = vt;
+  if (!ZGAME.vrDeathBanner) {
+    const mesh = new et(new _i(2.4, 1.05), new Yi({ map: tex, transparent: true, side: Gt }));
+    Ht.add(mesh);
+    ZGAME.vrDeathBanner = mesh;
+  } else {
+    ZGAME.vrDeathBanner.material.map = tex;
+    ZGAME.vrDeathBanner.material.needsUpdate = true;
+  }
+  // Place 2.3m right in front of player's current head position & facing direction!
+  const px = Ye.xr.isPresenting ? oi.x : xt.position.x;
+  const pz = Ye.xr.isPresenting ? oi.z : xt.position.z;
+  const yaw = Ye.xr.isPresenting ? xt.rotation.y : vs;
+  ZGAME.vrDeathBanner.position.set(px - Math.sin(yaw) * 2.3, xt.position.y + 1.55, pz - Math.cos(yaw) * 2.3);
+  ZGAME.vrDeathBanner.lookAt(px, xt.position.y + 1.55, pz);
+  ZGAME.vrDeathBanner.visible = true;
+}
+
+function enterExploreMode() {
+  if (kt("end-overlay")) kt("end-overlay").style.display = "none";
+  if (ZGAME.vrDeathBanner) ZGAME.vrDeathBanner.visible = false;
+  bo.value = "creative";
+  To();
+  kt("time-mode").value = "noon";
+  kt("time-mode").dispatchEvent(new Event("change"));
+  if (!Ye.xr.isPresenting) cd();
+}
+
 function showEndScreen(won) {
   const ov = kt("end-overlay");
-  if (!ov) return;
-  ov.classList.toggle("won-mode", !!won);
-  kt("end-title").textContent = won ? "YOU WON!" : "OVERRUN BY FACULTY ZOMBIES";
-  kt("end-title").style.color = won ? "#fde047" : "#ff6b6b";
-  const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
-  kt("end-stats").innerHTML = `Phase Reached: <b>Level ${lvl.level} (${lvl.name})</b><br>Total Kills: <b>${ZGAME.kills}</b> · Headshots: <b>${ZGAME.headshots}</b><br>Best Kill Streak: <b>${ZGAME.bestCombo}x</b><br>Final Score: <b style="color:#fde047">${ZGAME.score}</b>`;
-  ov.style.display = "flex";
+  if (ov) {
+    ov.classList.toggle("won-mode", !!won);
+    kt("end-title").textContent = won ? "YOU WON!" : "YOU DIED!";
+    kt("end-title").style.color = won ? "#fde047" : "#ff4d4d";
+    const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
+    kt("end-stats").innerHTML = `Phase Reached: <b>Level ${lvl.level} (${lvl.name})</b><br>Total Kills: <b>${ZGAME.kills}</b> · Headshots: <b>${ZGAME.headshots}</b><br>Best Kill Streak: <b>${ZGAME.bestCombo}x</b><br>Final Score: <b style="color:#fde047">${ZGAME.score}</b>`;
+    ov.style.display = "flex";
+  }
   if (won) {
-    // Launch immediate celebratory campus fireworks volley + 3D sky banner!
     show3DWinSkyBanner();
     ZGAME.fireworkTimer = 0.2;
     for (let k = 0; k < 4; k++) launchCampusFirework();
     playSFX("victory");
+  } else if (Ye.xr.isPresenting) {
+    showVRDeathBanner();
   }
 }
 if (kt("btn-restart-game")) kt("btn-restart-game").onclick = () => { startZombieGame(); cd(); };
+if (kt("btn-explore-campus")) kt("btn-explore-campus").onclick = () => enterExploreMode();
 
 function damagePlayer(amount) {
   if (ZGAME.gameOver || ZGAME.victory) return;
@@ -2546,6 +2609,7 @@ KEY_REPLACE = KEY_ANCHOR + """
       if (ZGAME.jumpY === 0) { ZGAME.jumpVel = 7.2; return; }
     }
     if (r.code === "KeyR") { if (ZGAME.gameOver || ZGAME.victory) { startZombieGame(); cd(); } else { triggerReload(); } return; }
+    if (r.code === "KeyX" && (ZGAME.gameOver || ZGAME.victory)) { enterExploreMode(); return; }
   }"""
 html = html.replace(KEY_ANCHOR, KEY_REPLACE, 1)
 
@@ -2662,34 +2726,37 @@ VR_SYNC_REPLACE = """    const pressed=!!buttons?.[4]?.pressed;
       const curPos=hand.anchor.position;
       if(side==="right"){
         const w=WEAPON_DEFS[ZGAME.weaponIdx];
-        if(w.type==="melee"){
-          // Real physical 3D blade-contact damage on hand movement (NO trigger needed!)
-          checkVRPhysicalMeleeHit(hand, 0.016);
-        } else {
-          if(trigDown && (w.auto || !hand.trigDown) && ZGAME.fireCd<=0){
-            const {origin,forward}=getVRRightAimRay();
-            performGunFire(origin,forward);
+        if(!ZGAME.introPlaying && !ZGAME.gameOver){
+          if(w.type==="melee"){
+            // Real physical 3D blade-contact damage on hand movement (NO trigger needed!)
+            checkVRPhysicalMeleeHit(hand, 0.016);
+          } else {
+            if(trigDown && (w.auto || !hand.trigDown) && ZGAME.fireCd<=0){
+              const {origin,forward}=getVRRightAimRay();
+              performGunFire(origin,forward);
+            }
           }
+          // Right Grip picks up nearby campus Iron Rod or Fallen Branch
+          if(gripDown && !hand.gripDown) tryPickupNearbyWeapon();
         }
-        // Right Grip picks up nearby campus Iron Rod or Fallen Branch
-        if(gripDown && !hand.gripDown) tryPickupNearbyWeapon();
         // A button cycles Right-Hand Weapons (or skips story intro in VR)
         if(hand.source===source && pressed && !hand.buttonDown){
-          if(ZGAME.introPlaying) finishStoryIntro(); else cycleWeapon(1);
+          if(ZGAME.introPlaying) finishStoryIntro(); else if(!ZGAME.gameOver) cycleWeapon(1);
         }
-        // B button reloads gun (or restarts if game over)
+        // B button reloads gun (or restarts if dead/won)
         if(hand.source===source && upper && !hand.upperDown){
           if(ZGAME.gameOver || ZGAME.victory) startZombieGame(); else triggerReload();
         }
       } else {
         // Left Hand: Shield opens ONLY when Left Trigger is actively pressed!
-        ZGAME.vrShieldTrigger = trigger > 0.55;
+        ZGAME.vrShieldTrigger = !ZGAME.introPlaying && !ZGAME.gameOver && trigger > 0.55;
         const lSpeed=curPos.distanceTo(ZGAME.vrPrevLeftPos)*60;
         ZGAME.vrPrevLeftPos.copy(curPos);
-        if(lSpeed>5.2 || (gripDown && !hand.gripDown)) triggerShieldBash();
-        // X button cycles lighting/atmosphere in VR
+        if(!ZGAME.introPlaying && !ZGAME.gameOver && (lSpeed>5.2 || (gripDown && !hand.gripDown))) triggerShieldBash();
+        // X button: Explore Campus when dead/won, or cycles lighting during gameplay
         if(hand.source===source && pressed && !hand.buttonDown){
-          const tm=kt("time-mode"); tm.selectedIndex=(tm.selectedIndex+1)%tm.options.length; tm.dispatchEvent(new Event("change"));
+          if(ZGAME.gameOver || ZGAME.victory) enterExploreMode();
+          else { const tm=kt("time-mode"); tm.selectedIndex=(tm.selectedIndex+1)%tm.options.length; tm.dispatchEvent(new Event("change")); }
         }
       }
       hand.trigDown=trigDown; hand.gripDown=gripDown;
@@ -2822,6 +2889,13 @@ STATUS_REPLACE = """  if (t && bo.value === "zombie") {
     fo.textContent = `OUTBREAK LVL ${lv.level}: ${lv.badge} · ${zone.toUpperCase()}`;
   } else if (t && bo.value !== "survival") {"""
 html = html.replace(STATUS_ANCHOR, STATUS_REPLACE, 1)
+
+# CRITICAL VR FIX: Never black out the VR screen (`hd`) during the aerial intro flyover or above buildings!
+html = html.replace(
+    'let l = Ye.xr.isPresenting && yo(oi.x, oi.z);',
+    'let l = Ye.xr.isPresenting && !ZGAME.introPlaying && xt.position.y < 14 && yo(oi.x, oi.z);',
+    1
+)
 
 # 7k. Keep dynamic shadow updates reasonable in VR + trigger cinematic aerial-to-FP story intro!
 html = html.replace(
