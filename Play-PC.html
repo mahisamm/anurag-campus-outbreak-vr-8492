@@ -6347,7 +6347,7 @@ function createRealisticArmAndHand(side) {
     let rodMat = new Jt({ color: 0x5c473e, roughness: 0.56, metalness: 0.72 });
     let branchMat = new Jt({ color: 0x523720, roughness: 0.9, metalness: 0.02 });
 
-    // 0: Plasma Lightsaber — Distinct Sword/Beat-Saber Grip (blade rises upward-forward out of clenched fist, NOT gun angle!)
+    // 0: Plasma Lightsaber — Triple-Layer Pulsing Plasma Blade + Emitter Flare + Ignition Animation
     let saberGrp = new fi();
     saberGrp.position.set(0, -0.018, -0.022);
     saberGrp.rotation.set(-0.55, 0, 0);
@@ -6355,14 +6355,35 @@ function createRealisticArmAndHand(side) {
       ? new et(blenderGeos.lightsaber_hilt, hiltMat)
       : new et(new pn(0.018, 0.018, 0.24, 14), hiltMat);
     saberGrp.add(hiltMesh);
-    let bladeOuterMat = new Yi({ color: 0x22d3ee, transparent: true, opacity: 0.82 });
-    let bladeCoreMat = new Yi({ color: 0xe0faff });
-    saberBlade = new et(new pn(0.015, 0.011, 0.96, 14), bladeOuterMat);
-    saberBlade.position.set(0, 0.63, 0);
-    saberGrp.add(saberBlade);
-    saberCore = new et(new pn(0.007, 0.005, 0.94, 10), bladeCoreMat);
-    saberCore.position.set(0, 0.63, 0);
-    saberGrp.add(saberCore);
+
+    // Emitter mouth glow ring
+    let emitterGlow = new et(new gn(0.022, 0.0055, 8, 18), new Yi({ color: 0x72efdd }));
+    emitterGlow.rotation.x = Math.PI / 2;
+    emitterGlow.position.set(0, 0.165, 0);
+    saberGrp.add(emitterGlow);
+
+    // Telescoping blade pivot anchored right at the emitter mouth (Y = 0.165)
+    let saberBladePivot = new fi();
+    saberBladePivot.position.set(0, 0.165, 0);
+    let bladeAuraMat = new Yi({ color: 0x0ea5e9, transparent: true, opacity: 0.28, depthWrite: false });
+    let bladeOuterMat = new Yi({ color: 0x22d3ee, transparent: true, opacity: 0.86 });
+    let bladeCoreMat = new Yi({ color: 0xffffff });
+
+    let saberAura = new et(new pn(0.024, 0.030, 0.98, 14), bladeAuraMat);
+    saberAura.position.set(0, 0.49, 0);
+    saberBladePivot.add(saberAura);
+    saberBlade = new et(new pn(0.013, 0.017, 0.96, 14), bladeOuterMat);
+    saberBlade.position.set(0, 0.48, 0);
+    saberBladePivot.add(saberBlade);
+    saberCore = new et(new pn(0.006, 0.0085, 0.94, 10), bladeCoreMat);
+    saberCore.position.set(0, 0.47, 0);
+    saberBladePivot.add(saberCore);
+    let bladeTip = new et(new fn(0.014, 10, 8), bladeCoreMat);
+    bladeTip.position.set(0, 0.96, 0);
+    saberBladePivot.add(bladeTip);
+    saberGrp.add(saberBladePivot);
+    saberGrp.userData.bladePivot = saberBladePivot;
+    saberGrp.userData.aura = saberAura;
     weaponMount.add(saberGrp);
 
     // 1: Tactical 9mm Pistol
@@ -6418,9 +6439,20 @@ function createRealisticArmAndHand(side) {
     branchGrp.add(branchMesh);
     weaponMount.add(branchGrp);
 
-    // Shared Muzzle Flash + Tactical Laser Sight (for VR & PC Gun Aiming!)
-    muzzleFlash = new et(new oa(0.055, 0.16, 8), new Yi({ color: 0xffd166, transparent: true, opacity: 0.92 }));
-    muzzleFlash.rotation.x = -Math.PI / 2;
+    // Multi-Layered Starburst Muzzle Flash + Tactical Laser Sight
+    muzzleFlash = new fi();
+    let mfCore = new et(new fn(0.042, 8, 8), new Yi({ color: 0xffffff }));
+    muzzleFlash.add(mfCore);
+    let mfMat = new Yi({ color: 0xffb703, transparent: true, opacity: 0.92, side: Gt, depthWrite: false });
+    let mfCone = new et(new oa(0.065, 0.22, 8), mfMat);
+    mfCone.rotation.x = -Math.PI / 2;
+    mfCone.position.z = -0.09;
+    muzzleFlash.add(mfCone);
+    for (let k = 0; k < 3; k++) {
+      let fin = new et(new _i(0.18, 0.055), mfMat);
+      fin.rotation.z = k * (Math.PI / 3);
+      muzzleFlash.add(fin);
+    }
     muzzleFlash.visible = false;
     weaponMount.add(muzzleFlash);
 
@@ -7628,10 +7660,15 @@ const ZGAME = {
   pickupWeaponIdx: -1,   // 4 or 5 when player has picked up a campus rod/branch
   ammo: [Infinity, 15, 30, 8, Infinity, Infinity],
   reloading: 0,
+  reloadTotal: 1.2,
   fireCd: 0,
   swingAnim: 0,
+  swingDir: 1,
   recoilAnim: 0,
+  saberIgnite: 0,
+  weaponDrawAnim: 0,
   muzzleTimer: 0,
+  trailTimer: 0,
   mouseLeftDown: false,
   mouseRightDown: false,
   zombies: [],
@@ -7720,6 +7757,30 @@ function spawnShockwave(pos, color = 0x38bdf8, maxScale = 4.2) {
   m.position.set(pos.x, pos.y + 0.18, pos.z);
   Ht.add(m);
   ZGAME.particles.push({ mesh: m, vel: new A(0, 0, 0), life: 0.36, isRing: true, maxScale });
+}
+
+// Eject Spinning Brass/Shotgun Shell Casing
+const shellGeo = new pn(0.006, 0.006, 0.026, 6);
+function spawnShellCasing(origin, forward, isShotgun) {
+  const mat = new Jt({ color: isShotgun ? 0xdc2626 : 0xfbbf24, roughness: 0.28, metalness: 0.82 });
+  const m = new et(shellGeo, mat);
+  if (isShotgun) m.scale.set(1.6, 1.4, 1.6);
+  const right = new A().crossVectors(forward, new A(0, 1, 0)).normalize();
+  m.position.copy(origin).addScaledVector(forward, 0.32).addScaledVector(right, 0.14).add(new A(0, -0.06, 0));
+  Ht.add(m);
+  const vel = right.multiplyScalar(1.6 + Math.random() * 0.9).add(new A(0, 1.4 + Math.random() * 0.6, 0));
+  ZGAME.particles.push({ mesh: m, vel, life: 0.75, spin: new A(14, 18, 12) });
+}
+
+// Glowing Lightsaber Plasma Slash Trail Segment
+const trailGeo = new _i(0.11, 0.78);
+function spawnSaberTrail(pos, quat, color = 0x22d3ee) {
+  const mat = new Yi({ color, transparent: true, opacity: 0.42, side: Gt, depthWrite: false });
+  const m = new et(trailGeo, mat);
+  m.position.copy(pos);
+  m.quaternion.copy(quat);
+  Ht.add(m);
+  ZGAME.particles.push({ mesh: m, vel: new A(0, 0, 0), life: 0.16, maxLife: 0.16, isFade: true });
 }
 
 // Campus Ground Pickups: Iron Construction Rods & Fallen Tree Branches
@@ -8293,7 +8354,13 @@ function selectWeapon(idx) {
   if ((idx === 4 || idx === 5) && ZGAME.pickupWeaponIdx !== idx) return;
   ZGAME.weaponIdx = idx;
   ZGAME.reloading = 0;
-  if (idx === 0) playSFX("saber");
+  ZGAME.weaponDrawAnim = 1.0;
+  if (idx === 0) {
+    ZGAME.saberIgnite = 0.02;
+    playSFX("saber");
+  } else {
+    playSFX("pickup");
+  }
   syncWeaponVisuals();
   updateCombatHUD();
 }
@@ -8338,6 +8405,7 @@ function triggerReload() {
   const w = WEAPON_DEFS[ZGAME.weaponIdx];
   if (!w || w.type !== "gun" || ZGAME.reloading > 0 || ZGAME.ammo[w.id] === w.mag) return;
   ZGAME.reloading = w.reload;
+  ZGAME.reloadTotal = w.reload;
   playSFX("reload");
   updateCombatHUD();
 }
@@ -8404,6 +8472,15 @@ function checkVRPhysicalMeleeHit(hand, dt) {
   const tipSpeed = tipWorld.distanceTo(ZGAME.vrPrevTipPos) / safeDt;
   ZGAME.vrPrevTipPos.copy(tipWorld);
 
+  // Spawn glowing plasma slash trail in VR whenever the lightsaber moves quickly!
+  if (w.key === "saber" && tipSpeed > 1.25 && ZGAME.trailTimer <= 0) {
+    ZGAME.trailTimer = 0.024;
+    const mid = hiltWorld.clone().lerp(tipWorld, 0.56);
+    const q = new Ot();
+    mount.getWorldQuaternion(q);
+    spawnSaberTrail(mid, q, 0x22d3ee);
+  }
+
   // Require a REAL intentional slash/swing (tipSpeed > 1.85 m/s) — lightly touching the saber deals ZERO damage!
   if (tipSpeed < 1.85) return;
 
@@ -8442,8 +8519,14 @@ function performMeleeAttack(origin, forward) {
   if (!w || w.type !== "melee") return;
   ZGAME.fireCd = w.cooldown;
   ZGAME.swingAnim = 1.0;
+  ZGAME.swingDir = -ZGAME.swingDir; // Alternate diagonal slash directions for fluid combo!
   playSFX(w.key === "saber" ? "saber" : w.key === "iron_rod" ? "rod" : "branch");
   pulseHaptics("right", 0.5, 60);
+  if (w.key === "saber") {
+    const arcPos = origin.clone().addScaledVector(forward, 0.85).add(new A(0, -0.08, 0));
+    const q = Mi.getWorldQuaternion(new Ot());
+    spawnSaberTrail(arcPos, q, 0x22d3ee);
+  }
 
   let hitAny = false;
   for (const z of ZGAME.zombies) {
@@ -8469,14 +8552,23 @@ function performGunFire(origin, forward) {
   ZGAME.ammo[w.id]--;
   ZGAME.fireCd = w.cooldown;
   ZGAME.recoilAnim = 1.0;
-  ZGAME.muzzleTimer = 0.055;
+  ZGAME.muzzleTimer = w.key === "shotgun" ? 0.085 : 0.055;
+  if (w.key === "shotgun") ZGAME.shake = Math.max(ZGAME.shake, 0.14);
+  else if (w.key === "pistol") ZGAME.shake = Math.max(ZGAME.shake, 0.045);
+  else ZGAME.shake = Math.max(ZGAME.shake, 0.032);
   playSFX(w.key);
   pulseHaptics("right", w.key === "shotgun" ? 0.95 : 0.65, w.key === "shotgun" ? 110 : 55);
+  spawnShellCasing(origin, forward, w.key === "shotgun");
 
-  // Position muzzle flash on active arm
+  // Position & randomize starburst muzzle flash rotation on active arm
   const activeRightArms = [fpHands[1], trackedHands.get("right")?.arm].filter(Boolean);
   for (const arm of activeRightArms) {
-    if (arm.muzzleFlash) arm.muzzleFlash.position.set(0, 0.055, w.muzzleZ);
+    if (arm.muzzleFlash) {
+      arm.muzzleFlash.position.set(0, 0.055, w.muzzleZ);
+      arm.muzzleFlash.rotation.z = Math.random() * Math.PI * 2;
+      const mfScale = w.key === "shotgun" ? 1.55 : w.key === "rifle" ? 1.15 : 0.85;
+      arm.muzzleFlash.scale.set(mfScale, mfScale, mfScale);
+    }
   }
 
   for (let p = 0; p < w.pellets; p++) {
@@ -8670,9 +8762,23 @@ function updateZombieGame(dt, timeSec) {
   if (ZGAME.fireCd > 0) ZGAME.fireCd = Math.max(0, ZGAME.fireCd - dt);
   if (ZGAME.shieldBashCd > 0) ZGAME.shieldBashCd = Math.max(0, ZGAME.shieldBashCd - dt);
   if (ZGAME.vrSwingCd > 0) ZGAME.vrSwingCd = Math.max(0, ZGAME.vrSwingCd - dt);
-  if (ZGAME.swingAnim > 0) ZGAME.swingAnim = Math.max(0, ZGAME.swingAnim - dt * 3.4);
-  if (ZGAME.recoilAnim > 0) ZGAME.recoilAnim = Math.max(0, ZGAME.recoilAnim - dt * 6.5);
+  if (ZGAME.swingAnim > 0) ZGAME.swingAnim = Math.max(0, ZGAME.swingAnim - dt * 3.6);
+  if (ZGAME.recoilAnim > 0) ZGAME.recoilAnim = Math.max(0, ZGAME.recoilAnim - dt * 6.8);
+  if (ZGAME.weaponDrawAnim > 0) ZGAME.weaponDrawAnim = Math.max(0, ZGAME.weaponDrawAnim - dt * 4.5);
+  if (ZGAME.trailTimer > 0) ZGAME.trailTimer = Math.max(0, ZGAME.trailTimer - dt);
   if (ZGAME.shieldBashAnim > 0) ZGAME.shieldBashAnim = Math.max(0, ZGAME.shieldBashAnim - dt * 3.2);
+
+  // Smooth Lightsaber Telescoping Ignition + 32Hz Plasma Blade Shimmer (Both PC & Meta Quest 3!)
+  const wantSaber = ZGAME.active && ZGAME.weaponIdx === 0 && !ZGAME.introPlaying;
+  ZGAME.saberIgnite = so.lerp(ZGAME.saberIgnite, wantSaber ? 1 : 0, Math.min(1, dt * 11));
+  const shimmer = 1.0 + Math.sin(timeSec * 42) * 0.09 + Math.cos(timeSec * 73) * 0.05;
+  for (const arm of [...fpHands, ...Array.from(trackedHands.values()).map(h => h.arm)]) {
+    const sg = arm.weaponModels?.[0];
+    if (sg && sg.userData.bladePivot) {
+      sg.userData.bladePivot.scale.set(shimmer, Math.max(0.001, ZGAME.saberIgnite), shimmer);
+      if (sg.userData.aura) sg.userData.aura.scale.set(1.0 + Math.sin(timeSec * 28) * 0.14, 1, 1.0 + Math.sin(timeSec * 28) * 0.14);
+    }
+  }
   if (ZGAME.muzzleTimer > 0) {
     ZGAME.muzzleTimer = Math.max(0, ZGAME.muzzleTimer - dt);
     syncWeaponVisuals();
@@ -8929,7 +9035,7 @@ function updateZombieGame(dt, timeSec) {
     }
   }
 
-  // Update Particles & Tracers
+  // Update Particles, Shell Casings, Saber Trails & Tracers
   for (let i = ZGAME.particles.length - 1; i >= 0; i--) {
     const pt = ZGAME.particles[i];
     pt.life -= dt;
@@ -8937,9 +9043,16 @@ function updateZombieGame(dt, timeSec) {
       const grow = 1 + dt * 14;
       pt.mesh.scale.x = Math.min(pt.maxScale, pt.mesh.scale.x * grow);
       pt.mesh.scale.y = pt.mesh.scale.x;
+    } else if (pt.isFade) {
+      if (pt.mesh.material) pt.mesh.material.opacity = Math.max(0, (pt.life / (pt.maxLife || 0.16)) * 0.44);
     } else if (!pt.isTracer) {
       pt.vel.y -= 9.8 * dt;
       pt.mesh.position.addScaledVector(pt.vel, dt);
+      if (pt.spin) {
+        pt.mesh.rotation.x += pt.spin.x * dt;
+        pt.mesh.rotation.y += pt.spin.y * dt;
+        pt.mesh.rotation.z += pt.spin.z * dt;
+      }
     }
     if (pt.life <= 0) {
       Ht.remove(pt.mesh);
@@ -9165,31 +9278,47 @@ Ye.setAnimationLoop((r,frame) => {
         arm.wristPivot.rotation.set(0, 0, 0);
         arm.setFingerCurl(0.85, false);
       } else {
-        // Right Hand: Lightsaber / Guns / Picked-up Rod or Branch
+        // Right Hand: Dynamic Weapon-Specific Animations (2-Combo Saber Slash, Recoil Kick, Tactical Reload Tilt, Draw Raise!)
         let w = WEAPON_DEFS[ZGAME.weaponIdx];
         let sw = Math.sin(ZGAME.swingAnim * Math.PI);
         let rec = ZGAME.recoilAnim;
+        let drawDip = ZGAME.weaponDrawAnim * 0.18;
+        let relTilt = ZGAME.reloading > 0 ? Math.sin((ZGAME.reloading / Math.max(0.1, ZGAME.reloadTotal)) * Math.PI) : 0;
+        let walkSwayX = isWalking ? Math.cos(Bc) * 0.014 : 0;
+        let walkSwayY = isWalking ? Math.abs(Math.sin(Bc)) * 0.012 : 0;
+
         if (w.type === "melee") {
+          let dir = ZGAME.swingDir;
           arm.root.position.set(
-            0.23 - sw * 0.22,
-            -0.21 + sw * 0.08 + breathe * 0.004,
-            -0.38 - sw * 0.12
+            0.23 + walkSwayX - sw * (dir > 0 ? 0.28 : -0.14),
+            -0.21 - drawDip + walkSwayY + sw * 0.11 + breathe * 0.005,
+            -0.38 - sw * 0.16
           );
           arm.root.rotation.set(
-            0.22 - sw * 1.15,
-            -0.25 + sw * 0.85,
-            -0.18 + sw * 0.55
+            0.18 - sw * 1.18,
+            -0.22 + sw * (dir > 0 ? 0.95 : -0.72),
+            -0.16 + sw * (dir > 0 ? 0.65 : -0.52)
           );
+          // Emit cyan plasma trail mid-swing on PC too!
+          if (w.key === "saber" && ZGAME.swingAnim > 0.25 && ZGAME.swingAnim < 0.85 && ZGAME.trailTimer <= 0) {
+            ZGAME.trailTimer = 0.03;
+            arm.weaponMount.updateWorldMatrix(true, false);
+            const mid = new A(0, 0.45, -0.35).applyMatrix4(arm.weaponMount.matrixWorld);
+            const q = new Ot(); arm.weaponMount.getWorldQuaternion(q);
+            spawnSaberTrail(mid, q, 0x22d3ee);
+          }
         } else {
+          let kickBack = w.key === "shotgun" ? 0.13 : w.key === "rifle" ? 0.055 : 0.07;
+          let kickPitch = w.key === "shotgun" ? 0.36 : w.key === "pistol" ? 0.28 : 0.14;
           arm.root.position.set(
-            0.20,
-            -0.19 + rec * 0.025 + breathe * 0.003,
-            -0.37 + rec * 0.065
+            0.20 + walkSwayX - relTilt * 0.06,
+            -0.19 - drawDip - relTilt * 0.12 + walkSwayY + rec * 0.032 + breathe * 0.003,
+            -0.37 + rec * kickBack
           );
           arm.root.rotation.set(
-            0.04 + rec * 0.22,
-            -0.06,
-            -0.04
+            0.04 + rec * kickPitch - relTilt * 0.42 - drawDip * 1.4,
+            -0.06 + relTilt * 0.38,
+            -0.04 + relTilt * 0.62
           );
         }
         arm.wristPivot.rotation.set(0, 0, 0);
