@@ -364,10 +364,10 @@ ARM_GEAR_JS = """
     let rodMat = new Jt({ color: 0x5c473e, roughness: 0.56, metalness: 0.72 });
     let branchMat = new Jt({ color: 0x523720, roughness: 0.9, metalness: 0.02 });
 
-    // 0: Plasma Lightsaber (angled naturally forward-upward like a real gripped sword!)
+    // 0: Plasma Lightsaber — Distinct Sword/Beat-Saber Grip (blade rises upward-forward out of clenched fist, NOT gun angle!)
     let saberGrp = new fi();
-    saberGrp.position.set(0, -0.015, -0.015);
-    saberGrp.rotation.set(-1.05, 0, 0);
+    saberGrp.position.set(0, -0.018, -0.022);
+    saberGrp.rotation.set(-0.55, 0, 0);
     let hiltMesh = blenderGeos.lightsaber_hilt
       ? new et(blenderGeos.lightsaber_hilt, hiltMat)
       : new et(new pn(0.018, 0.018, 0.24, 14), hiltMat);
@@ -415,18 +415,20 @@ ARM_GEAR_JS = """
     shotGrp.add(shotMesh);
     weaponMount.add(shotGrp);
 
-    // 4: Campus Iron Rod Pickup
+    // 4: Campus Iron Rod Pickup (distinct melee club grip)
     let rodGrp = new fi();
-    rodGrp.rotation.set(-0.34, 0, 0);
+    rodGrp.position.set(0, -0.018, -0.022);
+    rodGrp.rotation.set(-0.55, 0, 0);
     let rodMesh = blenderGeos.iron_rod
       ? new et(blenderGeos.iron_rod, rodMat)
       : new et(new pn(0.014, 0.014, 0.95, 10), rodMat);
     rodGrp.add(rodMesh);
     weaponMount.add(rodGrp);
 
-    // 5: Campus Fallen Branch Pickup
+    // 5: Campus Fallen Branch Pickup (distinct melee club grip)
     let branchGrp = new fi();
-    branchGrp.rotation.set(-0.34, 0, 0);
+    branchGrp.position.set(0, -0.018, -0.022);
+    branchGrp.rotation.set(-0.55, 0, 0);
     let branchMesh = blenderGeos.fallen_branch
       ? new et(blenderGeos.fallen_branch, branchMat)
       : new et(new pn(0.02, 0.012, 0.92, 10), branchMat);
@@ -1274,12 +1276,12 @@ function checkVRPhysicalMeleeHit(hand, dt) {
   const w = WEAPON_DEFS[ZGAME.weaponIdx];
   if (!w || w.type !== "melee" || !hand || !hand.anchor.visible) return;
 
-  // Compute real world-space hilt & blade-tip positions along the weapon's actual 3D orientation
+  // Compute real world-space hilt & blade-tip positions along the sword/rod/branch melee axis (-0.55 rad)
   const mount = hand.arm.weaponMount;
   if (!mount) return;
   mount.updateWorldMatrix(true, false);
-  const hiltWorld = new A(0, 0, -0.02).applyMatrix4(mount.matrixWorld);
-  const tipLocal = new A(0, 0.55, -0.95); // Matches forward-angled lightsaber / rod / branch blade axis
+  const hiltWorld = new A(0, -0.01, -0.02).applyMatrix4(mount.matrixWorld);
+  const tipLocal = new A(0, 0.90, -0.58);
   const tipWorld = tipLocal.applyMatrix4(mount.matrixWorld);
 
   const safeDt = Math.max(0.008, dt || 0.016);
@@ -1994,16 +1996,20 @@ VR_SYNC_REPLACE = """    const pressed=!!buttons?.[4]?.pressed;
     const gripDown=grip>0.65;
 
     if(ZGAME.active){
-      // Naturally curl Right-Hand fingers around the equipped weapon grip so hand never looks flat open!
+      // Distinct ergonomic VR hand pose for Guns (index finger on trigger) vs Lightsaber/Rod/Branch (full sword fist grip!)
       if(side==="right"){
+        const curW = WEAPON_DEFS[ZGAME.weaponIdx];
+        const isMelee = curW && curW.type === "melee";
         arm.fingers.forEach((finger,i)=>{
-          const c = i===0 ? Math.max(0.45, trigger) : Math.max(0.88, grip);
+          const c = (!isMelee && i===0) ? (0.28 + trigger*0.65) : Math.max(0.92, grip);
           finger.fRoot.rotation.x=-(.14+c*.95);
           finger.j2.rotation.x=-(.15+c*1.05);
           finger.j3.rotation.x=-(.08+c*.72);
         });
-        arm.thumbRoot.rotation.set(-.34, .88, -.28);
-        arm.thumbJ2.rotation.x=-.42;
+        arm.thumbRoot.rotation.set(isMelee ? -.42 : -.24, .88, -.28);
+        arm.thumbJ2.rotation.x = isMelee ? -.52 : -.28;
+        // Distinct slight wrist cant for melee sword swing vs dead-straight gun sight alignment
+        if(arm.wristPivot) arm.wristPivot.rotation.set(isMelee ? -0.18 : 0, 0, 0);
       }
       const curPos=hand.anchor.position;
       if(side==="right"){
@@ -2063,16 +2069,22 @@ html = html.replace(
     1
 )
 
-# Ensure newly created Quest controller hands also sync weapon/shield visibility
-# AND fix Quest 3 Touch gripSpace pitch/roll so hands & weapons align straight naturally without bending your wrist!
+# Use Meta Quest 3's calibrated targetRaySpace (natural straight pointing axis) for 1:1 hand & gun sync with ZERO wrist bending!
+html = html.replace(
+    'const pose=frame.getPose(source.gripSpace,space);',
+    'const pose=frame.getPose(source.targetRaySpace||source.gripSpace,space);',
+    1
+)
+
+# Align VR hands straight along targetRaySpace (-Z forward, relaxed natural wrist roll, zero bend needed!)
 html = html.replace(
     '  arm.root.position.set(0,.012,.046);\n  arm.root.rotation.z=sign*.72;',
-    '  arm.root.position.set(0,.008,.052);\n  arm.root.rotation.set(0.56, 0, sign*.22);',
+    '  arm.root.position.set(0,-.016,.092);\n  arm.root.rotation.set(0, 0, sign*.14);',
     1
 )
 html = html.replace(
     '  arm.root.position.set(0,.012,.046);\r\n  arm.root.rotation.z=sign*.72;',
-    '  arm.root.position.set(0,.008,.052);\r\n  arm.root.rotation.set(0.56, 0, sign*.22);',
+    '  arm.root.position.set(0,-.016,.092);\r\n  arm.root.rotation.set(0, 0, sign*.14);',
     1
 )
 CTRL_ADD_ANCHOR = '  trackedHands.set(side,hand);return hand;'
