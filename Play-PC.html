@@ -399,29 +399,28 @@ body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:transla
 #tour-complete-card p{font:500 14px/1.55 system-ui;color:#d6edf8;margin:0 0 18px}
 #tour-complete-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 #tour-choice-overlay{
-  position:fixed;inset:0;z-index:49;display:none;align-items:center;justify-content:center;
-  background:radial-gradient(circle at center,rgba(6,16,28,0.28),rgba(4,10,20,0.68));
-  backdrop-filter:blur(5px);pointer-events:auto;
+  position:fixed;left:20px;bottom:24px;z-index:49;display:none;
+  width:min(410px,92vw);pointer-events:auto;
 }
-#tour-choice-overlay.show{display:flex}
+#tour-choice-overlay.show{display:block}
 #tour-choice-card{
-  width:min(600px,92vw);padding:28px 30px;border-radius:18px;text-align:center;
-  background:linear-gradient(155deg,rgba(8,18,32,0.95),rgba(16,30,52,0.94));
-  border:1.5px solid rgba(114,239,221,0.65);box-shadow:0 24px 64px rgba(0,0,0,0.72);
+  width:100%;padding:18px 20px;border-radius:16px;text-align:left;
+  background:linear-gradient(155deg,rgba(8,18,32,0.94),rgba(16,30,52,0.92));
+  border:1.5px solid rgba(114,239,221,0.65);box-shadow:0 18px 46px rgba(0,0,0,0.68);
+  backdrop-filter:blur(12px);
 }
-#tour-choice-card h2{font:900 26px/1.18 Georgia,serif;color:#ffffff;margin:0 0 8px}
-#tour-choice-card p{font:500 14px/1.5 system-ui;color:#cfeaf7;margin:0 0 20px}
-.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media (max-width:560px){.choice-grid{grid-template-columns:1fr}}
+#tour-choice-card h2{font:900 19px/1.2 Georgia,serif;color:#ffffff;margin:0 0 6px}
+#tour-choice-card p{font:500 12.5px/1.45 system-ui;color:#cfeaf7;margin:0 0 14px}
+.choice-grid{display:flex;flex-direction:column;gap:10px}
 .choice-btn{
-  padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;
+  padding:12px 15px;border-radius:12px;cursor:pointer;text-align:left;
   border:1.5px solid rgba(114,239,221,0.45);background:rgba(15,34,54,0.92);color:#f8fafc;
   transition:transform .15s,filter .15s;
 }
-.choice-btn:hover{transform:translateY(-2px);filter:brightness(1.12)}
+.choice-btn:hover{transform:translateX(3px);filter:brightness(1.12)}
 .choice-btn.tour{background:linear-gradient(135deg,#0ea5e9,#2563eb);border-color:#bae6fd}
-.choice-btn-title{font:900 16px/1.2 'Segoe UI',system-ui,sans-serif;margin-bottom:5px;display:block}
-.choice-btn-sub{font:500 12px/1.38 system-ui;opacity:0.92;display:block}
+.choice-btn-title{font:900 14.5px/1.2 'Segoe UI',system-ui,sans-serif;margin-bottom:3px;display:block}
+.choice-btn-sub{font:500 11.5px/1.35 system-ui;opacity:0.92;display:block}
 #tour-board-prompt{
   position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:40;display:none;
   padding:12px 24px;border-radius:14px;text-align:center;
@@ -600,11 +599,11 @@ body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:transla
     <p>Choose our guided Open-Top Electric Buggy Tour with live college-demo narration, or explore freely on foot with automatic proximity voice guidance at every block.</p>
     <div class="choice-grid">
       <button class="choice-btn tour" id="btn-choose-tour">
-        <span class="choice-btn-title">Campus Tour (Electric Buggy)</span>
+        <span class="choice-btn-title">Campus Tour in Buggy</span>
         <span class="choice-btn-sub">Walk forward to the gate — our open-top buggy arrives for you and drives slowly past every block!</span>
       </button>
       <button class="choice-btn" id="btn-choose-free">
-        <span class="choice-btn-title">Free Walk (Explore Campus)</span>
+        <span class="choice-btn-title">Campus Free Roam</span>
         <span class="choice-btn-sub">Walk freely anywhere on campus — voice guide automatically explains each block as you arrive!</span>
       </button>
     </div>
@@ -7485,11 +7484,11 @@ function landAtMainGateChoice() {
     if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.add("show");
   } else {
     const vrPanel = getVRChoicePanel();
-    // Place VR Choice Panel 3.2m directly in front of the live headset position at comfortable eye height!
+    // Place VR Choice Panel cleanly in the lower-left of the player's gaze at Main Gate (unobstructed view of campus!)
     const hx = typeof oi !== "undefined" ? oi.x : -3;
     const hz = typeof oi !== "undefined" ? oi.z : 82;
-    vrPanel.position.set(hx, 1.72, hz - 3.2);
-    vrPanel.rotation.set(0, 0, 0);
+    vrPanel.position.set(hx - 0.95, 1.32, hz - 2.8);
+    vrPanel.rotation.set(0, 0.28, 0);
     vrPanel.visible = true;
   }
   speakTourGuide("We have arrived at the Anurag University Main Gate! Choose Campus Tour to walk forward and board our open-top electric buggy, or choose Free Walk to explore the campus at your own pace with automatic voice guidance.");
@@ -7515,6 +7514,8 @@ function beginWalkToBuggy() {
     bp.textContent = "Walk forward into the Main Gate (W / Left Stick) — your Electric Campus Buggy will pull up right in front of you!";
     bp.classList.add("show");
   }
+  // Immediately activate PC walking & pointer lock so user can press W right away with ZERO loop!
+  if (!Ye.xr.isPresenting && typeof cd === "function") cd();
   speakTourGuide("Please walk forward through the Main Gate. Our open-top electric campus buggy is on its way to pick you up!");
 }
 
@@ -7554,8 +7555,10 @@ function enterFreeWalkMode() {
   if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.remove("show");
   if (CAMPUS_TOUR.vrChoicePanel) CAMPUS_TOUR.vrChoicePanel.visible = false;
   if (typeof fpHands !== "undefined" && !Ye.xr.isPresenting) fpHands.forEach(a => (a.root.visible = true));
-  updateTourUI("FREE WALK · AUTO VOICE GUIDE", "Explore Anurag University Freely", ["Walk Near Any Block", "Auto Voice Explanations", "Press [X] / Replay for Buggy"], "You are in Free Walk mode! Walk toward A-Block, the Basketball Court, B-Block Pharmacy, D-Block, Kalam Hall, or any building — your voice guide will automatically explain each location as you arrive.", 100);
-  speakTourGuide("You are now in Free Walk mode! Walk up to any block on campus — like A-Block, the Basketball Court, B-Block Pharmacy, D-Block, or Abdul Kalam Hall — and I will automatically tell you all about it.");
+  // Immediately activate PC walking & pointer lock so user can walk freely right away with ZERO loop!
+  if (!Ye.xr.isPresenting && typeof cd === "function") cd();
+  updateTourUI("FREE ROAM · AUTO VOICE GUIDE", "Explore Anurag University Freely", ["Walk Near Any Block", "Auto Voice Explanations", "Press [X] / Replay for Buggy"], "You are in Campus Free Roam! Walk toward A-Block, the Basketball Court, B-Block Pharmacy, D-Block, Kalam Hall, or any building — your voice guide will automatically explain each location as you arrive.", 100);
+  speakTourGuide("You are now in Campus Free Roam! Walk up to any block on campus — like A-Block, the Basketball Court, B-Block Pharmacy, D-Block, or Abdul Kalam Hall — and I will automatically tell you all about it.");
 }
 
 // Wire Buttons & Keyboard Shortcuts ([E] to Board Buggy, [Space] to Land during Aerial)
