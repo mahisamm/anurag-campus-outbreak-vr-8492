@@ -340,7 +340,11 @@ body.campus-tour-only #weapon-hud,
 body.campus-tour-only #wave-banner,
 body.campus-tour-only #boss-bar-wrap,
 body.campus-tour-only #crosshair{display:none !important;opacity:0 !important;pointer-events:none !important}
-body.campus-tour-only main .control-grid:first-of-type{display:none !important}
+body.campus-tour-only #mode,
+body.campus-tour-only #stops{display:none !important}
+body.campus-tour-only.tour-running:not(.menu-forced) main{display:none !important}
+body.campus-tour-only.menu-forced #tour-guide-bar{display:none !important}
+body.campus-tour-only.tour-running #hint{display:none !important}
 body.campus-tour-only main #walk{
   grid-column:1 / -1;padding:15px 28px;font:900 17px/1.2 'Segoe UI',system-ui,sans-serif;
   letter-spacing:0.8px;text-transform:uppercase;
@@ -7436,6 +7440,8 @@ function announceCurrentStop() {
 // Step 1: Launch Smooth, Collision-Free Aerial Flyover -> Land in Front of Main Gate!
 function startGuidedCampusTour() {
   unlockTourVoice();
+  document.body.classList.add("tour-running");
+  document.body.classList.remove("menu-forced");
   if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.remove("show");
   if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.remove("show");
   if (document.getElementById("tour-board-prompt")) document.getElementById("tour-board-prompt").classList.remove("show");
@@ -7607,11 +7613,19 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
+// Toggle Menu cleanly without EVER overlapping #tour-guide-bar!
+const _menuBtn = document.getElementById("btn-menu");
+if (_menuBtn) {
+  _menuBtn.addEventListener("click", () => {
+    document.body.classList.toggle("menu-forced");
+  });
+}
 // Hook "Start Campus Tour" (#walk) synchronously so browser unlocks SpeechSynthesis immediately!
 const _walkBtn = document.getElementById("walk");
 if (_walkBtn) {
   _walkBtn.addEventListener("click", () => {
     unlockTourVoice();
+    document.body.classList.remove("menu-forced");
     startGuidedCampusTour();
   });
 }
