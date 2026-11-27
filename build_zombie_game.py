@@ -482,8 +482,11 @@ ARM_GEAR_JS = """
 
     wristPivot.add(shieldGroup);
   } else {
+    // Right Hand Multi-Weapon Mount anchored cleanly inside the curled palm hollow!
+    // Wrist rolls +1.36 rad (thumb UP, palm LEFT, fingers wrapping around grip), so weaponMount counter-rolls -1.36 rad!
     weaponMount = new fi();
-    weaponMount.position.set(0.0, -0.004, -0.048);
+    weaponMount.position.set(0.0, -0.026, -0.056);
+    weaponMount.rotation.set(0, 0, -1.36);
     wristPivot.add(weaponMount);
 
     let hiltMat = new Jt({ color: 0xb0bac7, roughness: 0.24, metalness: 0.85 });
@@ -492,10 +495,10 @@ ARM_GEAR_JS = """
     let rodMat = new Jt({ color: 0x5c473e, roughness: 0.56, metalness: 0.72 });
     let branchMat = new Jt({ color: 0x523720, roughness: 0.9, metalness: 0.02 });
 
-    // 0: Plasma Lightsaber — Triple-Layer Pulsing Plasma Blade + Emitter Flare + Ignition Animation
+    // 0: Plasma Lightsaber — Centered cleanly inside closed fist (hilt Y: -0.13 .. +0.17, blade rises above thumb/index!)
     let saberGrp = new fi();
-    saberGrp.position.set(0, -0.018, -0.022);
-    saberGrp.rotation.set(-0.55, 0, 0);
+    saberGrp.position.set(0.0, -0.008, -0.004);
+    saberGrp.rotation.set(-0.28, 0, 0);
     let hiltMesh = blenderGeos.lightsaber_hilt
       ? new et(blenderGeos.lightsaber_hilt, hiltMat)
       : new et(new pn(0.018, 0.018, 0.24, 14), hiltMat);
@@ -526,9 +529,9 @@ ARM_GEAR_JS = """
     saberGrp.userData.bladePivot = saberBladePivot;
     weaponMount.add(saberGrp);
 
-    // 1: Tactical 9mm Pistol
+    // 1: Tactical 9mm Pistol (pistol grip Y: -0.11..0 sits squarely inside closed fist, slide & green sight above index!)
     let pistolGrp = new fi();
-    pistolGrp.position.set(0, 0.015, -0.01);
+    pistolGrp.position.set(0.0, 0.036, -0.008);
     let pistolMesh = blenderGeos.pistol
       ? new et(blenderGeos.pistol, gunDarkMat)
       : new et(new Ni(0.032, 0.12, 0.2), gunDarkMat);
@@ -538,9 +541,9 @@ ARM_GEAR_JS = """
     pistolGrp.add(pSight);
     weaponMount.add(pistolGrp);
 
-    // 2: Pulse Assault Rifle
+    // 2: Pulse Assault Rifle (pistol grip inside closed fist, receiver & red-dot sight cleanly above wrist!)
     let rifleGrp = new fi();
-    rifleGrp.position.set(0, 0.018, -0.02);
+    rifleGrp.position.set(0.0, 0.042, -0.016);
     let rifleMesh = blenderGeos.assault_rifle
       ? new et(blenderGeos.assault_rifle, gunDarkMat)
       : new et(new Ni(0.045, 0.14, 0.58), gunDarkMat);
@@ -550,29 +553,29 @@ ARM_GEAR_JS = """
     rifleGrp.add(redDot);
     weaponMount.add(rifleGrp);
 
-    // 3: Combat Shotgun
+    // 3: Combat Shotgun (grip seated cleanly inside fist, barrel & pump aligned straight downrange!)
     let shotGrp = new fi();
-    shotGrp.position.set(0, 0.018, -0.02);
+    shotGrp.position.set(0.0, 0.032, -0.018);
     let shotMesh = blenderGeos.shotgun
       ? new et(blenderGeos.shotgun, gunAccentMat)
       : new et(new Ni(0.048, 0.13, 0.62), gunAccentMat);
     shotGrp.add(shotMesh);
     weaponMount.add(shotGrp);
 
-    // 4: Campus Iron Rod Pickup (distinct melee club grip)
+    // 4: Campus Iron Rod Pickup (full sword/club fist grip!)
     let rodGrp = new fi();
-    rodGrp.position.set(0, -0.018, -0.022);
-    rodGrp.rotation.set(-0.55, 0, 0);
+    rodGrp.position.set(0.0, -0.008, -0.004);
+    rodGrp.rotation.set(-0.28, 0, 0);
     let rodMesh = blenderGeos.iron_rod
       ? new et(blenderGeos.iron_rod, rodMat)
       : new et(new pn(0.014, 0.014, 0.95, 10), rodMat);
     rodGrp.add(rodMesh);
     weaponMount.add(rodGrp);
 
-    // 5: Campus Fallen Branch Pickup (distinct melee club grip)
+    // 5: Campus Fallen Branch Pickup (full club fist grip!)
     let branchGrp = new fi();
-    branchGrp.position.set(0, -0.018, -0.022);
-    branchGrp.rotation.set(-0.55, 0, 0);
+    branchGrp.position.set(0.0, -0.008, -0.004);
+    branchGrp.rotation.set(-0.28, 0, 0);
     let branchMesh = blenderGeos.fallen_branch
       ? new et(blenderGeos.fallen_branch, branchMat)
       : new et(new pn(0.02, 0.012, 0.92, 10), branchMat);
@@ -3017,20 +3020,19 @@ VR_SYNC_REPLACE = """    const pressed=!!buttons?.[4]?.pressed;
     const gripDown=grip>0.65;
 
     if(ZGAME.active){
-      // Distinct ergonomic VR hand pose for Guns (index finger on trigger) vs Lightsaber/Rod/Branch (full sword fist grip!)
+      // Distinct ergonomic VR hand pose: Thumb UP (wristPivot.rotation.z = +1.36) + tight closed fist for Melee vs trigger-finger grip for Guns!
       if(side==="right"){
         const curW = WEAPON_DEFS[ZGAME.weaponIdx];
         const isMelee = curW && curW.type === "melee";
         arm.fingers.forEach((finger,i)=>{
-          const c = (!isMelee && i===0) ? (0.28 + trigger*0.65) : Math.max(0.92, grip);
-          finger.fRoot.rotation.x=-(.14+c*.95);
-          finger.j2.rotation.x=-(.15+c*1.05);
-          finger.j3.rotation.x=-(.08+c*.72);
+          const c = (!isMelee && i===0) ? (0.34 + trigger*0.62) : Math.max(0.96, grip);
+          finger.fRoot.rotation.x=-(.18+c*1.04);
+          finger.j2.rotation.x=-(.20+c*1.12);
+          finger.j3.rotation.x=-(.12+c*.78);
         });
-        arm.thumbRoot.rotation.set(isMelee ? -.42 : -.24, .88, -.28);
-        arm.thumbJ2.rotation.x = isMelee ? -.52 : -.28;
-        // Distinct slight wrist cant for melee sword swing vs dead-straight gun sight alignment
-        if(arm.wristPivot) arm.wristPivot.rotation.set(isMelee ? -0.18 : 0, 0, 0);
+        arm.thumbRoot.rotation.set(isMelee ? -.44 : -.26, .76, -.26);
+        arm.thumbJ2.rotation.x = isMelee ? -.58 : -.32;
+        if(arm.wristPivot) arm.wristPivot.rotation.set(isMelee ? -0.10 : 0, 0, 1.36);
       }
       const curPos=hand.anchor.position;
       if(side==="right"){
@@ -3181,8 +3183,17 @@ FP_COMBAT_JS = """    if (ZGAME.active) {
             -0.04 + relTilt * 0.62
           );
         }
-        arm.wristPivot.rotation.set(0, 0, 0);
-        arm.setFingerCurl(0.82, false);
+        // Natural ergonomic Right-Hand Weapon Grip (Thumb UP, Palm LEFT, Fingers curled tightly around handle!)
+        arm.wristPivot.rotation.set(w.type === "melee" ? -0.08 : 0, 0, 1.36);
+        const isMeleePC = w.type === "melee";
+        arm.fingers.forEach((finger, idx) => {
+          const c = (!isMeleePC && idx === 0) ? (0.38 + rec * 0.52) : 1.0;
+          finger.fRoot.rotation.x = -(0.18 + c * 1.04);
+          finger.j2.rotation.x = -(0.20 + c * 1.12);
+          finger.j3.rotation.x = -(0.12 + c * 0.78);
+        });
+        arm.thumbRoot.rotation.set(isMeleePC ? -0.44 : -0.26, 0.76, -0.26);
+        arm.thumbJ2.rotation.x = isMeleePC ? -0.58 : -0.32;
       }
       return;
     }
