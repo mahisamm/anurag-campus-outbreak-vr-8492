@@ -606,7 +606,9 @@ body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:transla
         <span class="choice-btn-title">Campus Free Roam</span>
         <span class="choice-btn-sub">Walk freely anywhere on campus — voice guide automatically explains each block as you arrive!</span>
       </button>
-      <button id="btn-launch-zombie" style="margin-top:2px;padding:7px 12px;border-radius:9px;border:1px solid rgba(248,113,113,0.45);background:rgba(127,29,29,0.55);color:#fecaca;font:700 11.5px system-ui;cursor:pointer;text-align:center">Zombie Outbreak (Play Game)</button>
+      <div style="display:flex;justify-content:flex-end;margin-top:2px">
+        <button id="btn-launch-zombie" aria-label="Special Mode" style="width:16px;height:16px;padding:0;border-radius:4px;border:1px solid #f87171;background:#dc2626;cursor:pointer"></button>
+      </div>
     </div>
   </div>
 </div>
@@ -7298,11 +7300,9 @@ function getVRChoicePanel() {
   g.font = "600 22px sans-serif"; g.fillStyle = "#cbd5e1";
   g.fillText("Walk freely anywhere on campus", 754, 270);
   g.fillText("Auto Voice Guide at Every Block!", 754, 306);
-  // Small Momentary Bottom Strip: [X] Zombie Outbreak
-  g.fillStyle = "rgba(127,29,29,0.9)"; g.fillRect(262, 356, 500, 46);
-  g.strokeStyle = "#f87171"; g.lineWidth = 3; g.strokeRect(262, 356, 500, 46);
-  g.fillStyle = "#fecaca"; g.font = "800 22px sans-serif";
-  g.fillText("Left [X] · Zombie Outbreak (Play Game)", 512, 387);
+  // Discreet tiny red square indicator in bottom-right corner of VR panel (Left [X] secretly launches game — no text!)
+  g.fillStyle = "#dc2626"; g.fillRect(968, 368, 24, 24);
+  g.strokeStyle = "#f87171"; g.lineWidth = 2; g.strokeRect(968, 368, 24, 24);
 
   const tex = new dn(c); tex.colorSpace = vt;
   const mesh = new et(new _i(2.6, 1.06), new Yi({ map: tex, transparent: true, side: Gt, depthTest: false }));
