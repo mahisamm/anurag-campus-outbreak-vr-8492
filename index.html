@@ -7331,52 +7331,60 @@ function updateBuggyDashboard(stepText, title, pills) {
   CAMPUS_TOUR.dashTex.needsUpdate = true;
 }
 
-// Reliable Expressive College-Demo Voice-Over (Synchronously unlocked + Indian/Natural English accent + Sentence Chunker!)
-let _cachedVoices = [];
-function refreshVoices() {
-  try { _cachedVoices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || []; } catch (e) {}
+// 100% Meta Quest 3 + PC Bulletproof Indian-English MP3 Voice-Over Player (HTML5 Audio + Web Speech fallback!)
+const _tourAudio = new Audio();
+_tourAudio.preload = "auto";
+_tourAudio.volume = 1.0;
+const _SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+
+function isTourVoicePlaying() {
+  return (!_tourAudio.paused && !_tourAudio.ended && _tourAudio.currentTime > 0) ||
+    (window.speechSynthesis && window.speechSynthesis.speaking);
 }
-if (window.speechSynthesis) {
-  refreshVoices();
-  window.speechSynthesis.onvoiceschanged = refreshVoices;
+
+function stopTourVoice() {
+  try { _tourAudio.pause(); _tourAudio.currentTime = 0; } catch (e) {}
+  try { stopTourVoice(); } catch (e) {}
 }
-function pickBestCollegeGuideVoice() {
-  if (!_cachedVoices.length) refreshVoices();
-  // Prefer expressive Indian English (en-IN) -> British/US Natural/Google/Microsoft voices for an authentic college demo!
-  return (
-    _cachedVoices.find(v => /en[-_]IN/i.test(v.lang) && /natural|neural|google|microsoft|neerja|prabha|heera|ravi/i.test(v.name)) ||
-    _cachedVoices.find(v => /en[-_]IN/i.test(v.lang)) ||
-    _cachedVoices.find(v => /en[-_](GB|US)/i.test(v.lang) && /natural|neural|google|aria|jenny|guy|samantha|zira/i.test(v.name)) ||
-    _cachedVoices.find(v => /en/i.test(v.lang)) ||
-    null
-  );
-}
+
 function unlockTourVoice() {
   try {
-    if (!window.speechSynthesis) return;
+    if (CAMPUS_TOUR.voiceUnlocked) return;
     CAMPUS_TOUR.voiceUnlocked = true;
-    refreshVoices();
-    const silent = new SpeechSynthesisUtterance(" ");
-    silent.volume = 0.01;
-    window.speechSynthesis.speak(silent);
+    // Synchronously unlock HTML5 Audio inside user gesture so Meta Quest 3 WebXR plays every MP3 clip reliably!
+    _tourAudio.src = _SILENT_WAV;
+    const p = _tourAudio.play();
+    if (p && p.catch) p.catch(() => {});
   } catch (e) {}
 }
-function speakTourGuide(text) {
+
+function speakTourGuide(text, clipKey) {
+  stopTourVoice();
+  if (!CAMPUS_TOUR.voiceOn) return;
+  if (clipKey) {
+    try {
+      _tourAudio.src = `tour_audio/${clipKey}.mp3`;
+      _tourAudio.currentTime = 0;
+      const playPromise = _tourAudio.play();
+      if (playPromise && playPromise.catch) {
+        playPromise.catch(() => {
+          // Fallback to Web Speech API only if MP3 playback is blocked
+          try {
+            if (!window.speechSynthesis || !text) return;
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = "en-IN"; u.rate = 0.95;
+            window.speechSynthesis.speak(u);
+          } catch (e) {}
+        });
+      }
+      return;
+    } catch (e) {}
+  }
   try {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    if (!CAMPUS_TOUR.voiceOn || !text) return;
-    const voice = pickBestCollegeGuideVoice();
-    // Split into natural sentence chunks so Chrome/Edge/Quest Browser NEVER silently stall on long speech!
-    const chunks = text.match(/[^.!?]+[.!?]+/g) || [text];
-    chunks.forEach((chunk) => {
-      const u = new SpeechSynthesisUtterance(chunk.trim());
-      if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = "en-IN"; }
-      u.rate = 0.94;
-      u.pitch = 1.04;
-      u.volume = 1.0;
-      window.speechSynthesis.speak(u);
-    });
+    if (!window.speechSynthesis || !text) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-IN"; u.rate = 0.95;
+    window.speechSynthesis.speak(u);
   } catch (e) {}
 }
 
@@ -7439,7 +7447,7 @@ function announceCurrentStop() {
   if (!stop) return;
   const pct = ((CAMPUS_TOUR.stopIdx + 1) / AU_TOUR_STOPS.length) * 100;
   updateTourUI(`STOP ${CAMPUS_TOUR.stopIdx + 1} / ${AU_TOUR_STOPS.length}`, stop.name, stop.pills, stop.speech, pct);
-  speakTourGuide(stop.speech);
+  speakTourGuide(stop.speech, `stop_${CAMPUS_TOUR.stopIdx}`);
 }
 
 // Step 1: Launch Smooth, Collision-Free Aerial Flyover -> Land in Front of Main Gate!
@@ -7468,7 +7476,7 @@ function startGuidedCampusTour() {
     if (document.getElementById("intro-sub")) document.getElementById("intro-sub").textContent = "NAAC 'A' Accredited · NIRF Ranked · 100+ Acre Urban-Tech Campus";
   }
   const openMsg = "Namaste and welcome to Anurag University, Hyderabad! Spread across over 100 lush green acres in Venkatapur, we are accredited with NAAC A Grade and ranked among India's top universities by NIRF. Let's land right in front of our Main Gate, where you can choose our Electric Buggy Campus Tour or a Free Walk!";
-  speakTourGuide(openMsg);
+  speakTourGuide(openMsg, "aerial");
 }
 
 // Step 2: Land Cleanly Right in Front of the Main Gate (x = -3, z = 82) & Show Two Options: Campus Tour | Free Walk!
@@ -7497,7 +7505,7 @@ function landAtMainGateChoice() {
     vrPanel.rotation.set(0, 0.28, 0);
     vrPanel.visible = true;
   }
-  speakTourGuide("We have arrived at the Anurag University Main Gate! Choose Campus Tour to walk forward and board our open-top electric buggy, or choose Free Walk to explore the campus at your own pace with automatic voice guidance.");
+  speakTourGuide("We have arrived at the Anurag University Main Gate! Choose Campus Tour to walk forward and board our open-top electric buggy, or choose Free Walk to explore the campus at your own pace with automatic voice guidance.", "choice");
 }
 
 // Step 3A: User Chose "Campus Tour" -> Walk Forward Toward Main Gate -> Buggy Drives Up & Arrives in Front of You!
@@ -7522,7 +7530,7 @@ function beginWalkToBuggy() {
   }
   // Immediately activate PC walking & pointer lock so user can press W right away with ZERO loop!
   if (!Ye.xr.isPresenting && typeof cd === "function") cd();
-  speakTourGuide("Please walk forward through the Main Gate. Our open-top electric campus buggy is on its way to pick you up!");
+  speakTourGuide("Please walk forward through the Main Gate. Our open-top electric campus buggy is on its way to pick you up!", "walk_to_buggy");
 }
 
 // Step 3B: Board the Arrived Open-Top Buggy and Start the Slow Guided Road Tour!
@@ -7564,14 +7572,14 @@ function enterFreeWalkMode() {
   // Immediately activate PC walking & pointer lock so user can walk freely right away with ZERO loop!
   if (!Ye.xr.isPresenting && typeof cd === "function") cd();
   updateTourUI("FREE ROAM · AUTO VOICE GUIDE", "Explore Anurag University Freely", ["Walk Near Any Block", "Auto Voice Explanations", "Press [X] / Replay for Buggy"], "You are in Campus Free Roam! Walk toward A-Block, the Basketball Court, B-Block Pharmacy, D-Block, Kalam Hall, or any building — your voice guide will automatically explain each location as you arrive.", 100);
-  speakTourGuide("You are now in Campus Free Roam! Walk up to any block on campus — like A-Block, the Basketball Court, B-Block Pharmacy, D-Block, or Abdul Kalam Hall — and I will automatically tell you all about it.");
+  speakTourGuide("You are now in Campus Free Roam! Walk up to any block on campus — like A-Block, the Basketball Court, B-Block Pharmacy, D-Block, or Abdul Kalam Hall — and I will automatically tell you all about it.", "free_roam");
 }
 
 // Momentary "Zombie Outbreak" Launcher (re-enables full 6-level FP & Meta Quest 3 VR Zombie Game on demand!)
 function launchMomentaryZombieOutbreak() {
   window.CAMPUS_TOUR_ONLY = false;
   CAMPUS_TOUR.state = "idle";
-  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  try { stopTourVoice(); } catch (e) {}
   document.body.classList.remove("campus-tour-only", "tour-running", "menu-forced", "intro-active");
   if (document.getElementById("tour-guide-bar")) document.getElementById("tour-guide-bar").classList.remove("visible");
   if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.remove("show");
@@ -7612,7 +7620,7 @@ if (document.getElementById("btn-tg-pause")) {
   document.getElementById("btn-tg-pause").onclick = () => {
     CAMPUS_TOUR.paused = !CAMPUS_TOUR.paused;
     document.getElementById("btn-tg-pause").textContent = CAMPUS_TOUR.paused ? "Resume" : "Pause";
-    try { if (window.speechSynthesis) CAMPUS_TOUR.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume(); } catch (e) {}
+    try { if (CAMPUS_TOUR.paused) _tourAudio.pause(); else if (_tourAudio.src && !_tourAudio.ended) _tourAudio.play().catch(()=>{}); } catch (e) {}
   };
 }
 if (document.getElementById("btn-tg-voice")) {
@@ -7620,7 +7628,7 @@ if (document.getElementById("btn-tg-voice")) {
     unlockTourVoice();
     CAMPUS_TOUR.voiceOn = !CAMPUS_TOUR.voiceOn;
     document.getElementById("btn-tg-voice").textContent = CAMPUS_TOUR.voiceOn ? "Voice: ON" : "Voice: OFF";
-    if (!CAMPUS_TOUR.voiceOn) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (!CAMPUS_TOUR.voiceOn) stopTourVoice();
     else if (CAMPUS_TOUR.state === "riding") announceCurrentStop();
   };
 }
@@ -7715,10 +7723,10 @@ window._handleVRTourController = function(side, trigDown, prevTrig, pressed, pre
       else if (CAMPUS_TOUR.state === "done") startGuidedCampusTour();
       else if (CAMPUS_TOUR.state === "riding") {
         CAMPUS_TOUR.paused = !CAMPUS_TOUR.paused;
-        try { if (window.speechSynthesis) CAMPUS_TOUR.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume(); } catch (e) {}
+        try { if (CAMPUS_TOUR.paused) _tourAudio.pause(); else if (_tourAudio.src && !_tourAudio.ended) _tourAudio.play().catch(()=>{}); } catch (e) {}
       } else {
         CAMPUS_TOUR.voiceOn = !CAMPUS_TOUR.voiceOn;
-        if (!CAMPUS_TOUR.voiceOn && window.speechSynthesis) window.speechSynthesis.cancel();
+        if (!CAMPUS_TOUR.voiceOn) stopTourVoice();
       }
     }
     // Right Trigger: Repeat current voice guide narration!
@@ -7726,7 +7734,7 @@ window._handleVRTourController = function(side, trigDown, prevTrig, pressed, pre
       unlockTourVoice();
       if (CAMPUS_TOUR.state === "riding") announceCurrentStop();
       else if (CAMPUS_TOUR.state === "freewalk" && CAMPUS_TOUR.lastFreeZoneIdx >= 0) {
-        speakTourGuide(AU_TOUR_STOPS[CAMPUS_TOUR.lastFreeZoneIdx].speech);
+        speakTourGuide(AU_TOUR_STOPS[CAMPUS_TOUR.lastFreeZoneIdx].speech, `stop_${CAMPUS_TOUR.lastFreeZoneIdx}`);
       }
     }
   } else {
@@ -7842,7 +7850,7 @@ window._tickCampusTour = function(dt) {
       if (CAMPUS_TOUR.vrBoardPrompt) CAMPUS_TOUR.vrBoardPrompt.visible = true;
       const bp = document.getElementById("tour-board-prompt");
       if (bp) bp.textContent = "Buggy has arrived! Walk up to it or press [E] / [A] to board and begin the Campus Tour!";
-      speakTourGuide("Your electric buggy has arrived! Step right up or press E to hop aboard.");
+      speakTourGuide("Your electric buggy has arrived! Step right up or press E to hop aboard.", "buggy_arrived");
     }
     return;
   }
@@ -7873,7 +7881,7 @@ window._tickCampusTour = function(dt) {
       CAMPUS_TOUR.freeZoneCooldown = 4.0;
       const st = AU_TOUR_STOPS[nearestIdx];
       updateTourUI(`FREE WALK · LANDMARK GUIDE`, st.name, st.pills, st.speech, ((nearestIdx + 1) / AU_TOUR_STOPS.length) * 100);
-      speakTourGuide(st.speech);
+      speakTourGuide(st.speech, `stop_${nearestIdx}`);
     }
     return;
   }
@@ -7906,8 +7914,8 @@ window._tickCampusTour = function(dt) {
         CAMPUS_TOUR.wpIdx++;
       } else {
         CAMPUS_TOUR.holdTimer += safeDt;
-        const stillSpeaking = window.speechSynthesis && window.speechSynthesis.speaking && CAMPUS_TOUR.voiceOn;
-        if (CAMPUS_TOUR.holdTimer >= stop.holdSec && (!stillSpeaking || CAMPUS_TOUR.holdTimer >= stop.holdSec + 12.0)) {
+        const stillSpeaking = isTourVoicePlaying() && CAMPUS_TOUR.voiceOn;
+        if (CAMPUS_TOUR.holdTimer >= stop.holdSec && (!stillSpeaking || CAMPUS_TOUR.holdTimer >= stop.holdSec + 28.0)) {
           if (CAMPUS_TOUR.stopIdx < AU_TOUR_STOPS.length - 1) {
             CAMPUS_TOUR.stopIdx++;
             CAMPUS_TOUR.wpIdx = 0;
