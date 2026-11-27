@@ -4737,6 +4737,7 @@ if CAMPUS_TOUR_ONLY:
     html = html.replace('<option value="noon">Bright Campus Noon</option>', '<option value="noon" selected>Bright Campus Noon</option>', 1)
     html = html.replace('<option value="zombie" selected>Zombie Outbreak (6 Levels + CEO Boss)</option>\n      ', '', 1)
     html = html.replace('<option value="creative">Creative Flight & Walk</option>', '<option value="creative" selected>Guided Campus Tour & Explorer</option>', 1)
+    html = html.replace('<button id="btn-menu">Menu</button>', '<button id="btn-menu">Menu</button>\n      <button id="btn-top-zombie" style="background:rgba(127,29,29,0.85);border-color:rgba(248,113,113,0.6);color:#fecaca;font-size:11.5px">Zombie Outbreak</button>', 1)
     html = html.replace('<button id="walk">Play Game (PC)</button>', '<button id="walk">Start Campus Tour</button>', 1)
     html = html.replace(
         '01 · SURVIVAL MISSION</div><div class="intro-col-txt">Walk through the Main Gate, survive 5 escalating 2-min phases &amp; defeat THE CEO.',
@@ -4895,6 +4896,7 @@ body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:transla
         <span class="choice-btn-title">Campus Free Roam</span>
         <span class="choice-btn-sub">Walk freely anywhere on campus — voice guide automatically explains each block as you arrive!</span>
       </button>
+      <button id="btn-launch-zombie" style="margin-top:2px;padding:7px 12px;border-radius:9px;border:1px solid rgba(248,113,113,0.45);background:rgba(127,29,29,0.55);color:#fecaca;font:700 11.5px system-ui;cursor:pointer;text-align:center">Zombie Outbreak (Play Game)</button>
     </div>
   </div>
 </div>
@@ -5416,6 +5418,39 @@ function enterFreeWalkMode() {
   updateTourUI("FREE ROAM · AUTO VOICE GUIDE", "Explore Anurag University Freely", ["Walk Near Any Block", "Auto Voice Explanations", "Press [X] / Replay for Buggy"], "You are in Campus Free Roam! Walk toward A-Block, the Basketball Court, B-Block Pharmacy, D-Block, Kalam Hall, or any building — your voice guide will automatically explain each location as you arrive.", 100);
   speakTourGuide("You are now in Campus Free Roam! Walk up to any block on campus — like A-Block, the Basketball Court, B-Block Pharmacy, D-Block, or Abdul Kalam Hall — and I will automatically tell you all about it.");
 }
+
+// Momentary "Zombie Outbreak" Launcher (re-enables full 6-level FP & Meta Quest 3 VR Zombie Game on demand!)
+function launchMomentaryZombieOutbreak() {
+  window.CAMPUS_TOUR_ONLY = false;
+  CAMPUS_TOUR.state = "idle";
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  document.body.classList.remove("campus-tour-only", "tour-running", "menu-forced", "intro-active");
+  if (document.getElementById("tour-guide-bar")) document.getElementById("tour-guide-bar").classList.remove("visible");
+  if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.remove("show");
+  if (document.getElementById("tour-board-prompt")) document.getElementById("tour-board-prompt").classList.remove("show");
+  if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.remove("show");
+  if (document.getElementById("intro-overlay")) document.getElementById("intro-overlay").classList.remove("playing");
+  if (CAMPUS_TOUR.buggy) CAMPUS_TOUR.buggy.visible = false;
+  if (CAMPUS_TOUR.vrChoicePanel) CAMPUS_TOUR.vrChoicePanel.visible = false;
+  if (CAMPUS_TOUR.vrTourBanner) CAMPUS_TOUR.vrTourBanner.visible = false;
+  // Ensure outbreak dusk & zombie mode options exist in dropdowns
+  const tm = document.getElementById("time-mode");
+  if (tm && !Array.from(tm.options).some(o => o.value === "outbreak")) {
+    const opt = document.createElement("option"); opt.value = "outbreak"; opt.textContent = "Outbreak Dusk (Zombie Alert)"; tm.appendChild(opt);
+  }
+  const md = document.getElementById("mode");
+  if (md) {
+    if (!Array.from(md.options).some(o => o.value === "zombie")) {
+      const opt = document.createElement("option"); opt.value = "zombie"; opt.textContent = "Zombie Outbreak (6 Levels + CEO Boss)"; md.prepend(opt);
+    }
+    md.value = "zombie";
+  }
+  if (typeof startZombieGame === "function") startZombieGame(false);
+  if (typeof xo === "function") xo(0);
+  if (!Ye.xr.isPresenting && typeof cd === "function") cd();
+}
+if (document.getElementById("btn-launch-zombie")) document.getElementById("btn-launch-zombie").addEventListener("click", launchMomentaryZombieOutbreak);
+if (document.getElementById("btn-top-zombie")) document.getElementById("btn-top-zombie").addEventListener("click", launchMomentaryZombieOutbreak);
 
 // Wire Buttons & Keyboard Shortcuts ([E] to Board Buggy, [Space] to Land during Aerial)
 if (document.getElementById("btn-skip-intro")) {
