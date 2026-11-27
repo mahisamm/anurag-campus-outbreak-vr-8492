@@ -1673,28 +1673,37 @@ function redrawVRStoryBanner(beat, progress) {
   tex.needsUpdate = true;
 }
 
-// Head-Locked VR Top-Left Floating Heart Health Visor HUD (attached to VR camera Mi!)
+// Head-Locked VR Top-Left Floating Heart Health Visor HUD (tracks live Ye.xr.getCamera() every VR frame!)
 function createVRTopLeftHealthHUD() {
   if (ZGAME.vrTopLeftHud) return ZGAME.vrTopLeftHud;
   const c = document.createElement("canvas"); c.width = 512; c.height = 192;
   const tex = new dn(c); tex.colorSpace = vt;
   const mesh = new et(new _i(0.24, 0.09), new Yi({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
-  // Positioned cleanly in the upper-left corner of the Meta Quest 3 VR field of view!
-  mesh.position.set(-0.24, 0.165, -0.72);
-  mesh.rotation.set(0.06, 0.22, 0);
   mesh.renderOrder = 30;
   mesh.visible = false;
   mesh.userData = { canvas: c, ctx: c.getContext("2d"), tex, lastKey: "" };
-  Mi.add(mesh);
+  Ht.add(mesh);
   ZGAME.vrTopLeftHud = mesh;
   return mesh;
 }
+
+const _vrHudPos = new A(), _vrHudQuat = new Ot(), _vrHudOff = new A(), _vrHudTilt = new Ot().setFromAxisAngle(new A(0, 1, 0), 0.22);
 
 function updateVRTopLeftHealthHUD() {
   const hud = createVRTopLeftHealthHUD();
   const show = Boolean(Ye.xr.isPresenting && ZGAME.active && !ZGAME.introPlaying && !ZGAME.gameOver);
   hud.visible = show;
   if (!show) return;
+
+  // Lock rock-solid to the live Meta Quest 3 WebXR headset pose in the upper-left peripheral view!
+  const xrCam = Ye.xr.getCamera();
+  if (xrCam) {
+    xrCam.getWorldPosition(_vrHudPos);
+    xrCam.getWorldQuaternion(_vrHudQuat);
+    _vrHudOff.set(-0.24, 0.155, -0.72).applyQuaternion(_vrHudQuat);
+    hud.position.copy(_vrHudPos).add(_vrHudOff);
+    hud.quaternion.copy(_vrHudQuat).multiply(_vrHudTilt);
+  }
   const hpInt = Math.ceil(ZGAME.hp);
   const shInt = Math.ceil(ZGAME.shield);
   const lvl = ZOMBIE_LEVELS[ZGAME.levelIdx] || ZOMBIE_LEVELS[0];
@@ -2050,12 +2059,12 @@ function checkVRPhysicalMeleeHit(hand, dt) {
   const w = WEAPON_DEFS[ZGAME.weaponIdx];
   if (!w || w.type !== "melee" || !hand || !hand.anchor.visible) return;
 
-  // Compute real world-space hilt & blade-tip positions along the sword/rod/branch melee axis (-0.55 rad)
+  // Compute real world-space hilt & blade-tip positions matching the calibrated -0.28 rad lightsaber/rod/branch grip!
   const mount = hand.arm.weaponMount;
   if (!mount) return;
   mount.updateWorldMatrix(true, false);
-  const hiltWorld = new A(0, -0.01, -0.02).applyMatrix4(mount.matrixWorld);
-  const tipLocal = new A(0, 0.90, -0.58);
+  const hiltWorld = new A(0, -0.01, -0.004).applyMatrix4(mount.matrixWorld);
+  const tipLocal = new A(0, 1.04, -0.30);
   const tipWorld = tipLocal.applyMatrix4(mount.matrixWorld);
 
   const safeDt = Math.max(0.008, dt || 0.016);
@@ -3111,15 +3120,15 @@ html = html.replace(
     1
 )
 
-# Align VR hands straight along targetRaySpace (-Z forward, relaxed natural wrist roll, zero bend needed!)
+# Align VR hands dead-straight along targetRaySpace (-Z forward, 0 roll so wristPivot +1.36 & weaponMount -1.36 cancel to 0.000!)
 html = html.replace(
     '  arm.root.position.set(0,.012,.046);\n  arm.root.rotation.z=sign*.72;',
-    '  arm.root.position.set(0,-.016,.092);\n  arm.root.rotation.set(0, 0, sign*.14);',
+    '  arm.root.position.set(0,-.016,.092);\n  arm.root.rotation.set(0, 0, 0);',
     1
 )
 html = html.replace(
     '  arm.root.position.set(0,.012,.046);\r\n  arm.root.rotation.z=sign*.72;',
-    '  arm.root.position.set(0,-.016,.092);\r\n  arm.root.rotation.set(0, 0, sign*.14);',
+    '  arm.root.position.set(0,-.016,.092);\r\n  arm.root.rotation.set(0, 0, 0);',
     1
 )
 CTRL_ADD_ANCHOR = '  trackedHands.set(side,hand);return hand;'
@@ -3200,10 +3209,10 @@ FP_COMBAT_JS = """    if (ZGAME.active) {
     if (side === 1 && handGadgetMode === 1) {"""
 html = html.replace(FP_HAND_ANCHOR, FP_COMBAT_JS, 1)
 
-# 7i. Call updateZombieGame(e, timeSec) inside main animation loop
+# 7i. Call updateZombieGame(e, timeSec) + WebXR-safe GLSL shader ticker inside Ye.setAnimationLoop (works in BOTH PC & Meta Quest 3 VR!)
 TICK_ANCHOR = '  updateNavRoute(xt.position.x, xt.position.z, timeSec);'
 assert TICK_ANCHOR in html
-html = html.replace(TICK_ANCHOR, '  updateZombieGame(e, timeSec);\n  updateNavRoute(xt.position.x, xt.position.z, timeSec);', 1)
+html = html.replace(TICK_ANCHOR, '  if (window._tickRealisticShaders) window._tickRealisticShaders(e);\n  updateZombieGame(e, timeSec);\n  if (Ye.xr.isPresenting && typeof updateVRTopLeftHealthHUD === "function") updateVRTopLeftHealthHUD();\n  updateNavRoute(xt.position.x, xt.position.z, timeSec);', 1)
 
 # 7j. Keep status text informative in Zombie mode
 STATUS_ANCHOR = '  if (t && bo.value !== "survival") {'
@@ -4667,19 +4676,16 @@ REALISTIC_SHADERS_JS = r'''
   if (_tmEl) _tmEl.addEventListener("change", () => setTimeout(syncRealisticAtmosphere, 10));
   syncRealisticAtmosphere();
 
-  let lastShaderT = performance.now();
-  (function animateRealisticShaders() {
-    const now = performance.now();
-    const dt = Math.min(0.1, (now - lastShaderT) * 0.001);
-    lastShaderT = now;
-    skyUniforms.uTime.value += dt;
-    waterUniforms.uTime.value += dt;
-    rayUniforms.uTime.value += dt;
+  // Driven directly by Three.js Ye.setAnimationLoop so clouds, Gerstner water, God-Rays & skyDome animate in BOTH PC & Meta Quest 3 WebXR!
+  window._tickRealisticShaders = function(dt) {
+    const safeDt = Math.min(0.1, Math.max(0.001, dt || 0.016));
+    skyUniforms.uTime.value += safeDt;
+    waterUniforms.uTime.value += safeDt;
+    rayUniforms.uTime.value += safeDt;
     if (typeof xt !== "undefined") {
       skyDome.position.set(xt.position.x, 0, xt.position.z);
     }
-    requestAnimationFrame(animateRealisticShaders);
-  })();
+  };
 })();
 '''
 
