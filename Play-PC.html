@@ -7116,7 +7116,7 @@ const AU_TOUR_STOPS = [
     name: "H-Block, Green Solar Charging Tree & Pharmacy Medicinal Garden",
     pills: ["6-Story H-Block", "Green Solar Tree", "School of Agriculture & 70+ Buses"],
     center: [-46, -38], radius: 22,
-    path: [[-73, 40], [-73, 12], [-73, -22], [-72, -39], [-56, -40], [-34, -40]],
+    path: [[-73, 40], [-73, 12], [-73, -22], [-72, -38.5], [-56, -38.5], [-34, -38.5]],
     holdSec: 8.0,
     speech: "Now heading along North Campus Avenue, admire our 6-story H-Block, our eco-friendly Green Solar-Panel Charging Tree, our fleet of over 70 yellow Anurag University buses, and the lush Pharmacy Medicinal Garden! Anurag University also pioneers the ICAR-mapped School of Agricultural Sciences with polyhouses and smart IoT precision farming."
   },
@@ -7124,7 +7124,7 @@ const AU_TOUR_STOPS = [
     name: "Cricket Stadium Ground & Athletics Running Track",
     pills: ["Championship Cricket Oval", "Red-Clay Running Track", "Turf & Sports Arenas"],
     center: [28, -48], radius: 22,
-    path: [[-10, -40], [14, -40], [24.4, -42]],
+    path: [[-10, -38.5], [14, -38.5], [24.4, -42]],
     holdSec: 6.5,
     speech: "Opening up to our north-east is Anurag University's expansive Cricket Stadium Ground, encircled by a full circular red-clay athletics running track alongside synthetic turf and outdoor courts — nurturing champions both on the field and in the classroom."
   },
@@ -7371,6 +7371,47 @@ function speakTourGuide(text) {
   } catch (e) {}
 }
 
+// 3D Floating VR Landmark / Tour Complete Banner (so Meta Quest 3 riders see captions & completion even outside buggy!)
+function getVRTourBanner() {
+  if (CAMPUS_TOUR.vrTourBanner) return CAMPUS_TOUR.vrTourBanner;
+  const c = document.createElement("canvas"); c.width = 768; c.height = 176;
+  const tex = new dn(c); tex.colorSpace = vt;
+  const mesh = new et(new _i(0.72, 0.165), new Yi({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
+  mesh.renderOrder = 31;
+  mesh.visible = false;
+  mesh.userData = { canvas: c, ctx: c.getContext("2d"), tex, hideTimer: 0 };
+  Ht.add(mesh);
+  CAMPUS_TOUR.vrTourBanner = mesh;
+  return mesh;
+}
+function showVRTourBanner(stepLabel, title, subText, durationSec = 8.5) {
+  if (!Ye.xr.isPresenting) return;
+  const b = getVRTourBanner();
+  const g = b.userData.ctx;
+  g.clearRect(0, 0, 768, 176);
+  g.fillStyle = "rgba(8,18,34,0.92)"; g.fillRect(4, 4, 760, 168);
+  g.strokeStyle = "#72efdd"; g.lineWidth = 5; g.strokeRect(4, 4, 760, 168);
+  g.fillStyle = "#fde047"; g.font = "800 22px sans-serif"; g.textAlign = "left";
+  g.fillText(stepLabel, 24, 40);
+  g.fillStyle = "#ffffff"; g.font = "900 30px 'Segoe UI',sans-serif";
+  g.fillText(title.slice(0, 40), 24, 86);
+  g.fillStyle = "#cfeaf7"; g.font = "600 20px sans-serif";
+  g.fillText((subText || "").slice(0, 66), 24, 134);
+  b.userData.tex.needsUpdate = true;
+  b.userData.hideTimer = durationSec;
+  b.visible = true;
+}
+
+// Chromium / Quest Browser Web Speech API keep-alive heartbeat (prevents 14-second silent pause!)
+setInterval(() => {
+  try {
+    if (window.speechSynthesis && window.speechSynthesis.speaking && !CAMPUS_TOUR.paused && CAMPUS_TOUR.voiceOn) {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+    }
+  } catch (e) {}
+}, 8000);
+
 function updateTourUI(stepLabel, title, pills, caption, progPct) {
   const bar = document.getElementById("tour-guide-bar");
   if (bar) bar.classList.add("visible");
@@ -7381,6 +7422,7 @@ function updateTourUI(stepLabel, title, pills, caption, progPct) {
   const pWrap = document.getElementById("tg-pills");
   if (pWrap) pWrap.innerHTML = (pills || []).map(p => `<span class="tg-pill">${p}</span>`).join("");
   updateBuggyDashboard(stepLabel, title, pills);
+  if (Ye.xr.isPresenting) showVRTourBanner(stepLabel, title, (pills || []).join(" · "), 8.5);
 }
 
 function announceCurrentStop() {
@@ -7437,6 +7479,11 @@ function landAtMainGateChoice() {
     if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.add("show");
   } else {
     const vrPanel = getVRChoicePanel();
+    // Place VR Choice Panel 3.2m directly in front of the live headset position at comfortable eye height!
+    const hx = typeof oi !== "undefined" ? oi.x : -3;
+    const hz = typeof oi !== "undefined" ? oi.z : 82;
+    vrPanel.position.set(hx, 1.72, hz - 3.2);
+    vrPanel.rotation.set(0, 0, 0);
     vrPanel.visible = true;
   }
   speakTourGuide("We have arrived at the Anurag University Main Gate! Choose Campus Tour to walk forward and board our open-top electric buggy, or choose Free Walk to explore the campus at your own pace with automatic voice guidance.");
@@ -7599,6 +7646,7 @@ window._handleVRTourController = function(side, trigDown, prevTrig, pressed, pre
       if (CAMPUS_TOUR.state === "aerial") landAtMainGateChoice();
       else if (CAMPUS_TOUR.state === "choice") beginWalkToBuggy();
       else if (CAMPUS_TOUR.state === "waiting_walk" || CAMPUS_TOUR.state === "buggy_arriving" || CAMPUS_TOUR.state === "buggy_ready") boardTourBuggyNow();
+      else if (CAMPUS_TOUR.state === "done") startGuidedCampusTour();
       else if (CAMPUS_TOUR.state === "riding") {
         if (CAMPUS_TOUR.stopIdx < AU_TOUR_STOPS.length - 1) { CAMPUS_TOUR.stopIdx++; CAMPUS_TOUR.wpIdx = 0; CAMPUS_TOUR.holdTimer = 0; announceCurrentStop(); }
         else { CAMPUS_TOUR.state = "done"; enterFreeWalkMode(); }
@@ -7607,7 +7655,8 @@ window._handleVRTourController = function(side, trigDown, prevTrig, pressed, pre
     // Right B button: Choose Free Walk / Pause Buggy / Toggle Voice!
     if (upper && !prevUpper) {
       unlockTourVoice();
-      if (CAMPUS_TOUR.state === "choice") enterFreeWalkMode();
+      if (CAMPUS_TOUR.state === "choice" || CAMPUS_TOUR.state === "done") enterFreeWalkMode();
+      else if (CAMPUS_TOUR.state === "done") startGuidedCampusTour();
       else if (CAMPUS_TOUR.state === "riding") {
         CAMPUS_TOUR.paused = !CAMPUS_TOUR.paused;
         try { if (window.speechSynthesis) CAMPUS_TOUR.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume(); } catch (e) {}
@@ -7640,8 +7689,28 @@ window._handleVRTourController = function(side, trigDown, prevTrig, pressed, pre
 };
 
 // Per-Frame Campus Tour Ticker (Inside Three.js Ye.setAnimationLoop -> PC + Meta Quest 3 VR!)
+const _vrBanPos = new A(), _vrBanQuat = new Ot(), _vrBanOff = new A();
 window._tickCampusTour = function(dt) {
   const safeDt = Math.min(0.08, Math.max(0.001, dt || 0.016));
+  // Keep 3D VR Subtitle Banner smoothly anchored in lower-center peripheral view when active in Meta Quest 3!
+  if (CAMPUS_TOUR.vrTourBanner && CAMPUS_TOUR.vrTourBanner.visible) {
+    if (!Ye.xr.isPresenting) {
+      CAMPUS_TOUR.vrTourBanner.visible = false;
+    } else {
+      const xrCam = Ye.xr.getCamera();
+      if (xrCam) {
+        xrCam.getWorldPosition(_vrBanPos);
+        xrCam.getWorldQuaternion(_vrBanQuat);
+        _vrBanOff.set(0, -0.24, -1.18).applyQuaternion(_vrBanQuat);
+        CAMPUS_TOUR.vrTourBanner.position.copy(_vrBanPos).add(_vrBanOff);
+        CAMPUS_TOUR.vrTourBanner.quaternion.copy(_vrBanQuat);
+      }
+      if (CAMPUS_TOUR.vrTourBanner.userData.hideTimer > 0) {
+        CAMPUS_TOUR.vrTourBanner.userData.hideTimer -= safeDt;
+        if (CAMPUS_TOUR.vrTourBanner.userData.hideTimer <= 0) CAMPUS_TOUR.vrTourBanner.visible = false;
+      }
+    }
+  }
   if (CAMPUS_TOUR.state === "idle" || CAMPUS_TOUR.state === "done" || CAMPUS_TOUR.state === "choice") return;
 
   // 1. COLLISION-FREE HIGH-TO-FRONT AERIAL FLYOVER -> LANDS AT MAIN GATE (x=-3, z=82)!
@@ -7683,10 +7752,10 @@ window._tickCampusTour = function(dt) {
     return;
   }
 
-  // 2. INTERACTIVE BUGGY ARRIVAL SEQUENCE (Walk forward -> Buggy drives up -> Board it!)
+  // 2. INTERACTIVE BUGGY ARRIVAL SEQUENCE (Walk forward -> Buggy drives up & turns smoothly -> Board it!)
   if (CAMPUS_TOUR.state === "waiting_walk") {
-    // Once player walks forward into/near the Main Gate (z <= 77), buggy starts driving down the avenue toward them!
-    if (xt.position.z <= 77.5) {
+    const curZ = Ye.xr.isPresenting && typeof oi !== "undefined" ? Math.min(xt.position.z, oi.z) : xt.position.z;
+    if (curZ <= 77.5) {
       CAMPUS_TOUR.state = "buggy_arriving";
       const bp = document.getElementById("tour-board-prompt");
       if (bp) bp.textContent = "Your Open-Top Anurag University Buggy is pulling up right in front of you!";
@@ -7695,17 +7764,21 @@ window._tickCampusTour = function(dt) {
   }
 
   if (CAMPUS_TOUR.state === "buggy_arriving") {
-    const targetZ = Math.max(60, xt.position.z - 6.5);
+    const curZ = Ye.xr.isPresenting && typeof oi !== "undefined" ? oi.z : xt.position.z;
+    const targetZ = Math.max(60, curZ - 6.5);
     const dz = targetZ - CAMPUS_TOUR.buggyPos.z;
     if (Math.abs(dz) > 0.35) {
       const step = Math.min(Math.abs(dz), 5.2 * safeDt);
       CAMPUS_TOUR.buggyPos.z += Math.sign(dz) * step;
-      CAMPUS_TOUR.buggyYaw = Math.PI; // Driving south toward the player
+      CAMPUS_TOUR.buggyYaw = Math.PI;
       CAMPUS_TOUR.buggy.position.copy(CAMPUS_TOUR.buggyPos);
       CAMPUS_TOUR.buggy.rotation.set(0, CAMPUS_TOUR.buggyYaw, 0);
       for (const w of CAMPUS_TOUR.wheels) w.rotation.x -= step / 0.29;
+    } else if (Math.abs(CAMPUS_TOUR.buggyYaw) > 0.05) {
+      // Smooth U-turn to face A-Block instead of instant snap!
+      CAMPUS_TOUR.buggyYaw = Math.max(0, CAMPUS_TOUR.buggyYaw - safeDt * 3.6);
+      CAMPUS_TOUR.buggy.rotation.set(0, CAMPUS_TOUR.buggyYaw, 0);
     } else {
-      // Smoothly turn buggy around to face A-Block & open boarding!
       CAMPUS_TOUR.buggyYaw = 0;
       CAMPUS_TOUR.buggy.rotation.set(0, 0, 0);
       CAMPUS_TOUR.state = "buggy_ready";
@@ -7718,19 +7791,20 @@ window._tickCampusTour = function(dt) {
   }
 
   if (CAMPUS_TOUR.state === "buggy_ready") {
-    if (CAMPUS_TOUR.vrBoardPrompt) CAMPUS_TOUR.vrBoardPrompt.lookAt(xt.position.x, 1.95, xt.position.z);
-    // Auto-board as soon as player walks within 3.6m of the arrived buggy!
-    const distToBuggy = Math.hypot(xt.position.x - CAMPUS_TOUR.buggyPos.x, xt.position.z - CAMPUS_TOUR.buggyPos.z);
-    if (distToBuggy <= 3.6) {
+    const curX = Ye.xr.isPresenting && typeof oi !== "undefined" ? oi.x : xt.position.x;
+    const curZ = Ye.xr.isPresenting && typeof oi !== "undefined" ? oi.z : xt.position.z;
+    if (CAMPUS_TOUR.vrBoardPrompt) CAMPUS_TOUR.vrBoardPrompt.lookAt(curX, 1.95, curZ);
+    if (Math.hypot(curX - CAMPUS_TOUR.buggyPos.x, curZ - CAMPUS_TOUR.buggyPos.z) <= 3.8) {
       boardTourBuggyNow();
     }
     return;
   }
 
-  // 3. FREE WALK PROXIMITY VOICE-OVER GUIDE (Auto-explains every block as you walk near it!)
+  // 3. FREE WALK PROXIMITY VOICE-OVER GUIDE (Works with BOTH PC WASD & Meta Quest 3 Room-Scale + Thumbstick!)
   if (CAMPUS_TOUR.state === "freewalk") {
     if (CAMPUS_TOUR.freeZoneCooldown > 0) CAMPUS_TOUR.freeZoneCooldown -= safeDt;
-    const px = xt.position.x, pz = xt.position.z;
+    const px = Ye.xr.isPresenting && typeof oi !== "undefined" ? oi.x : xt.position.x;
+    const pz = Ye.xr.isPresenting && typeof oi !== "undefined" ? oi.z : xt.position.z;
     let nearestIdx = -1, nearestDist = 999;
     for (let i = 0; i < AU_TOUR_STOPS.length; i++) {
       const s = AU_TOUR_STOPS[i];
@@ -7785,6 +7859,7 @@ window._tickCampusTour = function(dt) {
           } else {
             CAMPUS_TOUR.state = "done";
             if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.add("show");
+            if (Ye.xr.isPresenting) showVRTourBanner("TOUR COMPLETE", "Welcome to Anurag University!", "Press [A] to Replay Tour  ·  Press [B] for Free Walk", 25.0);
             return;
           }
         }
@@ -12331,8 +12406,9 @@ Ye.setAnimationLoop((r,frame) => {
       let p = d[d.length - 2],
         f = d[d.length - 1];
       if (u.handedness === "left") {
-        s = zc(p);
-        a = -zc(f);
+        const _lockMove = typeof CAMPUS_TOUR !== "undefined" && (CAMPUS_TOUR.state === "aerial" || CAMPUS_TOUR.state === "choice" || CAMPUS_TOUR.state === "riding" || CAMPUS_TOUR.state === "done");
+        s = _lockMove ? 0 : zc(p);
+        a = _lockMove ? 0 : -zc(f);
       }
       if (u.handedness === "right") {
         n = -zc(f);
