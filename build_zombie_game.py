@@ -5142,19 +5142,24 @@ function getVRChoicePanel() {
   g.fillStyle = "#ffffff"; g.font = "900 44px Georgia,serif";
   g.fillText("CHOOSE YOUR EXPERIENCE", 512, 126);
   // Left Option Card: [A] Campus Tour
-  g.fillStyle = "#0284c7"; g.fillRect(48, 166, 444, 210);
-  g.strokeStyle = "#bae6fd"; g.lineWidth = 5; g.strokeRect(48, 166, 444, 210);
-  g.fillStyle = "#ffffff"; g.font = "900 34px sans-serif"; g.fillText("[A] CAMPUS TOUR", 270, 232);
+  g.fillStyle = "#0284c7"; g.fillRect(48, 166, 444, 178);
+  g.strokeStyle = "#bae6fd"; g.lineWidth = 5; g.strokeRect(48, 166, 444, 178);
+  g.fillStyle = "#ffffff"; g.font = "900 34px sans-serif"; g.fillText("[A] CAMPUS TOUR", 270, 224);
   g.font = "600 22px sans-serif"; g.fillStyle = "#e0f2fe";
-  g.fillText("Walk forward to the gate", 270, 282);
-  g.fillText("Open-Top Buggy + Voice Guide", 270, 320);
+  g.fillText("Walk forward to the gate", 270, 270);
+  g.fillText("Open-Top Buggy + Voice Guide", 270, 306);
   // Right Option Card: [B] Free Walk
-  g.fillStyle = "#1e293b"; g.fillRect(532, 166, 444, 210);
-  g.strokeStyle = "#72efdd"; g.lineWidth = 5; g.strokeRect(532, 166, 444, 210);
-  g.fillStyle = "#ffffff"; g.font = "900 34px sans-serif"; g.fillText("[B] FREE WALK", 754, 232);
+  g.fillStyle = "#1e293b"; g.fillRect(532, 166, 444, 178);
+  g.strokeStyle = "#72efdd"; g.lineWidth = 5; g.strokeRect(532, 166, 444, 178);
+  g.fillStyle = "#ffffff"; g.font = "900 34px sans-serif"; g.fillText("[B] FREE ROAM", 754, 224);
   g.font = "600 22px sans-serif"; g.fillStyle = "#cbd5e1";
-  g.fillText("Walk freely anywhere on campus", 754, 282);
-  g.fillText("Auto Voice Guide at Every Block!", 754, 320);
+  g.fillText("Walk freely anywhere on campus", 754, 270);
+  g.fillText("Auto Voice Guide at Every Block!", 754, 306);
+  // Small Momentary Bottom Strip: [X] Zombie Outbreak
+  g.fillStyle = "rgba(127,29,29,0.9)"; g.fillRect(262, 356, 500, 46);
+  g.strokeStyle = "#f87171"; g.lineWidth = 3; g.strokeRect(262, 356, 500, 46);
+  g.fillStyle = "#fecaca"; g.font = "800 22px sans-serif";
+  g.fillText("Left [X] · Zombie Outbreak (Play Game)", 512, 387);
 
   const tex = new dn(c); tex.colorSpace = vt;
   const mesh = new et(new _i(2.6, 1.06), new Yi({ map: tex, transparent: true, side: Gt, depthTest: false }));
@@ -5582,10 +5587,11 @@ window._handleVRTourController = function(side, trigDown, prevTrig, pressed, pre
       }
     }
   } else {
-    // Left X button: Exit Buggy to Free Walk, or Summon/Restart Campus Tour!
+    // Left X button: Launch Momentary Zombie Outbreak from Choice Screen, Exit Buggy to Free Roam, or Summon Buggy!
     if (pressed && !prevPressed) {
       unlockTourVoice();
-      if (CAMPUS_TOUR.state === "riding") enterFreeWalkMode();
+      if (CAMPUS_TOUR.state === "choice") launchMomentaryZombieOutbreak();
+      else if (CAMPUS_TOUR.state === "riding") enterFreeWalkMode();
       else if (CAMPUS_TOUR.state === "freewalk") beginWalkToBuggy();
     }
     // Left Y button: Cycle Time of Day (Bright Noon / Golden Sunset / Morning Sun)
