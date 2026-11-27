@@ -5610,10 +5610,64 @@ window._handleVRTourController = function(side, trigDown, prevTrig, pressed, pre
   }
 };
 
+// 3D Floating VR Top-Right Live Campus Satellite Minimap (mirrors #minimap canvas + live zone name in Meta Quest 3!)
+let _vrMiniGroup = null, _vrMiniCtx = null, _vrMiniTex = null, _vrMiniTick = 0;
+const _vrMiniPos = new A(), _vrMiniQuat = new Ot(), _vrMiniOff = new A();
+const _vrMiniTilt = new Ot().setFromAxisAngle(new A(0, 1, 0), -0.22);
+
+function createVRTopRightMinimap() {
+  if (_vrMiniGroup) return _vrMiniGroup;
+  const c = document.createElement("canvas"); c.width = 440; c.height = 420;
+  _vrMiniCtx = c.getContext("2d");
+  _vrMiniTex = new dn(c); _vrMiniTex.colorSpace = vt;
+  const mesh = new et(new _i(0.21, 0.20), new Yi({ map: _vrMiniTex, transparent: true, depthTest: false, depthWrite: false }));
+  mesh.renderOrder = 30;
+  mesh.visible = false;
+  Ht.add(mesh);
+  _vrMiniGroup = mesh;
+  return mesh;
+}
+
+function updateVRTopRightMinimap(dt) {
+  const mini = createVRTopRightMinimap();
+  const show = Boolean(Ye.xr.isPresenting && CAMPUS_TOUR.state !== "aerial");
+  mini.visible = show;
+  if (!show) return;
+
+  // Lock smoothly to the upper-right peripheral view of the live Meta Quest 3 headset camera!
+  const xrCam = Ye.xr.getCamera();
+  if (xrCam) {
+    xrCam.getWorldPosition(_vrMiniPos);
+    xrCam.getWorldQuaternion(_vrMiniQuat);
+    _vrMiniOff.set(0.255, 0.145, -0.74).applyQuaternion(_vrMiniQuat);
+    mini.position.copy(_vrMiniPos).add(_vrMiniOff);
+    mini.quaternion.copy(_vrMiniQuat).multiply(_vrMiniTilt);
+  }
+
+  // Redraw crisp framed minimap + live zone name at ~10 Hz (silky smooth, zero Quest 3 GPU overhead!)
+  _vrMiniTick += dt;
+  if (_vrMiniTick < 0.10) return;
+  _vrMiniTick = 0;
+  const srcCanvas = document.getElementById("minimap");
+  if (!srcCanvas || !_vrMiniCtx) return;
+  const g = _vrMiniCtx;
+  g.fillStyle = "rgba(8,18,32,0.92)"; g.fillRect(0, 0, 440, 420);
+  g.strokeStyle = "#38bdf8"; g.lineWidth = 5; g.strokeRect(3, 3, 434, 414);
+  g.fillStyle = "#72efdd"; g.font = "900 18px sans-serif"; g.textAlign = "left";
+  g.fillText("ANURAG CAMPUS MAP", 14, 26);
+  g.drawImage(srcCanvas, 10, 34, 420, 344);
+  const zoneTxt = (document.getElementById("minimap-zone")?.textContent || "Anurag University").slice(0, 36);
+  g.fillStyle = "#fde047"; g.font = "800 17px sans-serif";
+  g.fillText(zoneTxt, 14, 404);
+  _vrMiniTex.needsUpdate = true;
+}
+
 // Per-Frame Campus Tour Ticker (Inside Three.js Ye.setAnimationLoop -> PC + Meta Quest 3 VR!)
 const _vrBanPos = new A(), _vrBanQuat = new Ot(), _vrBanOff = new A();
 window._tickCampusTour = function(dt) {
   const safeDt = Math.min(0.08, Math.max(0.001, dt || 0.016));
+  if (Ye.xr.isPresenting) updateVRTopRightMinimap(safeDt);
+  else if (_vrMiniGroup) _vrMiniGroup.visible = false;
   // Keep 3D VR Subtitle Banner smoothly anchored in lower-center peripheral view when active in Meta Quest 3!
   if (CAMPUS_TOUR.vrTourBanner && CAMPUS_TOUR.vrTourBanner.visible) {
     if (!Ye.xr.isPresenting) {
