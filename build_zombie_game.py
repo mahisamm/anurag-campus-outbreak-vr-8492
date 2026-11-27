@@ -14,6 +14,15 @@ ASSETS_JSON = os.path.join(ROOT, "zombie_assets.json")
 MURAL_JPG = os.path.join(ROOT, "dblock_mural_real.jpg")
 CBLOCK_MURAL_JPG = os.path.join(ROOT, "cblock_mural_real.jpg")
 
+# =============================================================================
+# DEPLOYMENT MODE SWITCH (DO NOT DELETE ZOMBIE CODE — JUST FLIP THIS FLAG!)
+#   True  -> Official Guided Campus Tour Edition (Aerial Flyover + 3D Golf Cart
+#            Buggy + Road-Only Tour + Live AI Voice Guide; ALL zombie/combat
+#            features are completely hidden in Play-PC.html & index.html!)
+#   False -> Full Zombie Outbreak FP & Meta Quest 3 VR Game (for local play!)
+# =============================================================================
+CAMPUS_TOUR_ONLY = True
+
 dblock_mural_uri = ""
 if os.path.exists(MURAL_JPG):
     with open(MURAL_JPG, "rb") as mf:
@@ -1883,6 +1892,7 @@ function updateStoryIntro(dt) {
 }
 
 function startZombieGame(playIntro = false) {
+  if (window.CAMPUS_TOUR_ONLY) return;
   clearZombiesAndFX();
   ZGAME.active = true;
   ZGAME.gameOver = false;
@@ -1930,7 +1940,7 @@ function stopZombieGame() {
 }
 
 function syncWeaponVisuals() {
-  const showCombat = bo.value === "zombie";
+  const showCombat = !window.CAMPUS_TOUR_ONLY && bo.value === "zombie";
   const allHands = [...fpHands, ...Array.from(trackedHands.values()).map(h => h.arm)];
   for (const arm of allHands) {
     if (arm.shieldGroup) arm.shieldGroup.visible = showCombat && ZGAME.shieldDeploy > 0.03;
@@ -4700,6 +4710,651 @@ if REALISTIC_SHADERS_JS not in html:
         REALISTIC_SHADERS_JS + '\r\n// ============================================================================\r\n// BUILDING 9:',
         1
     )
+
+# =============================================================================
+# 7r. OFFICIAL GUIDED CAMPUS TOUR EDITION (CAMPUS_TOUR_ONLY = True)
+# Hides ALL zombie & weapon UI/logic cleanly (while keeping all zombie code
+# safely preserved in build_zombie_game.py!) and adds:
+#   - Clean welcome screen with ONLY "Start Campus Tour" (+ Meta Quest VR)
+#   - 10.5s Sunlit Cinematic Aerial Flyover with live welcoming Voice-Over
+#   - Detailed 3D Electric Anurag University Golf Cart / Campus Buggy
+#   - Road-only guided route covering ALL 10 major blocks & landmarks
+#   - Live AI Tour Guide Voice (Web Speech API) citing official anurag.edu.in facts
+#   - Sleek Subtitle & Controls Bar + Live 3D Buggy Dashboard Display for PC & VR!
+# =============================================================================
+if CAMPUS_TOUR_ONLY:
+    html = html.replace(
+        "<title>Anurag University — Campus Outbreak FP & Meta Quest 3 VR</title>",
+        "<title>Anurag University — Official 3D & VR Guided Campus Tour</title>",
+        1
+    )
+    # Default to Bright Campus Noon and remove Outbreak Dusk & Zombie mode from visible dropdowns
+    html = html.replace('<option value="outbreak" selected>Outbreak Dusk (Zombie Alert)</option>', '', 1)
+    html = html.replace('<option value="noon">Bright Campus Noon</option>', '<option value="noon" selected>Bright Campus Noon</option>', 1)
+    html = html.replace('<option value="zombie" selected>Zombie Outbreak (6 Levels + CEO Boss)</option>\n      ', '', 1)
+    html = html.replace('<option value="creative">Creative Flight & Walk</option>', '<option value="creative" selected>Guided Campus Tour & Explorer</option>', 1)
+    html = html.replace('<button id="walk">Play Game (PC)</button>', '<button id="walk">Start Campus Tour</button>', 1)
+    html = html.replace(
+        '01 · SURVIVAL MISSION</div><div class="intro-col-txt">Walk through the Main Gate, survive 5 escalating 2-min phases &amp; defeat THE CEO.',
+        '01 · ACADEMIC EXCELLENCE</div><div class="intro-col-txt">NAAC \'A\' Accredited · NIRF Top 151–200 University · NIRF Pharmacy #72 in India.',
+        1
+    )
+    html = html.replace(
+        '02 · TACTICAL ARSENAL</div><div class="intro-col-txt">Lightsaber [1], Pistol [2], Rifle [3], Shotgun [4] &amp; pickable Rods/Branches [E].',
+        '02 · RECORD PLACEMENTS</div><div class="intro-col-txt">₹53 LPA Highest Package · 2,100+ Job Offers · 97% Placement Rate · 200+ Recruiters.',
+        1
+    )
+    html = html.replace(
+        '03 · VR &amp; PC DEFENSE</div><div class="intro-col-txt">Left-Trigger / RMB raises Cyan Energy Shield · Space / Y to Jump · Swing in VR!',
+        '03 · ELECTRIC BUGGY TOUR</div><div class="intro-col-txt">100+ Acre Green Campus · 10 Major Blocks by Road · Live AI Voice Guide &amp; 360° Look!',
+        1
+    )
+    html = html.replace('<button id="btn-skip-intro">Skip Intro [Space]</button>', '<button id="btn-skip-intro">Board Buggy Now ›</button>', 1)
+    html = html.replace(
+        "Meta Quest 3 & PC Combat · Left Hand = Tactical Energy Shield (hold up to block, Left Trigger / thrust = Shield Bash). Right Hand = Lightsaber, Pistol, Rifle, Shotgun & Ground Rods/Branches (Right Trigger fires, swing physically in VR, Right Grip grabs ground weapons, A switches weapon, B reloads). Lift left wrist for live VR HUD.",
+        "Welcome to the Official 3D & Meta Quest 3 Guided Campus Tour of Anurag University, Venkatapur, Hyderabad — NAAC 'A' Accredited · NIRF Ranked · 100+ Acre Urban-Tech Campus. Experience an aerial campus flyover, then board our electric campus tour buggy for a narrated road tour of every major block!"
+    )
+
+    TOUR_CSS = """
+body.campus-tour-only #combat-hud,
+body.campus-tour-only #top-hp-bar,
+body.campus-tour-only #vitals-hud,
+body.campus-tour-only #weapon-hud,
+body.campus-tour-only #wave-banner,
+body.campus-tour-only #boss-bar-wrap,
+body.campus-tour-only #crosshair{display:none !important;opacity:0 !important;pointer-events:none !important}
+body.campus-tour-only main .control-grid:first-of-type{display:none !important}
+body.campus-tour-only main #walk{
+  grid-column:1 / -1;padding:15px 28px;font:900 17px/1.2 'Segoe UI',system-ui,sans-serif;
+  letter-spacing:0.8px;text-transform:uppercase;
+  background:linear-gradient(135deg,#0ea5e9,#2563eb,#1d4ed8);color:#ffffff;
+  border:1px solid rgba(186,230,253,0.75);border-radius:12px;
+  box-shadow:0 12px 32px rgba(14,165,233,0.45);cursor:pointer;
+}
+body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:translateY(-1px)}
+#tour-guide-bar{
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:38;
+  width:min(860px,94vw);padding:14px 20px;border-radius:16px;display:none;
+  background:linear-gradient(150deg,rgba(8,18,32,0.92),rgba(18,28,46,0.90));
+  border:1px solid rgba(114,239,221,0.48);
+  box-shadow:0 16px 46px rgba(0,0,0,0.62),inset 0 1px 0 rgba(255,255,255,0.12);
+  backdrop-filter:blur(14px);pointer-events:auto;
+}
+#tour-guide-bar.visible{display:block}
+#tg-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:7px}
+#tg-title-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#tg-step{
+  background:linear-gradient(135deg,#e11d48,#f59e0b);color:#fff;
+  font:900 11px system-ui;padding:3px 9px;border-radius:999px;letter-spacing:1.1px;
+}
+#tg-landmark{font:900 16px/1.2 'Segoe UI',system-ui,sans-serif;color:#ffffff;letter-spacing:0.4px}
+#tg-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tg-pill{
+  font:700 10.5px system-ui;color:#72efdd;background:rgba(14,165,233,0.16);
+  border:1px solid rgba(114,239,221,0.35);padding:2px 8px;border-radius:6px;letter-spacing:0.4px;
+}
+#tg-caption{font:500 13.5px/1.45 'Segoe UI',system-ui,sans-serif;color:#e2f2fc;margin-bottom:10px}
+#tg-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#tg-btns{display:flex;gap:7px;flex-wrap:wrap}
+.tg-btn{
+  padding:6px 13px;border-radius:8px;border:1px solid rgba(114,239,221,0.42);
+  background:rgba(15,34,54,0.9);color:#e0f7fa;font:700 12px system-ui;cursor:pointer;
+}
+.tg-btn:hover{background:#0ea5e9;color:#04151f}
+.tg-btn.primary{background:linear-gradient(135deg,#0ea5e9,#14b8a6);color:#04151f;border-color:#72efdd}
+#tg-prog-wrap{flex:1;min-width:140px;height:6px;background:rgba(255,255,255,0.14);border-radius:4px;overflow:hidden}
+#tg-prog-fill{height:100%;width:0%;background:linear-gradient(90deg,#38bdf8,#72efdd,#fbbf24);transition:width .2s}
+#tour-complete-overlay{
+  position:fixed;inset:0;z-index:48;display:none;align-items:center;justify-content:center;
+  background:rgba(6,14,24,0.62);backdrop-filter:blur(6px);pointer-events:auto;
+}
+#tour-complete-overlay.show{display:flex}
+#tour-complete-card{
+  width:min(560px,92vw);padding:28px 30px;border-radius:18px;text-align:center;
+  background:linear-gradient(155deg,rgba(10,22,38,0.95),rgba(20,34,56,0.94));
+  border:1.5px solid rgba(114,239,221,0.6);box-shadow:0 24px 64px rgba(0,0,0,0.72);
+}
+#tour-complete-card h2{font:900 28px/1.15 Georgia,serif;color:#fde047;margin:0 0 8px;letter-spacing:0.6px}
+#tour-complete-card p{font:500 14px/1.55 system-ui;color:#d6edf8;margin:0 0 18px}
+#tour-complete-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+"""
+    html = html.replace("</style>", TOUR_CSS + "\n</style>", 1)
+
+    TOUR_DOM = """
+<div id="tour-guide-bar">
+  <div id="tg-top">
+    <div id="tg-title-wrap">
+      <span id="tg-step">AERIAL FLYOVER</span>
+      <span id="tg-landmark">Anurag University · Venkatapur Campus</span>
+    </div>
+    <span style="font:700 11px system-ui;color:#fbbf24;letter-spacing:0.8px">ELECTRIC BUGGY TOUR · LOOK AROUND 360°</span>
+  </div>
+  <div id="tg-pills"></div>
+  <div id="tg-caption">Preparing your guided campus tour of Anurag University...</div>
+  <div id="tg-controls">
+    <div id="tg-btns">
+      <button class="tg-btn primary" id="btn-tg-pause">Pause</button>
+      <button class="tg-btn" id="btn-tg-voice">Voice: ON</button>
+      <button class="tg-btn" id="btn-tg-next">Next Stop ›</button>
+      <button class="tg-btn" id="btn-tg-replay">Replay Tour</button>
+      <button class="tg-btn" id="btn-tg-exit">Free Explore</button>
+    </div>
+    <div id="tg-prog-wrap"><div id="tg-prog-fill"></div></div>
+  </div>
+</div>
+<div id="tour-complete-overlay">
+  <div id="tour-complete-card">
+    <h2>Welcome to Anurag University!</h2>
+    <p>You have completed the Official Guided Campus Buggy Tour of Anurag University — NAAC 'A' Accredited · NIRF Ranked · ₹53 LPA Highest Package · 2,100+ Offers across 200+ Global Recruiters.</p>
+    <div id="tour-complete-actions">
+      <button class="tg-btn primary" id="btn-tc-replay" style="padding:11px 22px;font-size:14px">Replay Campus Tour</button>
+      <button class="tg-btn" id="btn-tc-explore" style="padding:11px 22px;font-size:14px">Explore Campus Freely</button>
+    </div>
+  </div>
+</div>
+"""
+    html = html.replace('<div id="hint"></div>', TOUR_DOM + '\n<div id="hint"></div>', 1)
+
+    CAMPUS_TOUR_JS = r'''
+// ============================================================================
+// OFFICIAL ANURAG UNIVERSITY GUIDED CAMPUS TOUR (AERIAL FLYOVER + 3D GOLF CART BUGGY + AI VOICE GUIDE)
+// All Zombie Outbreak code is disabled cleanly via CAMPUS_TOUR_ONLY = true!
+// ============================================================================
+window.CAMPUS_TOUR_ONLY = true;
+document.body.classList.add("campus-tour-only");
+
+// 10 Official Verified Road-Only Campus Tour Stops (Facts sourced directly from anurag.edu.in!)
+const AU_TOUR_STOPS = [
+  {
+    name: "Main Gate & Grand Entrance Avenue",
+    pills: ["100+ Acre Green Campus", "NAAC 'A' Accredited", "NIRF Top 151–200"],
+    path: [[-3, 67], [-3, 52], [-3, 38], [-3, 27]],
+    lookTarget: [-3, 6, 10],
+    holdSec: 7.5,
+    speech: "Welcome aboard the Anurag University Electric Campus Tour Buggy! Spread across over 100 lush green acres in Venkatapur, Hyderabad, Anurag University is accredited with NAAC A Grade and ranked among India's top 151 to 200 universities by NIRF. Notice our iconic Sports Silhouette Wall and placement achievement boards lining the grand entrance avenue."
+  },
+  {
+    name: "A-Block · School of Engineering & Main Quadrangle",
+    pills: ["NIRF Engg 101–150", "AI, ML & Data Science", "30,000+ sq. ft. Library"],
+    path: [[-3, 25], [8, 24]],
+    lookTarget: [-3, 6, 10],
+    holdSec: 8.0,
+    speech: "Straight ahead stands A-Block, the flagship home of the School of Engineering. Offering NBA-accredited B.Tech, M.Tech, and Ph.D. programs in Computer Science, Artificial Intelligence, Machine Learning, Data Science, and Cyber Security, A-Block houses our Centre for Advanced Computational Research, a 30,000 square foot central library, and the lively central amphitheater quadrangle."
+  },
+  {
+    name: "G-Block (Central Admin) & F-Block (Examination Branch)",
+    pills: ["School of Management", "Startup Incubation", "Wide 2-Lane East Avenue"],
+    path: [[18, 24], [24.4, 21], [24.4, 14], [24.4, -3]],
+    lookTarget: [38, 6, 4],
+    holdSec: 7.5,
+    speech: "We are now cruising north along our wide two-lane East Avenue past G-Block, our Central Administrative Block and School of Management established in 2006, alongside F-Block, our modern Examination Branch. Here, future leaders build MBA expertise, corporate leadership skills, and student-driven startups through our dedicated business incubation hub."
+  },
+  {
+    name: "E-Block · ECE, TEDxAnuragU & Space Research + I-Block",
+    pills: ["TEDxAnuragU Atrium", "Satellite Space Research", "10-Story I-Block Tower"],
+    path: [[24.4, -12], [24.4, -19.5]],
+    lookTarget: [42, 6, -19.5],
+    holdSec: 8.0,
+    speech: "To our right is E-Block, home to the Department of Electronics and Communication Engineering, the famous TEDxAnuragU atrium, and our pioneering Satellite Design and Development Center for Space Research. Rising just beyond it is our brand-new 10-story I-Block expansion mega-tower, built for next-generation innovation."
+  },
+  {
+    name: "Cricket Stadium Ground & Athletics Complex",
+    pills: ["Championship Cricket Oval", "Circular Running Track", "Turf & Basketball Courts"],
+    path: [[24.4, -32], [24.4, -44]],
+    lookTarget: [44, 3, -76],
+    holdSec: 7.0,
+    speech: "Opening up ahead is Anurag University's expansive Cricket Stadium Ground, encircled by a full red-clay athletics running track, alongside synthetic turf courts and basketball arenas. Sports, teamwork, and holistic student wellness thrive here every single day."
+  },
+  {
+    name: "North Avenue · Medicinal Garden, H-Block & Solar Tree",
+    pills: ["Green Solar Charging Tree", "School of Agriculture", "70+ Campus Fleet Buses"],
+    path: [[14, -41], [-8, -41], [-33, -41], [-56, -41]],
+    lookTarget: [-58, 4, -32],
+    holdSec: 8.5,
+    speech: "Driving along North Campus Avenue, we pass the School of Pharmacy's lush Medicinal Garden and our 6-story H-Block featuring our eco-friendly Green Solar-Panel Charging Tree. Anurag University also pioneers the ICAR-mapped School of Agricultural Sciences with IoT precision farming, polyhouses, and a fleet of over 70 yellow campus buses connecting all of Hyderabad."
+  },
+  {
+    name: "D-Block · School of Humanities & Science",
+    pills: ["Solar-Powered Roof", "YOUR FUTURE LOOKS Bright", "Foundational Sciences"],
+    path: [[-72, -36], [-73, -20], [-73, -10]],
+    lookTarget: [-54, 6, -10],
+    holdSec: 7.0,
+    speech: "Turning south along West Avenue, we arrive at D-Block, the School of Humanities and Science, crowned with rooftop solar panels and our inspiring street-art mural reminding every student that Your Future Looks Bright. Here, first-year scholars build rock-solid foundations in mathematics, physics, communication, and design thinking."
+  },
+  {
+    name: "B-Block · School of Pharmacy (NIRF #72 in India)",
+    pills: ["NIRF Pharmacy #72", "PCI & NBA Approved", "Neuroscience R&D Centre"],
+    path: [[-73, 0], [-73, 10]],
+    lookTarget: [-52, 5, 10],
+    holdSec: 8.0,
+    speech: "Next on our left is B-Block, home to our prestigious School of Pharmacy, established in 2005 and ranked 72nd nationally in India by NIRF. Approved by PCI and accredited by NBA, it leads South India in drug discovery with HPLC analytics, pharmacology laboratories, and a dedicated Neuroscience R&D Centre backed by ICMR and national research grants."
+  },
+  {
+    name: "C-Block · Civil Engineering & Basketball Plaza",
+    pills: ["Civil Engineering Wing", "Iconic Street-Art Mural", "AU Basketball Plaza"],
+    path: [[-73, 24], [-73, 35], [-52, 35]],
+    lookTarget: [-46, 3, 52],
+    holdSec: 7.0,
+    speech: "Rounding C-Block, our Civil Engineering Department, you can admire our iconic multi-story street-art mural and the vibrant C-Block Basketball Plaza featuring the Anurag University emblem at center court — a favorite gathering spot for students after lectures."
+  },
+  {
+    name: "Dr. APJ Abdul Kalam Hall & Record Placements Finale",
+    pills: ["₹53 LPA Highest Package", "2,100+ Job Offers", "200+ Global Recruiters"],
+    path: [[-73, 46], [-74, 56], [-42, 46], [-12, 34], [-3, 29]],
+    lookTarget: [-3, 6, 12],
+    holdSec: 9.5,
+    speech: "Passing the grand air-conditioned Dr. A P J Abdul Kalam Auditorium — venue for international conferences, hackathons, and orientations — we return to A-Block Plaza. With a 97 percent placement rate, over 2,100 job offers, a highest package of 53 Lakhs per annum, and over 200 top recruiters including Microsoft, Amazon, Qualcomm, JPMorgan Chase, Goldman Sachs, Cisco, Accenture, and TCS, Anurag University empowers you to be everyone you dream to be. Thank you for joining our tour!"
+  }
+];
+
+const CAMPUS_TOUR = {
+  state: "idle", // "idle" | "aerial" | "riding" | "done"
+  aerialTime: 0,
+  aerialDur: 10.5,
+  paused: false,
+  voiceOn: true,
+  stopIdx: 0,
+  wpIdx: 0,
+  holdTimer: 0,
+  speed: 8.2, // smooth comfortable buggy cruise speed (m/s)
+  buggy: null,
+  wheels: [],
+  dashCtx: null,
+  dashTex: null,
+  buggyPos: new A(-3, 0, 67),
+  buggyYaw: 0,
+  freeYawOffset: 0,
+  freePitch: 0.02
+};
+
+// Build Detailed 3D Anurag University Electric Campus Golf Cart / Buggy!
+function buildTourBuggy() {
+  if (CAMPUS_TOUR.buggy) return CAMPUS_TOUR.buggy;
+  const g = new fi();
+  const whiteMat = new Jt({ color: 0xf8fafc, roughness: 0.25, metalness: 0.18 });
+  const blueMat = new Jt({ color: 0x1d4ed8, roughness: 0.3, metalness: 0.35 });
+  const redMat = new Jt({ color: 0xdc2626, roughness: 0.32, metalness: 0.25 });
+  const chromeMat = new Jt({ color: 0xe2e8f0, roughness: 0.18, metalness: 0.88 });
+  const seatMat = new Jt({ color: 0xe7dcc6, roughness: 0.78 });
+  const darkMat = new Jt({ color: 0x1e293b, roughness: 0.65, metalness: 0.2 });
+  const glassMat = new Jt({ color: 0xbae6fd, transparent: true, opacity: 0.24, roughness: 0.08, metalness: 0.45 });
+
+  // Lower chassis & floorboards
+  const floor = new et(new Ni(1.62, 0.16, 3.15), darkMat); floor.position.set(0, 0.34, 0); floor.castShadow = true; g.add(floor);
+  // Front hood (sleek pearl white + royal blue nose + crimson AU stripe!)
+  const hood = new et(new Ni(1.56, 0.56, 0.95), whiteMat); hood.position.set(0, 0.68, -1.12); hood.castShadow = true; g.add(hood);
+  const nose = new et(new Ni(1.58, 0.26, 0.14), blueMat); nose.position.set(0, 0.54, -1.58); g.add(nose);
+  const stripe = new et(new Ni(1.60, 0.07, 0.98), redMat); stripe.position.set(0, 0.72, -1.12); g.add(stripe);
+  // Rear body deck
+  const rearBody = new et(new Ni(1.58, 0.58, 1.15), whiteMat); rearBody.position.set(0, 0.68, 1.0); rearBody.castShadow = true; g.add(rearBody);
+  const rearStripe = new et(new Ni(1.60, 0.07, 1.18), blueMat); rearStripe.position.set(0, 0.72, 1.0); g.add(rearStripe);
+
+  // LED Headlights & Red Taillights
+  const headMat = new Yi({ color: 0xfffbeb });
+  const tailMat = new Yi({ color: 0xef4444 });
+  for (let sx of [-0.54, 0.54]) {
+    let hl = new et(new pn(0.08, 0.08, 0.06, 12), headMat); hl.rotation.x = Math.PI / 2; hl.position.set(sx, 0.76, -1.60); g.add(hl);
+    let tl = new et(new Ni(0.22, 0.09, 0.05), tailMat); tl.position.set(sx, 0.76, 1.59); g.add(tl);
+  }
+
+  // Comfortable Cream Padded Front & Rear Bench Seats
+  const fSeat = new et(new Ni(1.42, 0.16, 0.56), seatMat); fSeat.position.set(0, 0.76, -0.15); g.add(fSeat);
+  const fBack = new et(new Ni(1.42, 0.52, 0.14), seatMat); fBack.position.set(0, 1.08, 0.12); g.add(fBack);
+  const rSeat = new et(new Ni(1.42, 0.16, 0.56), seatMat); rSeat.position.set(0, 0.76, 0.85); g.add(rSeat);
+  const rBack = new et(new Ni(1.42, 0.52, 0.14), seatMat); rBack.position.set(0, 1.08, 1.12); g.add(rBack);
+
+  // Dashboard Console + Steering Column & Wheel (on driver's left)
+  const dash = new et(new Ni(1.48, 0.24, 0.38), darkMat); dash.position.set(0, 1.02, -0.76); g.add(dash);
+  const steerCol = new et(new pn(0.03, 0.03, 0.44, 10), chromeMat);
+  steerCol.position.set(-0.38, 1.12, -0.62); steerCol.rotation.x = 0.52; g.add(steerCol);
+  const steerWheel = new et(new gn(0.16, 0.022, 8, 18), darkMat);
+  steerWheel.position.set(-0.38, 1.24, -0.49); steerWheel.rotation.x = 0.52; g.add(steerWheel);
+
+  // Live 3D Glowing Tour Guide Dashboard Screen (visible in BOTH PC & Meta Quest 3 VR!)
+  const dc = document.createElement("canvas"); dc.width = 512; dc.height = 192;
+  const dCtx = dc.getContext("2d");
+  const dTex = new dn(dc); dTex.colorSpace = vt;
+  const dScreen = new et(new _i(0.54, 0.20), new Yi({ map: dTex }));
+  dScreen.position.set(0.24, 1.16, -0.68);
+  dScreen.rotation.x = -0.32;
+  g.add(dScreen);
+  CAMPUS_TOUR.dashCtx = dCtx;
+  CAMPUS_TOUR.dashTex = dTex;
+
+  // 4 Brushed Chrome Canopy Pillars + White Sun Canopy Roof + Clear Tinted Windshield
+  for (let [px, pz] of [[-0.72, -0.82], [0.72, -0.82], [-0.72, 1.28], [0.72, 1.28]]) {
+    let pil = new et(new pn(0.028, 0.028, 1.26, 8), chromeMat);
+    pil.position.set(px, 1.54, pz); g.add(pil);
+  }
+  const roof = new et(new Ni(1.66, 0.09, 2.38), whiteMat); roof.position.set(0, 2.18, 0.22); roof.castShadow = true; g.add(roof);
+  const roofTrim = new et(new Ni(1.68, 0.05, 2.40), blueMat); roofTrim.position.set(0, 2.13, 0.22); g.add(roofTrim);
+  const wind = new et(new Ni(1.42, 0.78, 0.03), glassMat);
+  wind.position.set(0, 1.56, -0.84); wind.rotation.x = -0.14; g.add(wind);
+
+  // 4 Rotating Rubber Tires with Silver Alloy Rims!
+  const tireMat = new Jt({ color: 0x15181c, roughness: 0.92 });
+  CAMPUS_TOUR.wheels = [];
+  for (let [wx, wz] of [[-0.82, -1.02], [0.82, -1.02], [-0.82, 1.02], [0.82, 1.02]]) {
+    const wGrp = new fi();
+    wGrp.position.set(wx, 0.29, wz);
+    const tire = new et(new pn(0.29, 0.29, 0.20, 16), tireMat); tire.rotation.z = Math.PI / 2; wGrp.add(tire);
+    const rim = new et(new pn(0.15, 0.15, 0.22, 12), chromeMat); rim.rotation.z = Math.PI / 2; wGrp.add(rim);
+    g.add(wGrp);
+    CAMPUS_TOUR.wheels.push(wGrp);
+  }
+
+  g.position.copy(CAMPUS_TOUR.buggyPos);
+  Ht.add(g);
+  CAMPUS_TOUR.buggy = g;
+  return g;
+}
+
+function updateBuggyDashboard(stepText, title, pills) {
+  if (!CAMPUS_TOUR.dashCtx || !CAMPUS_TOUR.dashTex) return;
+  const g = CAMPUS_TOUR.dashCtx;
+  g.fillStyle = "#081424"; g.fillRect(0, 0, 512, 192);
+  g.strokeStyle = "#38bdf8"; g.lineWidth = 6; g.strokeRect(4, 4, 504, 184);
+  g.fillStyle = "#ef4444"; g.fillRect(18, 18, 52, 28);
+  g.fillStyle = "#ffffff"; g.font = "900 18px sans-serif"; g.textAlign = "center"; g.fillText("AU", 44, 38);
+  g.fillStyle = "#fde047"; g.font = "800 20px sans-serif"; g.textAlign = "left"; g.fillText(stepText, 82, 39);
+  g.fillStyle = "#ffffff"; g.font = "900 24px 'Segoe UI',sans-serif";
+  g.fillText(title.slice(0, 34), 18, 86);
+  g.fillStyle = "#72efdd"; g.font = "700 18px sans-serif";
+  g.fillText((pills || []).join("  ·  ").slice(0, 48), 18, 128);
+  g.fillStyle = "#94a3b8"; g.font = "600 16px Consolas,monospace";
+  g.fillText("ANURAG UNIVERSITY ELECTRIC CAMPUS BUGGY · 100% GREEN", 18, 168);
+  CAMPUS_TOUR.dashTex.needsUpdate = true;
+}
+
+// Natural AI Tour Guide Voice-Over (Web Speech API)
+function speakTourGuide(text) {
+  try {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    if (!CAMPUS_TOUR.voiceOn || !text) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices() || [];
+    const pref = voices.find(v => /en[-_](IN|US|GB)/i.test(v.lang) && /natural|google|microsoft|zira|heera|ravi|samantha/i.test(v.name))
+      || voices.find(v => /en/i.test(v.lang));
+    if (pref) u.voice = pref;
+    u.rate = 0.98;
+    u.pitch = 1.02;
+    u.volume = 1.0;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function updateTourUI(stepLabel, title, pills, caption, progPct) {
+  const bar = document.getElementById("tour-guide-bar");
+  if (bar) bar.classList.add("visible");
+  if (document.getElementById("tg-step")) document.getElementById("tg-step").textContent = stepLabel;
+  if (document.getElementById("tg-landmark")) document.getElementById("tg-landmark").textContent = title;
+  if (document.getElementById("tg-caption")) document.getElementById("tg-caption").textContent = caption;
+  if (document.getElementById("tg-prog-fill")) document.getElementById("tg-prog-fill").style.width = `${Math.max(0, Math.min(100, progPct))}%`;
+  const pWrap = document.getElementById("tg-pills");
+  if (pWrap) pWrap.innerHTML = (pills || []).map(p => `<span class="tg-pill">${p}</span>`).join("");
+  updateBuggyDashboard(stepLabel, title, pills);
+}
+
+function announceCurrentStop() {
+  const stop = AU_TOUR_STOPS[CAMPUS_TOUR.stopIdx];
+  if (!stop) return;
+  const pct = ((CAMPUS_TOUR.stopIdx + 1) / AU_TOUR_STOPS.length) * 100;
+  updateTourUI(`STOP ${CAMPUS_TOUR.stopIdx + 1} / ${AU_TOUR_STOPS.length}`, stop.name, stop.pills, stop.speech, pct);
+  speakTourGuide(stop.speech);
+}
+
+function startGuidedCampusTour() {
+  if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.remove("show");
+  const tm = document.getElementById("time-mode");
+  if (tm && tm.value !== "noon") { tm.value = "noon"; tm.dispatchEvent(new Event("change")); }
+  buildTourBuggy();
+  CAMPUS_TOUR.state = "aerial";
+  CAMPUS_TOUR.aerialTime = 0;
+  CAMPUS_TOUR.paused = false;
+  CAMPUS_TOUR.stopIdx = 0;
+  CAMPUS_TOUR.wpIdx = 0;
+  CAMPUS_TOUR.holdTimer = 0;
+  CAMPUS_TOUR.buggyPos.set(-3, 0, 67);
+  CAMPUS_TOUR.buggyYaw = 0;
+  CAMPUS_TOUR.freeYawOffset = 0;
+  CAMPUS_TOUR.freePitch = 0.02;
+  if (CAMPUS_TOUR.buggy) {
+    CAMPUS_TOUR.buggy.visible = true;
+    CAMPUS_TOUR.buggy.position.copy(CAMPUS_TOUR.buggyPos);
+    CAMPUS_TOUR.buggy.rotation.set(0, 0, 0);
+  }
+  if (document.getElementById("btn-tg-pause")) document.getElementById("btn-tg-pause").textContent = "Pause";
+  document.body.classList.add("intro-active");
+  if (document.getElementById("intro-overlay")) {
+    document.getElementById("intro-overlay").classList.add("playing");
+    if (document.getElementById("intro-kicker")) document.getElementById("intro-kicker").textContent = "ANURAG UNIVERSITY · OFFICIAL GUIDED CAMPUS TOUR";
+    if (document.getElementById("intro-headline")) document.getElementById("intro-headline").textContent = "WELCOME TO ANURAG UNIVERSITY";
+    if (document.getElementById("intro-sub")) document.getElementById("intro-sub").textContent = "NAAC 'A' Accredited · NIRF Top Ranked · 100+ Acre Urban-Tech Campus, Venkatapur, Hyderabad";
+  }
+  const openMsg = "Welcome to Anurag University, Hyderabad — accredited with NAAC A Grade and ranked among India's premier universities by NIRF. Enjoy this aerial overview of our 100-acre green campus before we board our electric tour buggy at the Main Gate!";
+  if (document.getElementById("tour-guide-bar")) document.getElementById("tour-guide-bar").classList.remove("visible");
+  updateBuggyDashboard("AERIAL OVERVIEW", "Anurag University · Venkatapur", ["NAAC 'A' Grade", "NIRF Top Ranked"]);
+  speakTourGuide(openMsg);
+}
+
+function boardTourBuggyNow() {
+  CAMPUS_TOUR.state = "riding";
+  document.body.classList.remove("intro-active");
+  if (document.getElementById("intro-overlay")) document.getElementById("intro-overlay").classList.remove("playing");
+  if (typeof fpHands !== "undefined") fpHands.forEach(a => (a.root.visible = false));
+  CAMPUS_TOUR.stopIdx = 0;
+  CAMPUS_TOUR.wpIdx = 0;
+  CAMPUS_TOUR.holdTimer = 0;
+  CAMPUS_TOUR.buggyPos.set(-3, 0, 67);
+  CAMPUS_TOUR.buggyYaw = 0;
+  announceCurrentStop();
+}
+
+function exitGuidedTourToExplore() {
+  CAMPUS_TOUR.state = "idle";
+  document.body.classList.remove("intro-active");
+  if (document.getElementById("intro-overlay")) document.getElementById("intro-overlay").classList.remove("playing");
+  if (document.getElementById("tour-guide-bar")) document.getElementById("tour-guide-bar").classList.remove("visible");
+  if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.remove("show");
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  if (typeof fpHands !== "undefined" && !Ye.xr.isPresenting) fpHands.forEach(a => (a.root.visible = true));
+}
+
+// Wire Tour Guide Buttons & Opening "Start Campus Tour" Button
+if (document.getElementById("btn-skip-intro")) {
+  const skipBtn = document.getElementById("btn-skip-intro");
+  skipBtn.textContent = "Board Buggy Now ›";
+  skipBtn.addEventListener("click", () => { if (CAMPUS_TOUR.state === "aerial") boardTourBuggyNow(); });
+}
+if (document.getElementById("btn-tg-pause")) {
+  document.getElementById("btn-tg-pause").onclick = () => {
+    CAMPUS_TOUR.paused = !CAMPUS_TOUR.paused;
+    document.getElementById("btn-tg-pause").textContent = CAMPUS_TOUR.paused ? "Resume" : "Pause";
+    try { if (window.speechSynthesis) CAMPUS_TOUR.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume(); } catch (e) {}
+  };
+}
+if (document.getElementById("btn-tg-voice")) {
+  document.getElementById("btn-tg-voice").onclick = () => {
+    CAMPUS_TOUR.voiceOn = !CAMPUS_TOUR.voiceOn;
+    document.getElementById("btn-tg-voice").textContent = CAMPUS_TOUR.voiceOn ? "Voice: ON" : "Voice: OFF";
+    if (!CAMPUS_TOUR.voiceOn) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    else if (CAMPUS_TOUR.state === "riding") announceCurrentStop();
+  };
+}
+if (document.getElementById("btn-tg-next")) {
+  document.getElementById("btn-tg-next").onclick = () => {
+    if (CAMPUS_TOUR.state === "aerial") { boardTourBuggyNow(); return; }
+    if (CAMPUS_TOUR.state !== "riding") return;
+    if (CAMPUS_TOUR.stopIdx < AU_TOUR_STOPS.length - 1) {
+      CAMPUS_TOUR.stopIdx++;
+      CAMPUS_TOUR.wpIdx = 0;
+      CAMPUS_TOUR.holdTimer = 0;
+      announceCurrentStop();
+    } else {
+      CAMPUS_TOUR.state = "done";
+      if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.add("show");
+    }
+  };
+}
+if (document.getElementById("btn-tg-replay")) document.getElementById("btn-tg-replay").onclick = () => startGuidedCampusTour();
+if (document.getElementById("btn-tg-exit")) document.getElementById("btn-tg-exit").onclick = () => exitGuidedTourToExplore();
+if (document.getElementById("btn-tc-replay")) document.getElementById("btn-tc-replay").onclick = () => startGuidedCampusTour();
+if (document.getElementById("btn-tc-explore")) document.getElementById("btn-tc-explore").onclick = () => exitGuidedTourToExplore();
+
+// Hook "Start Campus Tour" (#walk) button cleanly to launch Aerial Flyover -> Buggy Tour!
+const _walkBtn = document.getElementById("walk");
+if (_walkBtn) {
+  _walkBtn.addEventListener("click", () => {
+    setTimeout(() => startGuidedCampusTour(), 60);
+  });
+}
+
+// Mouse drag 360° free-look while riding inside the buggy on PC!
+let _tourDragging = false, _tourLastX = 0, _tourLastY = 0;
+window.addEventListener("mousedown", (e) => { if (CAMPUS_TOUR.state === "riding" && e.target.tagName === "CANVAS") { _tourDragging = true; _tourLastX = e.clientX; _tourLastY = e.clientY; } });
+window.addEventListener("mouseup", () => { _tourDragging = false; });
+window.addEventListener("mousemove", (e) => {
+  if (CAMPUS_TOUR.state !== "riding") return;
+  if (_tourDragging || document.pointerLockElement) {
+    const dx = document.pointerLockElement ? e.movementX : (e.clientX - _tourLastX);
+    const dy = document.pointerLockElement ? e.movementY : (e.clientY - _tourLastY);
+    _tourLastX = e.clientX; _tourLastY = e.clientY;
+    CAMPUS_TOUR.freeYawOffset -= dx * 0.0032;
+    CAMPUS_TOUR.freePitch = Math.max(-0.45, Math.min(0.55, CAMPUS_TOUR.freePitch - dy * 0.0025));
+  }
+});
+
+// Per-Frame Campus Tour Ticker (called inside Three.js Ye.setAnimationLoop -> works at 72-90 FPS on BOTH PC & Meta Quest 3 VR!)
+window._tickCampusTour = function(dt) {
+  const safeDt = Math.min(0.08, Math.max(0.001, dt || 0.016));
+  if (CAMPUS_TOUR.state === "idle" || CAMPUS_TOUR.state === "done" || CAMPUS_TOUR.paused) return;
+
+  if (CAMPUS_TOUR.state === "aerial") {
+    CAMPUS_TOUR.aerialTime += safeDt;
+    const t = Math.min(1, CAMPUS_TOUR.aerialTime / CAMPUS_TOUR.aerialDur);
+    if (document.getElementById("intro-progress-fill")) document.getElementById("intro-progress-fill").style.width = `${(t * 100).toFixed(1)}%`;
+    const sm = (x) => x * x * (3 - 2 * x);
+    let cx, cy, cz, lx, ly, lz;
+    if (t < 0.45) {
+      const u = sm(t / 0.45);
+      cx = so.lerp(62, -48, u); cy = so.lerp(52, 34, u); cz = so.lerp(-36, 36, u);
+      lx = so.lerp(0, -3, u); ly = so.lerp(4, 5, u); lz = so.lerp(-6, 8, u);
+    } else if (t < 0.78) {
+      const u = sm((t - 0.45) / 0.33);
+      cx = so.lerp(-48, 10, u); cy = so.lerp(34, 14, u); cz = so.lerp(36, 76, u);
+      lx = so.lerp(-3, -3, u); ly = so.lerp(5, 3.5, u); lz = so.lerp(8, 22, u);
+    } else {
+      const u = sm((t - 0.78) / 0.22);
+      cx = so.lerp(10, -2.72, u); cy = so.lerp(14, 1.56, u); cz = so.lerp(76, 66.85, u);
+      lx = -3; ly = so.lerp(3.5, 1.8, u); lz = so.lerp(22, 30, u);
+    }
+    if (Ye.xr.isPresenting) {
+      xt.position.set(cx, Math.max(0, cy - 1.6), cz);
+      xt.rotation.set(0, 0, 0);
+    } else {
+      xt.position.set(cx, cy - 1.66, cz);
+      xt.rotation.set(0, 0, 0);
+      camPivot.position.set(0, 1.66, 0);
+      camPivot.rotation.set(0, 0, 0);
+      Mi.position.set(0, 0, 0);
+      Mi.lookAt(lx, ly, lz);
+    }
+    if (typeof fpHands !== "undefined") fpHands.forEach(a => (a.root.visible = false));
+    if (CAMPUS_TOUR.aerialTime >= CAMPUS_TOUR.aerialDur) boardTourBuggyNow();
+    return;
+  }
+
+  if (CAMPUS_TOUR.state === "riding") {
+    const stop = AU_TOUR_STOPS[CAMPUS_TOUR.stopIdx];
+    if (!stop) return;
+    const wp = stop.path[CAMPUS_TOUR.wpIdx];
+    const tx = wp[0], tz = wp[1];
+    const dx = tx - CAMPUS_TOUR.buggyPos.x;
+    const dz = tz - CAMPUS_TOUR.buggyPos.z;
+    const dist = Math.hypot(dx, dz);
+
+    let moved = 0;
+    if (dist > 0.35) {
+      // Smoothly steer along the road toward the next road waypoint
+      const targetYaw = Math.atan2(-dx, -dz);
+      let dYaw = targetYaw - CAMPUS_TOUR.buggyYaw;
+      while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+      while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+      CAMPUS_TOUR.buggyYaw += dYaw * Math.min(1, safeDt * 3.8);
+      const stepDist = Math.min(dist, CAMPUS_TOUR.speed * safeDt);
+      CAMPUS_TOUR.buggyPos.x += (dx / dist) * stepDist;
+      CAMPUS_TOUR.buggyPos.z += (dz / dist) * stepDist;
+      moved = stepDist;
+      // Gently decay free-look offset slightly only if not dragging so user sees road ahead
+    } else {
+      // Reached waypoint!
+      if (CAMPUS_TOUR.wpIdx < stop.path.length - 1) {
+        CAMPUS_TOUR.wpIdx++;
+      } else {
+        // Showcase pause at the landmark while Tour Guide speaks!
+        CAMPUS_TOUR.holdTimer += safeDt;
+        const stillSpeaking = window.speechSynthesis && window.speechSynthesis.speaking && CAMPUS_TOUR.voiceOn;
+        if (CAMPUS_TOUR.holdTimer >= stop.holdSec && (!stillSpeaking || CAMPUS_TOUR.holdTimer >= stop.holdSec + 10.0)) {
+          if (CAMPUS_TOUR.stopIdx < AU_TOUR_STOPS.length - 1) {
+            CAMPUS_TOUR.stopIdx++;
+            CAMPUS_TOUR.wpIdx = 0;
+            CAMPUS_TOUR.holdTimer = 0;
+            announceCurrentStop();
+          } else {
+            CAMPUS_TOUR.state = "done";
+            if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.add("show");
+            return;
+          }
+        }
+      }
+    }
+
+    // Update 3D Buggy Position, Heading & Spinning Wheels!
+    const gy = groundAt(CAMPUS_TOUR.buggyPos.x, CAMPUS_TOUR.buggyPos.z);
+    CAMPUS_TOUR.buggyPos.y = gy;
+    if (CAMPUS_TOUR.buggy) {
+      CAMPUS_TOUR.buggy.position.copy(CAMPUS_TOUR.buggyPos);
+      CAMPUS_TOUR.buggy.rotation.set(0, CAMPUS_TOUR.buggyYaw, 0);
+      for (const w of CAMPUS_TOUR.wheels) w.rotation.x -= moved / 0.29;
+    }
+
+    // Seat the player comfortably in the front passenger seat of the golf cart!
+    const seatLocal = new A(0.32, 0, -0.05).applyAxisAngle(new A(0, 1, 0), CAMPUS_TOUR.buggyYaw);
+    const sx = CAMPUS_TOUR.buggyPos.x + seatLocal.x;
+    const sz = CAMPUS_TOUR.buggyPos.z + seatLocal.z;
+    if (Ye.xr.isPresenting) {
+      // In Meta Quest 3 VR: move rig smoothly with buggy, keep headset rotation 100% user-controlled for comfort!
+      xt.position.set(sx, gy + 0.15, sz);
+      xt.rotation.set(0, CAMPUS_TOUR.buggyYaw, 0);
+    } else {
+      xt.position.set(sx, gy - 0.12, sz);
+      xt.rotation.set(0, CAMPUS_TOUR.buggyYaw + CAMPUS_TOUR.freeYawOffset, 0);
+      camPivot.position.set(0, 1.66, 0);
+      camPivot.rotation.set(CAMPUS_TOUR.freePitch, 0, 0);
+      Mi.position.set(0, 0, 0);
+      Mi.rotation.set(0, 0, 0);
+    }
+    if (typeof fpHands !== "undefined") fpHands.forEach(a => (a.root.visible = false));
+  }
+};
+'''
+    html = html.replace(
+        '  if (window._tickRealisticShaders) window._tickRealisticShaders(e);',
+        '  if (window._tickRealisticShaders) window._tickRealisticShaders(e);\n  if (window._tickCampusTour) window._tickCampusTour(e);',
+        1
+    )
+    html = html.replace(
+        '// ============================================================================\n// BUILDING 9:',
+        CAMPUS_TOUR_JS + '\n// ============================================================================\n// BUILDING 9:',
+        1
+    )
+    if CAMPUS_TOUR_JS not in html:
+        html = html.replace(
+            '// ============================================================================\r\n// BUILDING 9:',
+            CAMPUS_TOUR_JS + '\r\n// ============================================================================\r\n// BUILDING 9:',
+            1
+        )
 
 with open(SRC_HTML, "w", encoding="utf-8") as f:
     f.write(html)
