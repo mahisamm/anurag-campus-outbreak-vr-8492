@@ -3095,6 +3095,10 @@ VR_SYNC_REPLACE = """    const pressed=!!buttons?.[4]?.pressed;
       }
       hand.trigDown=trigDown; hand.gripDown=gripDown;
       if(arm.phoneGroup) arm.phoneGroup.visible=false;
+    } else if (window.CAMPUS_TOUR_ONLY && window._handleVRTourController) {
+      window._handleVRTourController(side, trigDown, hand.trigDown, pressed, hand.buttonDown, upper, hand.upperDown);
+      hand.trigDown = trigDown; hand.gripDown = gripDown;
+      if (arm.phoneGroup) arm.phoneGroup.visible = false;
     } else {
       if(side==="right"&&hand.source===source&&pressed&&!hand.buttonDown)questPhone=!questPhone;
       if(hand.source===source && upper && !hand.upperDown){
@@ -4817,6 +4821,38 @@ body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:transla
 #tour-complete-card h2{font:900 28px/1.15 Georgia,serif;color:#fde047;margin:0 0 8px;letter-spacing:0.6px}
 #tour-complete-card p{font:500 14px/1.55 system-ui;color:#d6edf8;margin:0 0 18px}
 #tour-complete-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+#tour-choice-overlay{
+  position:fixed;inset:0;z-index:49;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(circle at center,rgba(6,16,28,0.28),rgba(4,10,20,0.68));
+  backdrop-filter:blur(5px);pointer-events:auto;
+}
+#tour-choice-overlay.show{display:flex}
+#tour-choice-card{
+  width:min(600px,92vw);padding:28px 30px;border-radius:18px;text-align:center;
+  background:linear-gradient(155deg,rgba(8,18,32,0.95),rgba(16,30,52,0.94));
+  border:1.5px solid rgba(114,239,221,0.65);box-shadow:0 24px 64px rgba(0,0,0,0.72);
+}
+#tour-choice-card h2{font:900 26px/1.18 Georgia,serif;color:#ffffff;margin:0 0 8px}
+#tour-choice-card p{font:500 14px/1.5 system-ui;color:#cfeaf7;margin:0 0 20px}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.choice-grid{grid-template-columns:1fr}}
+.choice-btn{
+  padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;
+  border:1.5px solid rgba(114,239,221,0.45);background:rgba(15,34,54,0.92);color:#f8fafc;
+  transition:transform .15s,filter .15s;
+}
+.choice-btn:hover{transform:translateY(-2px);filter:brightness(1.12)}
+.choice-btn.tour{background:linear-gradient(135deg,#0ea5e9,#2563eb);border-color:#bae6fd}
+.choice-btn-title{font:900 16px/1.2 'Segoe UI',system-ui,sans-serif;margin-bottom:5px;display:block}
+.choice-btn-sub{font:500 12px/1.38 system-ui;opacity:0.92;display:block}
+#tour-board-prompt{
+  position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:40;display:none;
+  padding:12px 24px;border-radius:14px;text-align:center;
+  background:linear-gradient(135deg,rgba(8,20,36,0.94),rgba(20,42,68,0.92));
+  border:1.5px solid #38bdf8;color:#f0f9ff;font:800 15px/1.35 system-ui;
+  box-shadow:0 12px 34px rgba(0,0,0,0.6);pointer-events:auto;
+}
+#tour-board-prompt.show{display:block}
 """
     html = html.replace("</style>", TOUR_CSS + "\n</style>", 1)
 
@@ -4842,6 +4878,24 @@ body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:transla
     <div id="tg-prog-wrap"><div id="tg-prog-fill"></div></div>
   </div>
 </div>
+<div id="tour-choice-overlay">
+  <div id="tour-choice-card">
+    <div style="font:800 11px system-ui;color:#fde047;letter-spacing:2px;margin-bottom:6px">ANURAG UNIVERSITY · MAIN GATE</div>
+    <h2>How Would You Like to Experience Campus?</h2>
+    <p>Choose our guided Open-Top Electric Buggy Tour with live college-demo narration, or explore freely on foot with automatic proximity voice guidance at every block.</p>
+    <div class="choice-grid">
+      <button class="choice-btn tour" id="btn-choose-tour">
+        <span class="choice-btn-title">Campus Tour (Electric Buggy)</span>
+        <span class="choice-btn-sub">Walk forward to the gate — our open-top buggy arrives for you and drives slowly past every block!</span>
+      </button>
+      <button class="choice-btn" id="btn-choose-free">
+        <span class="choice-btn-title">Free Walk (Explore Campus)</span>
+        <span class="choice-btn-sub">Walk freely anywhere on campus — voice guide automatically explains each block as you arrive!</span>
+      </button>
+    </div>
+  </div>
+</div>
+<div id="tour-board-prompt">Walk forward into the Main Gate — your Electric Buggy is arriving!</div>
 <div id="tour-complete-overlay">
   <div id="tour-complete-card">
     <h2>Welcome to Anurag University!</h2>
@@ -4863,111 +4917,119 @@ body.campus-tour-only main #walk:hover{filter:brightness(1.12);transform:transla
 window.CAMPUS_TOUR_ONLY = true;
 document.body.classList.add("campus-tour-only");
 
-// 10 Official Verified Road-Only Campus Tour Stops (Facts sourced directly from anurag.edu.in!)
+// 10 Official Verified Road-Only Campus Tour Stops in Exact Requested Order!
+// Order: A-Block -> Volleyball & Basketball -> B-Block & C-Block -> A/B/D Palm Pathway -> D-Block -> APJ Abdul Kalam Hall -> H-Block/Solar Tree & Medicinal Garden -> Cricket Stadium -> E-Block TEDx & I-Block -> F/G-Block East Avenue Finale!
 const AU_TOUR_STOPS = [
   {
-    name: "Main Gate & Grand Entrance Avenue",
-    pills: ["100+ Acre Green Campus", "NAAC 'A' Accredited", "NIRF Top 151–200"],
-    path: [[-3, 67], [-3, 52], [-3, 38], [-3, 27]],
-    lookTarget: [-3, 6, 10],
-    holdSec: 7.5,
-    speech: "Welcome aboard the Anurag University Electric Campus Tour Buggy! Spread across over 100 lush green acres in Venkatapur, Hyderabad, Anurag University is accredited with NAAC A Grade and ranked among India's top 151 to 200 universities by NIRF. Notice our iconic Sports Silhouette Wall and placement achievement boards lining the grand entrance avenue."
-  },
-  {
     name: "A-Block · School of Engineering & Main Quadrangle",
-    pills: ["NIRF Engg 101–150", "AI, ML & Data Science", "30,000+ sq. ft. Library"],
-    path: [[-3, 25], [8, 24]],
-    lookTarget: [-3, 6, 10],
-    holdSec: 8.0,
-    speech: "Straight ahead stands A-Block, the flagship home of the School of Engineering. Offering NBA-accredited B.Tech, M.Tech, and Ph.D. programs in Computer Science, Artificial Intelligence, Machine Learning, Data Science, and Cyber Security, A-Block houses our Centre for Advanced Computational Research, a 30,000 square foot central library, and the lively central amphitheater quadrangle."
-  },
-  {
-    name: "G-Block (Central Admin) & F-Block (Examination Branch)",
-    pills: ["School of Management", "Startup Incubation", "Wide 2-Lane East Avenue"],
-    path: [[18, 24], [24.4, 21], [24.4, 14], [24.4, -3]],
-    lookTarget: [38, 6, 4],
-    holdSec: 7.5,
-    speech: "We are now cruising north along our wide two-lane East Avenue past G-Block, our Central Administrative Block and School of Management established in 2006, alongside F-Block, our modern Examination Branch. Here, future leaders build MBA expertise, corporate leadership skills, and student-driven startups through our dedicated business incubation hub."
-  },
-  {
-    name: "E-Block · ECE, TEDxAnuragU & Space Research + I-Block",
-    pills: ["TEDxAnuragU Atrium", "Satellite Space Research", "10-Story I-Block Tower"],
-    path: [[24.4, -12], [24.4, -19.5]],
-    lookTarget: [42, 6, -19.5],
-    holdSec: 8.0,
-    speech: "To our right is E-Block, home to the Department of Electronics and Communication Engineering, the famous TEDxAnuragU atrium, and our pioneering Satellite Design and Development Center for Space Research. Rising just beyond it is our brand-new 10-story I-Block expansion mega-tower, built for next-generation innovation."
-  },
-  {
-    name: "Cricket Stadium Ground & Athletics Complex",
-    pills: ["Championship Cricket Oval", "Circular Running Track", "Turf & Basketball Courts"],
-    path: [[24.4, -32], [24.4, -44]],
-    lookTarget: [44, 3, -76],
+    pills: ["NAAC 'A' Accredited", "NIRF Engg 101–150", "30,000+ sq. ft. Library"],
+    center: [-3, 18], radius: 18,
+    path: [[-3, 64], [-3, 48], [-3, 32], [-3, 25]],
     holdSec: 7.0,
-    speech: "Opening up ahead is Anurag University's expansive Cricket Stadium Ground, encircled by a full red-clay athletics running track, alongside synthetic turf courts and basketball arenas. Sports, teamwork, and holistic student wellness thrive here every single day."
+    speech: "Welcome aboard our open-top Anurag University campus buggy! Straight ahead stands A-Block, the flagship home of our School of Engineering. Accredited with NAAC A Grade and ranked among India's top engineering institutions by NIRF, A-Block powers B.Tech, M.Tech, and Ph.D. programs in Computer Science, AI and Machine Learning, Data Science, and Cyber Security, alongside our 30,000 square foot central library and open-air amphitheater quadrangle."
   },
   {
-    name: "North Avenue · Medicinal Garden, H-Block & Solar Tree",
-    pills: ["Green Solar Charging Tree", "School of Agriculture", "70+ Campus Fleet Buses"],
-    path: [[14, -41], [-8, -41], [-33, -41], [-56, -41]],
-    lookTarget: [-58, 4, -32],
-    holdSec: 8.5,
-    speech: "Driving along North Campus Avenue, we pass the School of Pharmacy's lush Medicinal Garden and our 6-story H-Block featuring our eco-friendly Green Solar-Panel Charging Tree. Anurag University also pioneers the ICAR-mapped School of Agricultural Sciences with IoT precision farming, polyhouses, and a fleet of over 70 yellow campus buses connecting all of Hyderabad."
+    name: "Volleyball & Championship Basketball Courts Plaza",
+    pills: ["Volleyball Arena", "AU Basketball Plaza", "Vibrant Student Sports"],
+    center: [-36, 46], radius: 18,
+    path: [[-10, 25], [-22, 30], [-36, 36], [-45, 39]],
+    holdSec: 6.5,
+    speech: "Turning west, look around at our energetic outdoor sports zone! Here we have the dedicated campus Volleyball recreation arena right beside the iconic C-Block Basketball Plaza featuring the Anurag University emblem at center court, stepped concrete seating, and colorful architectural pillars where students gather every evening."
+  },
+  {
+    name: "B-Block (School of Pharmacy) & C-Block (Civil Engineering)",
+    pills: ["NIRF Pharmacy #72", "PCI & NBA Approved", "Iconic C-Block Mural"],
+    center: [-52, 22], radius: 16,
+    path: [[-45, 34], [-45, 24], [-37, 20]],
+    holdSec: 7.5,
+    speech: "Just ahead are two landmark academic wings: C-Block, our Civil Engineering Department famous for its inspiring multi-story street-art mural, and B-Block, home to our prestigious School of Pharmacy! Established in 2005 and ranked 72nd in all of India by NIRF, our PCI and NBA approved Pharmacy school leads South India in drug discovery, HPLC analytics, and our Neuroscience R and D Centre."
+  },
+  {
+    name: "Palm-Lined Avenue Between A-Block & B/D-Block",
+    pills: ["Tricolor Palm Avenue", "Double Skybridges", "Green Walkable Campus"],
+    center: [-31.2, 0], radius: 15,
+    path: [[-31.2, 14], [-31.2, 2], [-31.2, -14]],
+    holdSec: 6.0,
+    speech: "We are now gliding slowly down one of the most photographed spots on campus — the serene palm-lined avenue connecting A-Block with B-Block and D-Block! Lined with tricolor-painted royal palms, brick planters, and double-level red skybridges overhead, this corridor connects thousands of students between classes every day."
   },
   {
     name: "D-Block · School of Humanities & Science",
-    pills: ["Solar-Powered Roof", "YOUR FUTURE LOOKS Bright", "Foundational Sciences"],
-    path: [[-72, -36], [-73, -20], [-73, -10]],
-    lookTarget: [-54, 6, -10],
+    pills: ["YOUR FUTURE LOOKS Bright", "Rooftop Solar Power", "Foundational Sciences"],
+    center: [-66, -10], radius: 18,
+    path: [[-31.2, -23], [-48, -23], [-68, -22], [-73, -16], [-73, -8]],
     holdSec: 7.0,
-    speech: "Turning south along West Avenue, we arrive at D-Block, the School of Humanities and Science, crowned with rooftop solar panels and our inspiring street-art mural reminding every student that Your Future Looks Bright. Here, first-year scholars build rock-solid foundations in mathematics, physics, communication, and design thinking."
+    speech: "Rounding the north side onto West Avenue brings us directly in front of D-Block, our School of Humanities and Science! Crowned with clean rooftop solar panels and our iconic mural proclaiming Your Future Looks Bright, D-Block is where first-year scholars master mathematics, physics, communication, and design thinking."
   },
   {
-    name: "B-Block · School of Pharmacy (NIRF #72 in India)",
-    pills: ["NIRF Pharmacy #72", "PCI & NBA Approved", "Neuroscience R&D Centre"],
-    path: [[-73, 0], [-73, 10]],
-    lookTarget: [-52, 5, 10],
+    name: "Dr. APJ Abdul Kalam Hall · Grand Auditorium",
+    pills: ["Grand A/C Auditorium", "Hackathons & Orientations", "Cultural Hub"],
+    center: [-78, 56], radius: 22,
+    path: [[-73, 8], [-73, 28], [-73, 46], [-75, 56]],
+    holdSec: 7.5,
+    speech: "Continuing south along West Avenue, we arrive at the majestic Dr. A P J Abdul Kalam Hall! This state-of-the-art air-conditioned auditorium hosts international conferences, grand B.Tech orientations, national hackathons, star awards, and vibrant cultural festivals throughout the academic year."
+  },
+  {
+    name: "H-Block, Green Solar Charging Tree & Pharmacy Medicinal Garden",
+    pills: ["6-Story H-Block", "Green Solar Tree", "School of Agriculture & 70+ Buses"],
+    center: [-46, -38], radius: 22,
+    path: [[-73, 40], [-73, 12], [-73, -22], [-72, -39], [-56, -40], [-34, -40]],
     holdSec: 8.0,
-    speech: "Next on our left is B-Block, home to our prestigious School of Pharmacy, established in 2005 and ranked 72nd nationally in India by NIRF. Approved by PCI and accredited by NBA, it leads South India in drug discovery with HPLC analytics, pharmacology laboratories, and a dedicated Neuroscience R&D Centre backed by ICMR and national research grants."
+    speech: "Now heading along North Campus Avenue, admire our 6-story H-Block, our eco-friendly Green Solar-Panel Charging Tree, our fleet of over 70 yellow Anurag University buses, and the lush Pharmacy Medicinal Garden! Anurag University also pioneers the ICAR-mapped School of Agricultural Sciences with polyhouses and smart IoT precision farming."
   },
   {
-    name: "C-Block · Civil Engineering & Basketball Plaza",
-    pills: ["Civil Engineering Wing", "Iconic Street-Art Mural", "AU Basketball Plaza"],
-    path: [[-73, 24], [-73, 35], [-52, 35]],
-    lookTarget: [-46, 3, 52],
-    holdSec: 7.0,
-    speech: "Rounding C-Block, our Civil Engineering Department, you can admire our iconic multi-story street-art mural and the vibrant C-Block Basketball Plaza featuring the Anurag University emblem at center court — a favorite gathering spot for students after lectures."
+    name: "Cricket Stadium Ground & Athletics Running Track",
+    pills: ["Championship Cricket Oval", "Red-Clay Running Track", "Turf & Sports Arenas"],
+    center: [28, -48], radius: 22,
+    path: [[-10, -40], [14, -40], [24.4, -42]],
+    holdSec: 6.5,
+    speech: "Opening up to our north-east is Anurag University's expansive Cricket Stadium Ground, encircled by a full circular red-clay athletics running track alongside synthetic turf and outdoor courts — nurturing champions both on the field and in the classroom."
   },
   {
-    name: "Dr. APJ Abdul Kalam Hall & Record Placements Finale",
-    pills: ["₹53 LPA Highest Package", "2,100+ Job Offers", "200+ Global Recruiters"],
-    path: [[-73, 46], [-74, 56], [-42, 46], [-12, 34], [-3, 29]],
-    lookTarget: [-3, 6, 12],
-    holdSec: 9.5,
-    speech: "Passing the grand air-conditioned Dr. A P J Abdul Kalam Auditorium — venue for international conferences, hackathons, and orientations — we return to A-Block Plaza. With a 97 percent placement rate, over 2,100 job offers, a highest package of 53 Lakhs per annum, and over 200 top recruiters including Microsoft, Amazon, Qualcomm, JPMorgan Chase, Goldman Sachs, Cisco, Accenture, and TCS, Anurag University empowers you to be everyone you dream to be. Thank you for joining our tour!"
+    name: "E-Block (ECE, TEDxAnuragU & Space Research) & 10-Story I-Block",
+    pills: ["TEDxAnuragU Atrium", "Satellite Space Research", "10-Story I-Block Tower"],
+    center: [30, -19.5], radius: 16,
+    path: [[24.4, -30], [24.4, -19.5]],
+    holdSec: 7.5,
+    speech: "Cruising south along our wide two-lane East Avenue, look to your left at E-Block — home to Electronics and Communication Engineering, the famous TEDxAnuragU atrium, and our Satellite Design and Development Center for Space Research! Rising behind it is our massive 10-story I-Block expansion tower."
+  },
+  {
+    name: "F-Block, G-Block (Central Admin) & Record Placements Finale",
+    pills: ["₹53 LPA Highest Package", "2,100+ Offers · 97% Placed", "200+ Global Recruiters"],
+    center: [26, 8], radius: 18,
+    path: [[24.4, -5], [24.4, 14], [18, 24], [6, 26], [-3, 27]],
+    holdSec: 9.0,
+    speech: "Passing F-Block, our Examination Branch, and G-Block, our Central Administrative Block and School of Management established in 2006, we return gracefully to A-Block Plaza. With a 97 percent placement rate, over 2,100 job offers, a highest package of 53 Lakhs per annum, and over 200 global recruiters including Microsoft, Amazon, Qualcomm, JPMorgan Chase, Goldman Sachs, Cisco, Accenture, and TCS, Anurag University empowers you to be everyone you dream to be. Thank you for touring with us!"
   }
 ];
 
 const CAMPUS_TOUR = {
-  state: "idle", // "idle" | "aerial" | "riding" | "done"
+  state: "idle", // "idle" | "aerial" | "choice" | "waiting_walk" | "buggy_arriving" | "buggy_ready" | "riding" | "freewalk" | "done"
   aerialTime: 0,
-  aerialDur: 10.5,
+  aerialDur: 9.5,
   paused: false,
   voiceOn: true,
+  voiceUnlocked: false,
   stopIdx: 0,
   wpIdx: 0,
   holdTimer: 0,
-  speed: 8.2, // smooth comfortable buggy cruise speed (m/s)
+  speed: 3.4, // Slow, relaxed, scenic golf-cart pace (~12 km/h)!
   buggy: null,
   wheels: [],
   dashCtx: null,
   dashTex: null,
-  buggyPos: new A(-3, 0, 67),
-  buggyYaw: 0,
+  vrChoicePanel: null,
+  vrBoardPrompt: null,
+  buggyPos: new A(-3, 0, 42),
+  buggyYaw: Math.PI,
   freeYawOffset: 0,
-  freePitch: 0.02
+  freePitch: 0.02,
+  lastFreeZoneIdx: -1,
+  freeZoneCooldown: 0,
+  speechQueue: [],
+  speechTimer: 0
 };
 
-// Build Detailed 3D Anurag University Electric Campus Golf Cart / Buggy!
+// Build Detailed 3D OPEN-TOP Electric Anurag University Campus Buggy (NO roof / NO top pillars for 100% panoramic view!)
 function buildTourBuggy() {
   if (CAMPUS_TOUR.buggy) return CAMPUS_TOUR.buggy;
   const g = new fi();
@@ -4977,64 +5039,76 @@ function buildTourBuggy() {
   const chromeMat = new Jt({ color: 0xe2e8f0, roughness: 0.18, metalness: 0.88 });
   const seatMat = new Jt({ color: 0xe7dcc6, roughness: 0.78 });
   const darkMat = new Jt({ color: 0x1e293b, roughness: 0.65, metalness: 0.2 });
-  const glassMat = new Jt({ color: 0xbae6fd, transparent: true, opacity: 0.24, roughness: 0.08, metalness: 0.45 });
+  const glassMat = new Jt({ color: 0xbae6fd, transparent: true, opacity: 0.22, roughness: 0.08, metalness: 0.45 });
 
-  // Lower chassis & floorboards
-  const floor = new et(new Ni(1.62, 0.16, 3.15), darkMat); floor.position.set(0, 0.34, 0); floor.castShadow = true; g.add(floor);
-  // Front hood (sleek pearl white + royal blue nose + crimson AU stripe!)
-  const hood = new et(new Ni(1.56, 0.56, 0.95), whiteMat); hood.position.set(0, 0.68, -1.12); hood.castShadow = true; g.add(hood);
-  const nose = new et(new Ni(1.58, 0.26, 0.14), blueMat); nose.position.set(0, 0.54, -1.58); g.add(nose);
-  const stripe = new et(new Ni(1.60, 0.07, 0.98), redMat); stripe.position.set(0, 0.72, -1.12); g.add(stripe);
+  // Sleek low open-top convertible chassis & pearl-white/royal-blue AU body
+  const floor = new et(new Ni(1.62, 0.16, 3.10), darkMat); floor.position.set(0, 0.34, 0); floor.castShadow = true; g.add(floor);
+  const hood = new et(new Ni(1.56, 0.52, 0.92), whiteMat); hood.position.set(0, 0.66, -1.10); hood.castShadow = true; g.add(hood);
+  const nose = new et(new Ni(1.58, 0.24, 0.14), blueMat); nose.position.set(0, 0.52, -1.56); g.add(nose);
+  const stripe = new et(new Ni(1.60, 0.07, 0.96), redMat); stripe.position.set(0, 0.70, -1.10); g.add(stripe);
+  // Side safety rails (low sleek chrome armrests — open-top!)
+  for (let sx of [-0.77, 0.77]) {
+    let rail = new et(new pn(0.022, 0.022, 1.85, 8), chromeMat);
+    rail.rotation.x = Math.PI / 2; rail.position.set(sx, 0.88, 0.18); g.add(rail);
+  }
   // Rear body deck
-  const rearBody = new et(new Ni(1.58, 0.58, 1.15), whiteMat); rearBody.position.set(0, 0.68, 1.0); rearBody.castShadow = true; g.add(rearBody);
-  const rearStripe = new et(new Ni(1.60, 0.07, 1.18), blueMat); rearStripe.position.set(0, 0.72, 1.0); g.add(rearStripe);
+  const rearBody = new et(new Ni(1.58, 0.54, 1.10), whiteMat); rearBody.position.set(0, 0.66, 0.98); rearBody.castShadow = true; g.add(rearBody);
+  const rearStripe = new et(new Ni(1.60, 0.07, 1.14), blueMat); rearStripe.position.set(0, 0.70, 0.98); g.add(rearStripe);
 
   // LED Headlights & Red Taillights
   const headMat = new Yi({ color: 0xfffbeb });
   const tailMat = new Yi({ color: 0xef4444 });
   for (let sx of [-0.54, 0.54]) {
-    let hl = new et(new pn(0.08, 0.08, 0.06, 12), headMat); hl.rotation.x = Math.PI / 2; hl.position.set(sx, 0.76, -1.60); g.add(hl);
-    let tl = new et(new Ni(0.22, 0.09, 0.05), tailMat); tl.position.set(sx, 0.76, 1.59); g.add(tl);
+    let hl = new et(new pn(0.08, 0.08, 0.06, 12), headMat); hl.rotation.x = Math.PI / 2; hl.position.set(sx, 0.74, -1.58); g.add(hl);
+    let tl = new et(new Ni(0.22, 0.09, 0.05), tailMat); tl.position.set(sx, 0.74, 1.54); g.add(tl);
   }
 
   // Comfortable Cream Padded Front & Rear Bench Seats
-  const fSeat = new et(new Ni(1.42, 0.16, 0.56), seatMat); fSeat.position.set(0, 0.76, -0.15); g.add(fSeat);
-  const fBack = new et(new Ni(1.42, 0.52, 0.14), seatMat); fBack.position.set(0, 1.08, 0.12); g.add(fBack);
-  const rSeat = new et(new Ni(1.42, 0.16, 0.56), seatMat); rSeat.position.set(0, 0.76, 0.85); g.add(rSeat);
-  const rBack = new et(new Ni(1.42, 0.52, 0.14), seatMat); rBack.position.set(0, 1.08, 1.12); g.add(rBack);
+  const fSeat = new et(new Ni(1.42, 0.16, 0.56), seatMat); fSeat.position.set(0, 0.74, -0.15); g.add(fSeat);
+  const fBack = new et(new Ni(1.42, 0.48, 0.14), seatMat); fBack.position.set(0, 1.04, 0.12); g.add(fBack);
+  const rSeat = new et(new Ni(1.42, 0.16, 0.56), seatMat); rSeat.position.set(0, 0.74, 0.82); g.add(rSeat);
+  const rBack = new et(new Ni(1.42, 0.48, 0.14), seatMat); rBack.position.set(0, 1.04, 1.08); g.add(rBack);
 
-  // Dashboard Console + Steering Column & Wheel (on driver's left)
-  const dash = new et(new Ni(1.48, 0.24, 0.38), darkMat); dash.position.set(0, 1.02, -0.76); g.add(dash);
-  const steerCol = new et(new pn(0.03, 0.03, 0.44, 10), chromeMat);
-  steerCol.position.set(-0.38, 1.12, -0.62); steerCol.rotation.x = 0.52; g.add(steerCol);
-  const steerWheel = new et(new gn(0.16, 0.022, 8, 18), darkMat);
-  steerWheel.position.set(-0.38, 1.24, -0.49); steerWheel.rotation.x = 0.52; g.add(steerWheel);
+  // Compact Low Dashboard + Steering Wheel + Low Half-Height Sport Wind-Deflector (ZERO top obstruction!)
+  const dash = new et(new Ni(1.48, 0.20, 0.36), darkMat); dash.position.set(0, 0.98, -0.76); g.add(dash);
+  const steerCol = new et(new pn(0.028, 0.028, 0.40, 10), chromeMat);
+  steerCol.position.set(-0.38, 1.08, -0.62); steerCol.rotation.x = 0.52; g.add(steerCol);
+  const steerWheel = new et(new gn(0.15, 0.02, 8, 18), darkMat);
+  steerWheel.position.set(-0.38, 1.19, -0.49); steerWheel.rotation.x = 0.52; g.add(steerWheel);
+  const wind = new et(new Ni(1.40, 0.28, 0.025), glassMat);
+  wind.position.set(0, 1.18, -0.88); wind.rotation.x = -0.45; g.add(wind);
 
   // Live 3D Glowing Tour Guide Dashboard Screen (visible in BOTH PC & Meta Quest 3 VR!)
   const dc = document.createElement("canvas"); dc.width = 512; dc.height = 192;
   const dCtx = dc.getContext("2d");
   const dTex = new dn(dc); dTex.colorSpace = vt;
-  const dScreen = new et(new _i(0.54, 0.20), new Yi({ map: dTex }));
-  dScreen.position.set(0.24, 1.16, -0.68);
-  dScreen.rotation.x = -0.32;
+  const dScreen = new et(new _i(0.50, 0.18), new Yi({ map: dTex }));
+  dScreen.position.set(0.24, 1.11, -0.68);
+  dScreen.rotation.x = -0.38;
   g.add(dScreen);
   CAMPUS_TOUR.dashCtx = dCtx;
   CAMPUS_TOUR.dashTex = dTex;
 
-  // 4 Brushed Chrome Canopy Pillars + White Sun Canopy Roof + Clear Tinted Windshield
-  for (let [px, pz] of [[-0.72, -0.82], [0.72, -0.82], [-0.72, 1.28], [0.72, 1.28]]) {
-    let pil = new et(new pn(0.028, 0.028, 1.26, 8), chromeMat);
-    pil.position.set(px, 1.54, pz); g.add(pil);
-  }
-  const roof = new et(new Ni(1.66, 0.09, 2.38), whiteMat); roof.position.set(0, 2.18, 0.22); roof.castShadow = true; g.add(roof);
-  const roofTrim = new et(new Ni(1.68, 0.05, 2.40), blueMat); roofTrim.position.set(0, 2.13, 0.22); g.add(roofTrim);
-  const wind = new et(new Ni(1.42, 0.78, 0.03), glassMat);
-  wind.position.set(0, 1.56, -0.84); wind.rotation.x = -0.14; g.add(wind);
+  // 3D Floating "BOARD BUGGY [E / A]" Sign above buggy when waiting for player to board!
+  const bc = document.createElement("canvas"); bc.width = 512; bc.height = 128;
+  const bg = bc.getContext("2d");
+  bg.fillStyle = "rgba(8,22,40,0.92)"; bg.fillRect(0, 0, 512, 128);
+  bg.strokeStyle = "#38bdf8"; bg.lineWidth = 6; bg.strokeRect(4, 4, 504, 120);
+  bg.fillStyle = "#fde047"; bg.font = "900 32px sans-serif"; bg.textAlign = "center";
+  bg.fillText("ANURAG CAMPUS BUGGY", 256, 52);
+  bg.fillStyle = "#ffffff"; bg.font = "700 24px sans-serif";
+  bg.fillText("Walk Up or Press [E] / [A] to Board", 256, 98);
+  const bTex = new dn(bc); bTex.colorSpace = vt;
+  const bSign = new et(new _i(1.75, 0.44), new Yi({ map: bTex, transparent: true, side: Gt }));
+  bSign.position.set(0, 1.95, 0);
+  bSign.visible = false;
+  g.add(bSign);
+  CAMPUS_TOUR.vrBoardPrompt = bSign;
 
   // 4 Rotating Rubber Tires with Silver Alloy Rims!
   const tireMat = new Jt({ color: 0x15181c, roughness: 0.92 });
   CAMPUS_TOUR.wheels = [];
-  for (let [wx, wz] of [[-0.82, -1.02], [0.82, -1.02], [-0.82, 1.02], [0.82, 1.02]]) {
+  for (let [wx, wz] of [[-0.82, -1.00], [0.82, -1.00], [-0.82, 1.00], [0.82, 1.00]]) {
     const wGrp = new fi();
     wGrp.position.set(wx, 0.29, wz);
     const tire = new et(new pn(0.29, 0.29, 0.20, 16), tireMat); tire.rotation.z = Math.PI / 2; wGrp.add(tire);
@@ -5044,9 +5118,47 @@ function buildTourBuggy() {
   }
 
   g.position.copy(CAMPUS_TOUR.buggyPos);
+  g.visible = false;
   Ht.add(g);
   CAMPUS_TOUR.buggy = g;
   return g;
+}
+
+// 3D Floating VR Choice Panel (shown in front of player at Main Gate in Meta Quest 3 VR!)
+function getVRChoicePanel() {
+  if (CAMPUS_TOUR.vrChoicePanel) return CAMPUS_TOUR.vrChoicePanel;
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 420;
+  const g = c.getContext("2d");
+  g.fillStyle = "rgba(8,18,34,0.95)"; g.fillRect(0, 0, 1024, 420);
+  g.strokeStyle = "#72efdd"; g.lineWidth = 8; g.strokeRect(6, 6, 1012, 408);
+  g.textAlign = "center";
+  g.fillStyle = "#fde047"; g.font = "800 28px sans-serif";
+  g.fillText("WELCOME TO ANURAG UNIVERSITY · MAIN GATE", 512, 62);
+  g.fillStyle = "#ffffff"; g.font = "900 44px Georgia,serif";
+  g.fillText("CHOOSE YOUR EXPERIENCE", 512, 126);
+  // Left Option Card: [A] Campus Tour
+  g.fillStyle = "#0284c7"; g.fillRect(48, 166, 444, 210);
+  g.strokeStyle = "#bae6fd"; g.lineWidth = 5; g.strokeRect(48, 166, 444, 210);
+  g.fillStyle = "#ffffff"; g.font = "900 34px sans-serif"; g.fillText("[A] CAMPUS TOUR", 270, 232);
+  g.font = "600 22px sans-serif"; g.fillStyle = "#e0f2fe";
+  g.fillText("Walk forward to the gate", 270, 282);
+  g.fillText("Open-Top Buggy + Voice Guide", 270, 320);
+  // Right Option Card: [B] Free Walk
+  g.fillStyle = "#1e293b"; g.fillRect(532, 166, 444, 210);
+  g.strokeStyle = "#72efdd"; g.lineWidth = 5; g.strokeRect(532, 166, 444, 210);
+  g.fillStyle = "#ffffff"; g.font = "900 34px sans-serif"; g.fillText("[B] FREE WALK", 754, 232);
+  g.font = "600 22px sans-serif"; g.fillStyle = "#cbd5e1";
+  g.fillText("Walk freely anywhere on campus", 754, 282);
+  g.fillText("Auto Voice Guide at Every Block!", 754, 320);
+
+  const tex = new dn(c); tex.colorSpace = vt;
+  const mesh = new et(new _i(2.6, 1.06), new Yi({ map: tex, transparent: true, side: Gt, depthTest: false }));
+  mesh.position.set(-3, 2.05, 78.6);
+  mesh.renderOrder = 32;
+  mesh.visible = false;
+  Ht.add(mesh);
+  CAMPUS_TOUR.vrChoicePanel = mesh;
+  return mesh;
 }
 
 function updateBuggyDashboard(stepText, title, pills) {
@@ -5062,25 +5174,56 @@ function updateBuggyDashboard(stepText, title, pills) {
   g.fillStyle = "#72efdd"; g.font = "700 18px sans-serif";
   g.fillText((pills || []).join("  ·  ").slice(0, 48), 18, 128);
   g.fillStyle = "#94a3b8"; g.font = "600 16px Consolas,monospace";
-  g.fillText("ANURAG UNIVERSITY ELECTRIC CAMPUS BUGGY · 100% GREEN", 18, 168);
+  g.fillText("ANURAG UNIVERSITY OPEN-TOP CAMPUS BUGGY", 18, 168);
   CAMPUS_TOUR.dashTex.needsUpdate = true;
 }
 
-// Natural AI Tour Guide Voice-Over (Web Speech API)
+// Reliable Expressive College-Demo Voice-Over (Synchronously unlocked + Indian/Natural English accent + Sentence Chunker!)
+let _cachedVoices = [];
+function refreshVoices() {
+  try { _cachedVoices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || []; } catch (e) {}
+}
+if (window.speechSynthesis) {
+  refreshVoices();
+  window.speechSynthesis.onvoiceschanged = refreshVoices;
+}
+function pickBestCollegeGuideVoice() {
+  if (!_cachedVoices.length) refreshVoices();
+  // Prefer expressive Indian English (en-IN) -> British/US Natural/Google/Microsoft voices for an authentic college demo!
+  return (
+    _cachedVoices.find(v => /en[-_]IN/i.test(v.lang) && /natural|neural|google|microsoft|neerja|prabha|heera|ravi/i.test(v.name)) ||
+    _cachedVoices.find(v => /en[-_]IN/i.test(v.lang)) ||
+    _cachedVoices.find(v => /en[-_](GB|US)/i.test(v.lang) && /natural|neural|google|aria|jenny|guy|samantha|zira/i.test(v.name)) ||
+    _cachedVoices.find(v => /en/i.test(v.lang)) ||
+    null
+  );
+}
+function unlockTourVoice() {
+  try {
+    if (!window.speechSynthesis) return;
+    CAMPUS_TOUR.voiceUnlocked = true;
+    refreshVoices();
+    const silent = new SpeechSynthesisUtterance(" ");
+    silent.volume = 0.01;
+    window.speechSynthesis.speak(silent);
+  } catch (e) {}
+}
 function speakTourGuide(text) {
   try {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     if (!CAMPUS_TOUR.voiceOn || !text) return;
-    const u = new SpeechSynthesisUtterance(text);
-    const voices = window.speechSynthesis.getVoices() || [];
-    const pref = voices.find(v => /en[-_](IN|US|GB)/i.test(v.lang) && /natural|google|microsoft|zira|heera|ravi|samantha/i.test(v.name))
-      || voices.find(v => /en/i.test(v.lang));
-    if (pref) u.voice = pref;
-    u.rate = 0.98;
-    u.pitch = 1.02;
-    u.volume = 1.0;
-    window.speechSynthesis.speak(u);
+    const voice = pickBestCollegeGuideVoice();
+    // Split into natural sentence chunks so Chrome/Edge/Quest Browser NEVER silently stall on long speech!
+    const chunks = text.match(/[^.!?]+[.!?]+/g) || [text];
+    chunks.forEach((chunk) => {
+      const u = new SpeechSynthesisUtterance(chunk.trim());
+      if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = "en-IN"; }
+      u.rate = 0.94;
+      u.pitch = 1.04;
+      u.volume = 1.0;
+      window.speechSynthesis.speak(u);
+    });
   } catch (e) {}
 }
 
@@ -5104,69 +5247,128 @@ function announceCurrentStop() {
   speakTourGuide(stop.speech);
 }
 
+// Step 1: Launch Smooth, Collision-Free Aerial Flyover -> Land in Front of Main Gate!
 function startGuidedCampusTour() {
+  unlockTourVoice();
   if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.remove("show");
+  if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.remove("show");
+  if (document.getElementById("tour-board-prompt")) document.getElementById("tour-board-prompt").classList.remove("show");
+  if (document.getElementById("tour-guide-bar")) document.getElementById("tour-guide-bar").classList.remove("visible");
+  if (CAMPUS_TOUR.vrChoicePanel) CAMPUS_TOUR.vrChoicePanel.visible = false;
   const tm = document.getElementById("time-mode");
   if (tm && tm.value !== "noon") { tm.value = "noon"; tm.dispatchEvent(new Event("change")); }
   buildTourBuggy();
+  if (CAMPUS_TOUR.buggy) CAMPUS_TOUR.buggy.visible = false;
   CAMPUS_TOUR.state = "aerial";
   CAMPUS_TOUR.aerialTime = 0;
   CAMPUS_TOUR.paused = false;
-  CAMPUS_TOUR.stopIdx = 0;
-  CAMPUS_TOUR.wpIdx = 0;
-  CAMPUS_TOUR.holdTimer = 0;
-  CAMPUS_TOUR.buggyPos.set(-3, 0, 67);
-  CAMPUS_TOUR.buggyYaw = 0;
-  CAMPUS_TOUR.freeYawOffset = 0;
-  CAMPUS_TOUR.freePitch = 0.02;
-  if (CAMPUS_TOUR.buggy) {
-    CAMPUS_TOUR.buggy.visible = true;
-    CAMPUS_TOUR.buggy.position.copy(CAMPUS_TOUR.buggyPos);
-    CAMPUS_TOUR.buggy.rotation.set(0, 0, 0);
-  }
   if (document.getElementById("btn-tg-pause")) document.getElementById("btn-tg-pause").textContent = "Pause";
   document.body.classList.add("intro-active");
   if (document.getElementById("intro-overlay")) {
     document.getElementById("intro-overlay").classList.add("playing");
-    if (document.getElementById("intro-kicker")) document.getElementById("intro-kicker").textContent = "ANURAG UNIVERSITY · OFFICIAL GUIDED CAMPUS TOUR";
+    if (document.getElementById("intro-kicker")) document.getElementById("intro-kicker").textContent = "ANURAG UNIVERSITY · VENKATAPUR, HYDERABAD";
     if (document.getElementById("intro-headline")) document.getElementById("intro-headline").textContent = "WELCOME TO ANURAG UNIVERSITY";
-    if (document.getElementById("intro-sub")) document.getElementById("intro-sub").textContent = "NAAC 'A' Accredited · NIRF Top Ranked · 100+ Acre Urban-Tech Campus, Venkatapur, Hyderabad";
+    if (document.getElementById("intro-sub")) document.getElementById("intro-sub").textContent = "NAAC 'A' Accredited · NIRF Ranked · 100+ Acre Urban-Tech Campus";
   }
-  const openMsg = "Welcome to Anurag University, Hyderabad — accredited with NAAC A Grade and ranked among India's premier universities by NIRF. Enjoy this aerial overview of our 100-acre green campus before we board our electric tour buggy at the Main Gate!";
-  if (document.getElementById("tour-guide-bar")) document.getElementById("tour-guide-bar").classList.remove("visible");
-  updateBuggyDashboard("AERIAL OVERVIEW", "Anurag University · Venkatapur", ["NAAC 'A' Grade", "NIRF Top Ranked"]);
+  const openMsg = "Namaste and welcome to Anurag University, Hyderabad! Spread across over 100 lush green acres in Venkatapur, we are accredited with NAAC A Grade and ranked among India's top universities by NIRF. Let's land right in front of our Main Gate, where you can choose our Electric Buggy Campus Tour or a Free Walk!";
   speakTourGuide(openMsg);
 }
 
+// Step 2: Land Cleanly Right in Front of the Main Gate (x = -3, z = 82) & Show Two Options: Campus Tour | Free Walk!
+function landAtMainGateChoice() {
+  CAMPUS_TOUR.state = "choice";
+  document.body.classList.remove("intro-active");
+  if (document.getElementById("intro-overlay")) document.getElementById("intro-overlay").classList.remove("playing");
+  // Stand squarely on the open Venkatapur approach road in front of the Main Gate facing A-Block (ZERO wall clipping!)
+  xt.position.set(-3, 0, 82);
+  xt.rotation.set(0, 0, 0);
+  if (!Ye.xr.isPresenting) {
+    if (typeof vs !== "undefined") vs = 0;
+    if (typeof gs !== "undefined") gs = 0.04;
+    camPivot.position.set(0, 1.66, 0);
+    camPivot.rotation.set(0.04, 0, 0);
+    Mi.position.set(0, 0, 0);
+    Mi.rotation.set(0, 0, 0);
+    if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
+    if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.add("show");
+  } else {
+    const vrPanel = getVRChoicePanel();
+    vrPanel.visible = true;
+  }
+  speakTourGuide("We have arrived at the Anurag University Main Gate! Choose Campus Tour to walk forward and board our open-top electric buggy, or choose Free Walk to explore the campus at your own pace with automatic voice guidance.");
+}
+
+// Step 3A: User Chose "Campus Tour" -> Walk Forward Toward Main Gate -> Buggy Drives Up & Arrives in Front of You!
+function beginWalkToBuggy() {
+  unlockTourVoice();
+  CAMPUS_TOUR.state = "waiting_walk";
+  if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.remove("show");
+  if (CAMPUS_TOUR.vrChoicePanel) CAMPUS_TOUR.vrChoicePanel.visible = false;
+  buildTourBuggy();
+  // Position buggy up the entrance road at z = 40 facing toward the player (ready to drive up!)
+  CAMPUS_TOUR.buggyPos.set(-3, 0, 42);
+  CAMPUS_TOUR.buggyYaw = Math.PI;
+  CAMPUS_TOUR.buggy.position.copy(CAMPUS_TOUR.buggyPos);
+  CAMPUS_TOUR.buggy.rotation.set(0, Math.PI, 0);
+  CAMPUS_TOUR.buggy.visible = true;
+  if (CAMPUS_TOUR.vrBoardPrompt) CAMPUS_TOUR.vrBoardPrompt.visible = false;
+  if (typeof fpHands !== "undefined" && !Ye.xr.isPresenting) fpHands.forEach(a => (a.root.visible = true));
+  const bp = document.getElementById("tour-board-prompt");
+  if (bp) {
+    bp.textContent = "Walk forward into the Main Gate (W / Left Stick) — your Electric Campus Buggy will pull up right in front of you!";
+    bp.classList.add("show");
+  }
+  speakTourGuide("Please walk forward through the Main Gate. Our open-top electric campus buggy is on its way to pick you up!");
+}
+
+// Step 3B: Board the Arrived Open-Top Buggy and Start the Slow Guided Road Tour!
 function boardTourBuggyNow() {
+  unlockTourVoice();
   CAMPUS_TOUR.state = "riding";
   document.body.classList.remove("intro-active");
   if (document.getElementById("intro-overlay")) document.getElementById("intro-overlay").classList.remove("playing");
+  if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.remove("show");
+  if (document.getElementById("tour-board-prompt")) document.getElementById("tour-board-prompt").classList.remove("show");
+  if (CAMPUS_TOUR.vrChoicePanel) CAMPUS_TOUR.vrChoicePanel.visible = false;
+  if (CAMPUS_TOUR.vrBoardPrompt) CAMPUS_TOUR.vrBoardPrompt.visible = false;
   if (typeof fpHands !== "undefined") fpHands.forEach(a => (a.root.visible = false));
+  buildTourBuggy();
+  CAMPUS_TOUR.buggy.visible = true;
   CAMPUS_TOUR.stopIdx = 0;
   CAMPUS_TOUR.wpIdx = 0;
   CAMPUS_TOUR.holdTimer = 0;
-  CAMPUS_TOUR.buggyPos.set(-3, 0, 67);
+  CAMPUS_TOUR.buggyPos.set(-3, 0, 64);
   CAMPUS_TOUR.buggyYaw = 0;
+  CAMPUS_TOUR.freeYawOffset = 0;
+  CAMPUS_TOUR.freePitch = 0.02;
   announceCurrentStop();
 }
 
-function exitGuidedTourToExplore() {
-  CAMPUS_TOUR.state = "idle";
+// Step 3C: User Chose "Free Walk" -> Explore Freely with Automatic Proximity Voice-Over at Every Block!
+function enterFreeWalkMode() {
+  unlockTourVoice();
+  CAMPUS_TOUR.state = "freewalk";
+  CAMPUS_TOUR.lastFreeZoneIdx = -1;
+  CAMPUS_TOUR.freeZoneCooldown = 0;
   document.body.classList.remove("intro-active");
   if (document.getElementById("intro-overlay")) document.getElementById("intro-overlay").classList.remove("playing");
-  if (document.getElementById("tour-guide-bar")) document.getElementById("tour-guide-bar").classList.remove("visible");
+  if (document.getElementById("tour-choice-overlay")) document.getElementById("tour-choice-overlay").classList.remove("show");
+  if (document.getElementById("tour-board-prompt")) document.getElementById("tour-board-prompt").classList.remove("show");
   if (document.getElementById("tour-complete-overlay")) document.getElementById("tour-complete-overlay").classList.remove("show");
-  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  if (CAMPUS_TOUR.vrChoicePanel) CAMPUS_TOUR.vrChoicePanel.visible = false;
   if (typeof fpHands !== "undefined" && !Ye.xr.isPresenting) fpHands.forEach(a => (a.root.visible = true));
+  updateTourUI("FREE WALK · AUTO VOICE GUIDE", "Explore Anurag University Freely", ["Walk Near Any Block", "Auto Voice Explanations", "Press [X] / Replay for Buggy"], "You are in Free Walk mode! Walk toward A-Block, the Basketball Court, B-Block Pharmacy, D-Block, Kalam Hall, or any building — your voice guide will automatically explain each location as you arrive.", 100);
+  speakTourGuide("You are now in Free Walk mode! Walk up to any block on campus — like A-Block, the Basketball Court, B-Block Pharmacy, D-Block, or Abdul Kalam Hall — and I will automatically tell you all about it.");
 }
 
-// Wire Tour Guide Buttons & Opening "Start Campus Tour" Button
+// Wire Buttons & Keyboard Shortcuts ([E] to Board Buggy, [Space] to Land during Aerial)
 if (document.getElementById("btn-skip-intro")) {
   const skipBtn = document.getElementById("btn-skip-intro");
-  skipBtn.textContent = "Board Buggy Now ›";
-  skipBtn.addEventListener("click", () => { if (CAMPUS_TOUR.state === "aerial") boardTourBuggyNow(); });
+  skipBtn.textContent = "Land at Main Gate ›";
+  skipBtn.addEventListener("click", () => { unlockTourVoice(); if (CAMPUS_TOUR.state === "aerial") landAtMainGateChoice(); });
 }
+if (document.getElementById("btn-choose-tour")) document.getElementById("btn-choose-tour").addEventListener("click", () => beginWalkToBuggy());
+if (document.getElementById("btn-choose-free")) document.getElementById("btn-choose-free").addEventListener("click", () => enterFreeWalkMode());
 if (document.getElementById("btn-tg-pause")) {
   document.getElementById("btn-tg-pause").onclick = () => {
     CAMPUS_TOUR.paused = !CAMPUS_TOUR.paused;
@@ -5176,6 +5378,7 @@ if (document.getElementById("btn-tg-pause")) {
 }
 if (document.getElementById("btn-tg-voice")) {
   document.getElementById("btn-tg-voice").onclick = () => {
+    unlockTourVoice();
     CAMPUS_TOUR.voiceOn = !CAMPUS_TOUR.voiceOn;
     document.getElementById("btn-tg-voice").textContent = CAMPUS_TOUR.voiceOn ? "Voice: ON" : "Voice: OFF";
     if (!CAMPUS_TOUR.voiceOn) { try { window.speechSynthesis.cancel(); } catch (e) {} }
@@ -5184,7 +5387,9 @@ if (document.getElementById("btn-tg-voice")) {
 }
 if (document.getElementById("btn-tg-next")) {
   document.getElementById("btn-tg-next").onclick = () => {
-    if (CAMPUS_TOUR.state === "aerial") { boardTourBuggyNow(); return; }
+    unlockTourVoice();
+    if (CAMPUS_TOUR.state === "aerial") { landAtMainGateChoice(); return; }
+    if (CAMPUS_TOUR.state === "waiting_walk" || CAMPUS_TOUR.state === "buggy_arriving" || CAMPUS_TOUR.state === "buggy_ready") { boardTourBuggyNow(); return; }
     if (CAMPUS_TOUR.state !== "riding") return;
     if (CAMPUS_TOUR.stopIdx < AU_TOUR_STOPS.length - 1) {
       CAMPUS_TOUR.stopIdx++;
@@ -5198,19 +5403,35 @@ if (document.getElementById("btn-tg-next")) {
   };
 }
 if (document.getElementById("btn-tg-replay")) document.getElementById("btn-tg-replay").onclick = () => startGuidedCampusTour();
-if (document.getElementById("btn-tg-exit")) document.getElementById("btn-tg-exit").onclick = () => exitGuidedTourToExplore();
+if (document.getElementById("btn-tg-exit")) document.getElementById("btn-tg-exit").onclick = () => enterFreeWalkMode();
 if (document.getElementById("btn-tc-replay")) document.getElementById("btn-tc-replay").onclick = () => startGuidedCampusTour();
-if (document.getElementById("btn-tc-explore")) document.getElementById("btn-tc-explore").onclick = () => exitGuidedTourToExplore();
+if (document.getElementById("btn-tc-explore")) document.getElementById("btn-tc-explore").onclick = () => enterFreeWalkMode();
 
-// Hook "Start Campus Tour" (#walk) button cleanly to launch Aerial Flyover -> Buggy Tour!
+window.addEventListener("keydown", (e) => {
+  if (e.code === "KeyE" && (CAMPUS_TOUR.state === "waiting_walk" || CAMPUS_TOUR.state === "buggy_arriving" || CAMPUS_TOUR.state === "buggy_ready")) {
+    boardTourBuggyNow();
+  }
+  if (e.code === "Space" && CAMPUS_TOUR.state === "aerial") {
+    landAtMainGateChoice();
+  }
+});
+
+// Hook "Start Campus Tour" (#walk) synchronously so browser unlocks SpeechSynthesis immediately!
 const _walkBtn = document.getElementById("walk");
 if (_walkBtn) {
   _walkBtn.addEventListener("click", () => {
-    setTimeout(() => startGuidedCampusTour(), 60);
+    unlockTourVoice();
+    startGuidedCampusTour();
   });
 }
+// Auto-start Aerial Overview when pressing "Enter Meta Quest" (#vr) -> lands at Main Gate -> shows 3D VR Choice Panel!
+const _vrBtn = document.getElementById("vr");
+if (_vrBtn) _vrBtn.addEventListener("click", () => unlockTourVoice());
+Ye.xr.addEventListener("sessionstart", () => {
+  setTimeout(() => startGuidedCampusTour(), 250);
+});
 
-// Mouse drag 360° free-look while riding inside the buggy on PC!
+// Mouse drag 360° free-look while riding inside the open-top buggy on PC!
 let _tourDragging = false, _tourLastX = 0, _tourLastY = 0;
 window.addEventListener("mousedown", (e) => { if (CAMPUS_TOUR.state === "riding" && e.target.tagName === "CANVAS") { _tourDragging = true; _tourLastX = e.clientX; _tourLastY = e.clientY; } });
 window.addEventListener("mouseup", () => { _tourDragging = false; });
@@ -5221,15 +5442,65 @@ window.addEventListener("mousemove", (e) => {
     const dy = document.pointerLockElement ? e.movementY : (e.clientY - _tourLastY);
     _tourLastX = e.clientX; _tourLastY = e.clientY;
     CAMPUS_TOUR.freeYawOffset -= dx * 0.0032;
-    CAMPUS_TOUR.freePitch = Math.max(-0.45, Math.min(0.55, CAMPUS_TOUR.freePitch - dy * 0.0025));
+    CAMPUS_TOUR.freePitch = Math.max(-0.45, Math.min(0.65, CAMPUS_TOUR.freePitch - dy * 0.0025));
   }
 });
 
-// Per-Frame Campus Tour Ticker (called inside Three.js Ye.setAnimationLoop -> works at 72-90 FPS on BOTH PC & Meta Quest 3 VR!)
+// Meta Quest 3 Controller Handler for Campus Tour & Free Walk (Called from syncControllerHands!)
+window._handleVRTourController = function(side, trigDown, prevTrig, pressed, prevPressed, upper, prevUpper) {
+  if (side === "right") {
+    // Right A button: Context-aware primary action!
+    if (pressed && !prevPressed) {
+      unlockTourVoice();
+      if (CAMPUS_TOUR.state === "aerial") landAtMainGateChoice();
+      else if (CAMPUS_TOUR.state === "choice") beginWalkToBuggy();
+      else if (CAMPUS_TOUR.state === "waiting_walk" || CAMPUS_TOUR.state === "buggy_arriving" || CAMPUS_TOUR.state === "buggy_ready") boardTourBuggyNow();
+      else if (CAMPUS_TOUR.state === "riding") {
+        if (CAMPUS_TOUR.stopIdx < AU_TOUR_STOPS.length - 1) { CAMPUS_TOUR.stopIdx++; CAMPUS_TOUR.wpIdx = 0; CAMPUS_TOUR.holdTimer = 0; announceCurrentStop(); }
+        else { CAMPUS_TOUR.state = "done"; enterFreeWalkMode(); }
+      }
+    }
+    // Right B button: Choose Free Walk / Pause Buggy / Toggle Voice!
+    if (upper && !prevUpper) {
+      unlockTourVoice();
+      if (CAMPUS_TOUR.state === "choice") enterFreeWalkMode();
+      else if (CAMPUS_TOUR.state === "riding") {
+        CAMPUS_TOUR.paused = !CAMPUS_TOUR.paused;
+        try { if (window.speechSynthesis) CAMPUS_TOUR.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume(); } catch (e) {}
+      } else {
+        CAMPUS_TOUR.voiceOn = !CAMPUS_TOUR.voiceOn;
+        if (!CAMPUS_TOUR.voiceOn && window.speechSynthesis) window.speechSynthesis.cancel();
+      }
+    }
+    // Right Trigger: Repeat current voice guide narration!
+    if (trigDown && !prevTrig) {
+      unlockTourVoice();
+      if (CAMPUS_TOUR.state === "riding") announceCurrentStop();
+      else if (CAMPUS_TOUR.state === "freewalk" && CAMPUS_TOUR.lastFreeZoneIdx >= 0) {
+        speakTourGuide(AU_TOUR_STOPS[CAMPUS_TOUR.lastFreeZoneIdx].speech);
+      }
+    }
+  } else {
+    // Left X button: Exit Buggy to Free Walk, or Summon/Restart Campus Tour!
+    if (pressed && !prevPressed) {
+      unlockTourVoice();
+      if (CAMPUS_TOUR.state === "riding") enterFreeWalkMode();
+      else if (CAMPUS_TOUR.state === "freewalk") beginWalkToBuggy();
+    }
+    // Left Y button: Cycle Time of Day (Bright Noon / Golden Sunset / Morning Sun)
+    if (upper && !prevUpper) {
+      const tm = document.getElementById("time-mode");
+      if (tm) { tm.selectedIndex = (tm.selectedIndex + 1) % tm.options.length; tm.dispatchEvent(new Event("change")); }
+    }
+  }
+};
+
+// Per-Frame Campus Tour Ticker (Inside Three.js Ye.setAnimationLoop -> PC + Meta Quest 3 VR!)
 window._tickCampusTour = function(dt) {
   const safeDt = Math.min(0.08, Math.max(0.001, dt || 0.016));
-  if (CAMPUS_TOUR.state === "idle" || CAMPUS_TOUR.state === "done" || CAMPUS_TOUR.paused) return;
+  if (CAMPUS_TOUR.state === "idle" || CAMPUS_TOUR.state === "done" || CAMPUS_TOUR.state === "choice") return;
 
+  // 1. COLLISION-FREE HIGH-TO-FRONT AERIAL FLYOVER -> LANDS AT MAIN GATE (x=-3, z=82)!
   if (CAMPUS_TOUR.state === "aerial") {
     CAMPUS_TOUR.aerialTime += safeDt;
     const t = Math.min(1, CAMPUS_TOUR.aerialTime / CAMPUS_TOUR.aerialDur);
@@ -5237,17 +5508,20 @@ window._tickCampusTour = function(dt) {
     const sm = (x) => x * x * (3 - 2 * x);
     let cx, cy, cz, lx, ly, lz;
     if (t < 0.45) {
+      // High panoramic sweep strictly over open air (Y = 48m -> 40m, Z = 116 -> 98) — ZERO buildings or walls in path!
       const u = sm(t / 0.45);
-      cx = so.lerp(62, -48, u); cy = so.lerp(52, 34, u); cz = so.lerp(-36, 36, u);
-      lx = so.lerp(0, -3, u); ly = so.lerp(4, 5, u); lz = so.lerp(-6, 8, u);
+      cx = so.lerp(28, -26, u); cy = so.lerp(48, 40, u); cz = so.lerp(116, 98, u);
+      lx = so.lerp(-3, -3, u); ly = so.lerp(6, 5, u); lz = so.lerp(8, 16, u);
     } else if (t < 0.78) {
+      // Smoothly align straight down the open Main Approach Road (still high above all gates & trees!)
       const u = sm((t - 0.45) / 0.33);
-      cx = so.lerp(-48, 10, u); cy = so.lerp(34, 14, u); cz = so.lerp(36, 76, u);
-      lx = so.lerp(-3, -3, u); ly = so.lerp(5, 3.5, u); lz = so.lerp(8, 22, u);
+      cx = so.lerp(-26, -3, u); cy = so.lerp(40, 18, u); cz = so.lerp(98, 94, u);
+      lx = -3; ly = so.lerp(5, 4, u); lz = so.lerp(16, 26, u);
     } else {
+      // Clean vertical-forward glide down the open Venkatapur road directly in front of the Main Gate (z = 82)!
       const u = sm((t - 0.78) / 0.22);
-      cx = so.lerp(10, -2.72, u); cy = so.lerp(14, 1.56, u); cz = so.lerp(76, 66.85, u);
-      lx = -3; ly = so.lerp(3.5, 1.8, u); lz = so.lerp(22, 30, u);
+      cx = -3; cy = so.lerp(18, 1.66, u); cz = so.lerp(94, 82, u);
+      lx = -3; ly = so.lerp(4, 2.5, u); lz = so.lerp(26, 20, u);
     }
     if (Ye.xr.isPresenting) {
       xt.position.set(cx, Math.max(0, cy - 1.6), cz);
@@ -5261,11 +5535,76 @@ window._tickCampusTour = function(dt) {
       Mi.lookAt(lx, ly, lz);
     }
     if (typeof fpHands !== "undefined") fpHands.forEach(a => (a.root.visible = false));
-    if (CAMPUS_TOUR.aerialTime >= CAMPUS_TOUR.aerialDur) boardTourBuggyNow();
+    if (CAMPUS_TOUR.aerialTime >= CAMPUS_TOUR.aerialDur) landAtMainGateChoice();
     return;
   }
 
-  if (CAMPUS_TOUR.state === "riding") {
+  // 2. INTERACTIVE BUGGY ARRIVAL SEQUENCE (Walk forward -> Buggy drives up -> Board it!)
+  if (CAMPUS_TOUR.state === "waiting_walk") {
+    // Once player walks forward into/near the Main Gate (z <= 77), buggy starts driving down the avenue toward them!
+    if (xt.position.z <= 77.5) {
+      CAMPUS_TOUR.state = "buggy_arriving";
+      const bp = document.getElementById("tour-board-prompt");
+      if (bp) bp.textContent = "Your Open-Top Anurag University Buggy is pulling up right in front of you!";
+    }
+    return;
+  }
+
+  if (CAMPUS_TOUR.state === "buggy_arriving") {
+    const targetZ = Math.max(60, xt.position.z - 6.5);
+    const dz = targetZ - CAMPUS_TOUR.buggyPos.z;
+    if (Math.abs(dz) > 0.35) {
+      const step = Math.min(Math.abs(dz), 5.2 * safeDt);
+      CAMPUS_TOUR.buggyPos.z += Math.sign(dz) * step;
+      CAMPUS_TOUR.buggyYaw = Math.PI; // Driving south toward the player
+      CAMPUS_TOUR.buggy.position.copy(CAMPUS_TOUR.buggyPos);
+      CAMPUS_TOUR.buggy.rotation.set(0, CAMPUS_TOUR.buggyYaw, 0);
+      for (const w of CAMPUS_TOUR.wheels) w.rotation.x -= step / 0.29;
+    } else {
+      // Smoothly turn buggy around to face A-Block & open boarding!
+      CAMPUS_TOUR.buggyYaw = 0;
+      CAMPUS_TOUR.buggy.rotation.set(0, 0, 0);
+      CAMPUS_TOUR.state = "buggy_ready";
+      if (CAMPUS_TOUR.vrBoardPrompt) CAMPUS_TOUR.vrBoardPrompt.visible = true;
+      const bp = document.getElementById("tour-board-prompt");
+      if (bp) bp.textContent = "Buggy has arrived! Walk up to it or press [E] / [A] to board and begin the Campus Tour!";
+      speakTourGuide("Your electric buggy has arrived! Step right up or press E to hop aboard.");
+    }
+    return;
+  }
+
+  if (CAMPUS_TOUR.state === "buggy_ready") {
+    if (CAMPUS_TOUR.vrBoardPrompt) CAMPUS_TOUR.vrBoardPrompt.lookAt(xt.position.x, 1.95, xt.position.z);
+    // Auto-board as soon as player walks within 3.6m of the arrived buggy!
+    const distToBuggy = Math.hypot(xt.position.x - CAMPUS_TOUR.buggyPos.x, xt.position.z - CAMPUS_TOUR.buggyPos.z);
+    if (distToBuggy <= 3.6) {
+      boardTourBuggyNow();
+    }
+    return;
+  }
+
+  // 3. FREE WALK PROXIMITY VOICE-OVER GUIDE (Auto-explains every block as you walk near it!)
+  if (CAMPUS_TOUR.state === "freewalk") {
+    if (CAMPUS_TOUR.freeZoneCooldown > 0) CAMPUS_TOUR.freeZoneCooldown -= safeDt;
+    const px = xt.position.x, pz = xt.position.z;
+    let nearestIdx = -1, nearestDist = 999;
+    for (let i = 0; i < AU_TOUR_STOPS.length; i++) {
+      const s = AU_TOUR_STOPS[i];
+      const d = Math.hypot(px - s.center[0], pz - s.center[1]);
+      if (d <= s.radius && d < nearestDist) { nearestDist = d; nearestIdx = i; }
+    }
+    if (nearestIdx !== -1 && nearestIdx !== CAMPUS_TOUR.lastFreeZoneIdx && CAMPUS_TOUR.freeZoneCooldown <= 0) {
+      CAMPUS_TOUR.lastFreeZoneIdx = nearestIdx;
+      CAMPUS_TOUR.freeZoneCooldown = 4.0;
+      const st = AU_TOUR_STOPS[nearestIdx];
+      updateTourUI(`FREE WALK · LANDMARK GUIDE`, st.name, st.pills, st.speech, ((nearestIdx + 1) / AU_TOUR_STOPS.length) * 100);
+      speakTourGuide(st.speech);
+    }
+    return;
+  }
+
+  // 4. SLOW, SCENIC OPEN-TOP BUGGY GUIDED ROAD TOUR (3.4 m/s!)
+  if (CAMPUS_TOUR.state === "riding" && !CAMPUS_TOUR.paused) {
     const stop = AU_TOUR_STOPS[CAMPUS_TOUR.stopIdx];
     if (!stop) return;
     const wp = stop.path[CAMPUS_TOUR.wpIdx];
@@ -5276,26 +5615,24 @@ window._tickCampusTour = function(dt) {
 
     let moved = 0;
     if (dist > 0.35) {
-      // Smoothly steer along the road toward the next road waypoint
       const targetYaw = Math.atan2(-dx, -dz);
       let dYaw = targetYaw - CAMPUS_TOUR.buggyYaw;
       while (dYaw > Math.PI) dYaw -= Math.PI * 2;
       while (dYaw < -Math.PI) dYaw += Math.PI * 2;
-      CAMPUS_TOUR.buggyYaw += dYaw * Math.min(1, safeDt * 3.8);
-      const stepDist = Math.min(dist, CAMPUS_TOUR.speed * safeDt);
+      CAMPUS_TOUR.buggyYaw += dYaw * Math.min(1, safeDt * 2.6);
+      // Gentle ease-in/out when approaching a stop
+      const curSpd = dist < 3.0 ? Math.max(1.4, CAMPUS_TOUR.speed * (dist / 3.0)) : CAMPUS_TOUR.speed;
+      const stepDist = Math.min(dist, curSpd * safeDt);
       CAMPUS_TOUR.buggyPos.x += (dx / dist) * stepDist;
       CAMPUS_TOUR.buggyPos.z += (dz / dist) * stepDist;
       moved = stepDist;
-      // Gently decay free-look offset slightly only if not dragging so user sees road ahead
     } else {
-      // Reached waypoint!
       if (CAMPUS_TOUR.wpIdx < stop.path.length - 1) {
         CAMPUS_TOUR.wpIdx++;
       } else {
-        // Showcase pause at the landmark while Tour Guide speaks!
         CAMPUS_TOUR.holdTimer += safeDt;
         const stillSpeaking = window.speechSynthesis && window.speechSynthesis.speaking && CAMPUS_TOUR.voiceOn;
-        if (CAMPUS_TOUR.holdTimer >= stop.holdSec && (!stillSpeaking || CAMPUS_TOUR.holdTimer >= stop.holdSec + 10.0)) {
+        if (CAMPUS_TOUR.holdTimer >= stop.holdSec && (!stillSpeaking || CAMPUS_TOUR.holdTimer >= stop.holdSec + 12.0)) {
           if (CAMPUS_TOUR.stopIdx < AU_TOUR_STOPS.length - 1) {
             CAMPUS_TOUR.stopIdx++;
             CAMPUS_TOUR.wpIdx = 0;
@@ -5310,7 +5647,6 @@ window._tickCampusTour = function(dt) {
       }
     }
 
-    // Update 3D Buggy Position, Heading & Spinning Wheels!
     const gy = groundAt(CAMPUS_TOUR.buggyPos.x, CAMPUS_TOUR.buggyPos.z);
     CAMPUS_TOUR.buggyPos.y = gy;
     if (CAMPUS_TOUR.buggy) {
@@ -5319,12 +5655,11 @@ window._tickCampusTour = function(dt) {
       for (const w of CAMPUS_TOUR.wheels) w.rotation.x -= moved / 0.29;
     }
 
-    // Seat the player comfortably in the front passenger seat of the golf cart!
+    // Seat passenger cleanly inside the Open-Top Buggy with unobstructed 360° sky & building view!
     const seatLocal = new A(0.32, 0, -0.05).applyAxisAngle(new A(0, 1, 0), CAMPUS_TOUR.buggyYaw);
     const sx = CAMPUS_TOUR.buggyPos.x + seatLocal.x;
     const sz = CAMPUS_TOUR.buggyPos.z + seatLocal.z;
     if (Ye.xr.isPresenting) {
-      // In Meta Quest 3 VR: move rig smoothly with buggy, keep headset rotation 100% user-controlled for comfort!
       xt.position.set(sx, gy + 0.15, sz);
       xt.rotation.set(0, CAMPUS_TOUR.buggyYaw, 0);
     } else {
