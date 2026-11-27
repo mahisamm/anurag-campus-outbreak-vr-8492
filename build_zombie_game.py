@@ -5338,10 +5338,339 @@ window._tickCampusTour = function(dt) {
     if (typeof fpHands !== "undefined") fpHands.forEach(a => (a.root.visible = false));
   }
 };
+
+// ============================================================================
+// LIVING ANURAG UNIVERSITY CAMPUS POPULATION (STUDENTS WITH BACKPACKS & IDs + FORMAL FACULTY)
+// Reuses our articulated human rig (hips, knees, shoulders, elbows, swinging AU ID cards)
+// with natural skin tones, backpacks, walking friend groups, and gesturing conversation circles!
+// ============================================================================
+(function() {
+  const SKIN_TONES = [0xd8a175, 0xc68b59, 0xe2ae84, 0xb57a4c, 0xe8ba96, 0x9e6942];
+  const STUDENT_TOPS = [0x1e3a8a, 0xf8fafc, 0x334155, 0x991b1b, 0x166534, 0x0284c7, 0xd97706, 0x4c1d95, 0xbe185d, 0x0f766e];
+  const STUDENT_PANTS = [0x1e293b, 0x26354d, 0x374151, 0x1f2937, 0x4b5563];
+  const BAG_COLORS = [0x111827, 0x1e3a8a, 0x7f1d1d, 0x14532d, 0x374151, 0x0f766e];
+  const FACULTY_SHIRTS = [0xf8fafc, 0xdbeafe, 0xe2e8f0, 0xfef3c7, 0xf1f5f9];
+  const FACULTY_SUITS = [0x1e293b, 0x1f2937, 0x312e81, 0x3f3f46];
+
+  // Cached crisp Student & Faculty Anurag University ID Card textures
+  function makeCampusIdTex(isFaculty) {
+    const c = document.createElement("canvas"); c.width = 128; c.height = 176;
+    const g = c.getContext("2d");
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, 128, 176);
+    g.fillStyle = isFaculty ? "#b91c1c" : "#1d4ed8";
+    g.fillRect(0, 0, 128, 38);
+    g.fillStyle = "#ffffff"; g.font = "900 13px sans-serif"; g.textAlign = "center";
+    g.fillText("ANURAG UNIV", 64, 17);
+    g.font = "700 10px sans-serif";
+    g.fillText(isFaculty ? "FACULTY ID" : "STUDENT ID", 64, 32);
+    // Portrait photo silhouette
+    g.fillStyle = "#e2e8f0"; g.fillRect(36, 48, 56, 56);
+    g.fillStyle = "#475569"; g.beginPath(); g.arc(64, 68, 13, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(64, 102, 20, Math.PI, 0); g.fill();
+    // Name bar & barcode
+    g.fillStyle = isFaculty ? "#991b1b" : "#1e40af";
+    g.fillRect(14, 114, 100, 22);
+    g.fillStyle = "#ffffff"; g.font = "800 12px sans-serif";
+    g.fillText(isFaculty ? "PROFESSOR" : "B.TECH / AU", 64, 129);
+    g.fillStyle = "#111827";
+    for (let bx = 20; bx < 108; bx += 5) g.fillRect(bx, 146, (bx % 3 === 0 ? 3 : 1.5), 18);
+    const t = new dn(c); t.colorSpace = vt;
+    return t;
+  }
+  const studentIdMat = new Jt({ map: makeCampusIdTex(false), roughness: 0.35, side: Gt });
+  const facultyIdMat = new Jt({ map: makeCampusIdTex(true), roughness: 0.35, side: Gt });
+  const eyeWhiteMat = new Jt({ color: 0xf8fafc, roughness: 0.3 });
+  const pupilMat = new Jt({ color: 0x111827, roughness: 0.2 });
+  const hairDarkMat = new Jt({ color: 0x181512, roughness: 0.85 });
+  const shoeDarkMat = new Jt({ color: 0x181a1f, roughness: 0.65 });
+  const sneakerMat = new Jt({ color: 0xe5e7eb, roughness: 0.72 });
+  const beltMat = new Jt({ color: 0x1f1916, roughness: 0.5 });
+
+  let npcSeed = 777;
+  function nRand() { npcSeed = (npcSeed * 16807) % 2147483647; return (npcSeed - 1) / 2147483646; }
+  function pick(arr) { return arr[Math.floor(nRand() * arr.length)]; }
+
+  // Build Articulated Human Student or Faculty Member (reusing our stylized human rig!)
+  function createCampusHuman(role, x, z, yaw = 0) {
+    const isFaculty = role === "faculty";
+    const isFemale = nRand() > 0.52;
+    const sc = isFaculty ? (0.98 + nRand() * 0.08) : (0.92 + nRand() * 0.09);
+
+    const skinMat = new Jt({ color: pick(SKIN_TONES), roughness: 0.72 });
+    const topCol = isFaculty ? pick(FACULTY_SHIRTS) : pick(STUDENT_TOPS);
+    const topMat = new Jt({ color: topCol, roughness: 0.68 });
+    const pantMat = new Jt({ color: isFaculty ? pick(FACULTY_SUITS) : pick(STUDENT_PANTS), roughness: 0.78 });
+    const tieMat = new Jt({ color: isFaculty ? (nRand() > 0.5 ? 0x991b1b : 0x1e3a8a) : 0x334155, roughness: 0.55 });
+    const lanyardMat = new Jt({ color: isFaculty ? 0xb91c1c : 0x1d4ed8, roughness: 0.6 });
+
+    const root = new fi();
+    root.position.set(x, groundAt(x, z), z);
+    root.rotation.y = yaw;
+    root.scale.setScalar(sc);
+
+    const pelvis = new fi(); pelvis.position.y = 0.90; root.add(pelvis);
+
+    // Formal/Casual Torso + Collar + Belt
+    const torso = new et(new sa(0.155, 0.27, 6, 12), topMat);
+    torso.scale.set(1.22, 1.0, 0.80); torso.position.y = 0.30; torso.castShadow = true; pelvis.add(torso);
+    const belt = new et(new pn(0.165, 0.165, 0.052, 12), beltMat);
+    belt.scale.set(1.18, 1.0, 0.82); belt.position.y = 0.05; pelvis.add(belt);
+    const collar = new et(new pn(0.088, 0.102, 0.06, 10), new Jt({ color: 0xf8fafc, roughness: 0.6 }));
+    collar.position.y = 0.56; pelvis.add(collar);
+
+    // Faculty Formal Blazer Lapels & Tie (or Book/Folder)
+    if (isFaculty) {
+      const hasBlazer = nRand() > 0.35;
+      if (hasBlazer) {
+        const blazerMat = pantMat;
+        for (let sx of [-0.115, 0.115]) {
+          let lapel = new et(new Ni(0.085, 0.44, 0.19), blazerMat);
+          lapel.position.set(sx, 0.30, 0.02); pelvis.add(lapel);
+        }
+      }
+      const tie = new et(new Ni(0.036, 0.25, 0.016), tieMat);
+      tie.position.set(0, 0.39, 0.135); pelvis.add(tie);
+    }
+
+    // Swinging Anurag University Lanyard & ID Card (BOTH Students AND Faculty!)
+    const idPivot = new fi(); idPivot.position.set(0, 0.54, 0.132); pelvis.add(idPivot);
+    for (let sx of [-0.045, 0.045]) {
+      let strap = new et(new Ni(0.012, 0.22, 0.006), lanyardMat);
+      strap.position.set(sx * 0.55, -0.10, 0); strap.rotation.z = sx > 0 ? 0.22 : -0.22; idPivot.add(strap);
+    }
+    const idCard = new et(new _i(0.072, 0.102), isFaculty ? facultyIdMat : studentIdMat);
+    idCard.position.set(0, -0.24, 0.005); idPivot.add(idCard);
+
+    // Detailed 3D College Backpack for Students (Padded body + Front Pocket + Dual Shoulder Straps!)
+    if (!isFaculty) {
+      const bagMat = new Jt({ color: pick(BAG_COLORS), roughness: 0.78 });
+      const bagPack = new et(new Ni(0.27, 0.36, 0.14), bagMat);
+      bagPack.position.set(0, 0.31, -0.175); bagPack.castShadow = true; pelvis.add(bagPack);
+      const bagPocket = new et(new Ni(0.21, 0.16, 0.05), new Jt({ color: 0x0f172a, roughness: 0.75 }));
+      bagPocket.position.set(0, 0.23, -0.255); pelvis.add(bagPocket);
+      for (let sx of [-0.11, 0.11]) {
+        let sStrap = new et(new Ni(0.036, 0.34, 0.22), bagMat);
+        sStrap.position.set(sx, 0.36, -0.02); pelvis.add(sStrap);
+      }
+    }
+
+    // Neck & Expressive Friendly Human Head + Hair
+    const neck = new et(new pn(0.052, 0.06, 0.08, 10), skinMat); neck.position.y = 0.61; pelvis.add(neck);
+    const headPivot = new fi(); headPivot.position.y = 0.73; pelvis.add(headPivot);
+    const head = new et(new fn(0.135, 14, 12), skinMat); head.scale.set(0.95, 1.08, 0.98); head.castShadow = true; headPivot.add(head);
+    // Hair cap + optional female ponytail/bun
+    const hair = new et(new fn(0.142, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), hairDarkMat);
+    hair.position.set(0, 0.025, -0.015); headPivot.add(hair);
+    if (isFemale) {
+      const bun = new et(new fn(0.068, 10, 8), hairDarkMat);
+      bun.position.set(0, 0.0, -0.145); headPivot.add(bun);
+    }
+    // Natural Friendly Eyes & Warm Smile
+    for (let sx of [-0.046, 0.046]) {
+      let ew = new et(new fn(0.019, 8, 8), eyeWhiteMat); ew.position.set(sx, 0.022, 0.118); headPivot.add(ew);
+      let ep = new et(new fn(0.010, 8, 8), pupilMat); ep.position.set(sx, 0.022, 0.132); headPivot.add(ep);
+    }
+    const smile = new et(new Ni(0.044, 0.008, 0.008), new Jt({ color: 0x7c3a2d, roughness: 0.7 }));
+    smile.position.set(0, -0.042, 0.126); headPivot.add(smile);
+
+    // Articulated Arms (Shoulders + Elbows + Hands; Faculty sometimes holds a folder/book!)
+    const arms = [];
+    for (let s of [-1, 1]) {
+      const sh = new fi(); sh.position.set(s * 0.225, 0.50, 0); pelvis.add(sh);
+      const uArm = new et(new sa(0.048, 0.20, 4, 8), topMat); uArm.position.y = -0.12; sh.add(uArm);
+      const elb = new fi(); elb.position.y = -0.25; sh.add(elb);
+      const fArm = new et(new sa(0.042, 0.19, 4, 8), isFaculty ? topMat : skinMat); fArm.position.y = -0.11; elb.add(fArm);
+      const hand = new et(new fn(0.042, 8, 8), skinMat); hand.position.y = -0.23; elb.add(hand);
+      if (isFaculty && s === 1) {
+        const folder = new et(new Ni(0.04, 0.28, 0.22), new Jt({ color: 0x1e3a8a, roughness: 0.6 }));
+        folder.position.set(0.02, -0.22, 0.06); elb.add(folder);
+      }
+      arms.push({ sh, elb, side: s });
+    }
+
+    // Articulated Legs (Hips + Knees + Dress Shoes / Sneakers)
+    const legs = [];
+    for (let s of [-1, 1]) {
+      const hip = new fi(); hip.position.set(s * 0.095, 0.0, 0); pelvis.add(hip);
+      const thigh = new et(new sa(0.064, 0.30, 4, 10), pantMat); thigh.position.y = -0.21; thigh.castShadow = true; hip.add(thigh);
+      const knee = new fi(); knee.position.y = -0.43; hip.add(knee);
+      const shin = new et(new sa(0.052, 0.30, 4, 10), pantMat); shin.position.y = -0.20; knee.add(shin);
+      const shoe = new et(new Ni(0.095, 0.075, 0.21), isFaculty ? shoeDarkMat : (nRand() > 0.45 ? sneakerMat : shoeDarkMat));
+      shoe.position.set(0, -0.42, 0.04); knee.add(shoe);
+      legs.push({ hip, knee, side: s });
+    }
+
+    Ht.add(root);
+    return { root, pelvis, headPivot, idPivot, arms, legs, role, phase: nRand() * Math.PI * 2 };
+  }
+
+  // --- POPULATE CAMPUS WITH WALKING FRIEND GROUPS, CONVERSATION CIRCLES & FORMAL FACULTY ---
+  const walkingGroups = [];
+  const talkingCircles = [];
+
+  // 1. Walking Student Friend Groups (Pairs & Trios strolling side-by-side along footpaths & walkways!)
+  const walkGroupSpecs = [
+    // Main Entrance Avenue West & East footpaths
+    { role: "student", count: 3, speed: 1.35, path: [[-10.2, 62], [-10.2, 30], [-10.2, 62]] },
+    { role: "student", count: 2, speed: 1.45, path: [[4.4, 30], [4.4, 62], [4.4, 30]] },
+    // A-Block <-> B/D-Block Palm-Lined Pathway
+    { role: "student", count: 3, speed: 1.32, path: [[-31.2, 13], [-31.2, -20], [-31.2, 13]] },
+    { role: "student", count: 2, speed: 1.40, path: [[-31.2, -18], [-31.2, 12], [-31.2, -18]] },
+    // Wide 2-Lane East Avenue Footpaths (past G-Block, F-Block & E-Block!)
+    { role: "student", count: 3, speed: 1.38, path: [[19.3, 24], [19.3, -24], [19.3, 24]] },
+    { role: "student", count: 2, speed: 1.42, path: [[29.5, -24], [29.5, 20], [29.5, -24]] },
+    // North Avenue (past Medicinal Garden & H-Block)
+    { role: "student", count: 2, speed: 1.35, path: [[-14, -37], [-58, -37], [-14, -37]] },
+    // West Avenue (past D-Block, B-Block & C-Block)
+    { role: "student", count: 3, speed: 1.36, path: [[-69.5, -20], [-69.5, 22], [-69.5, -20]] },
+    // Formal Faculty Strolling Between Academic Blocks!
+    { role: "faculty", count: 2, speed: 1.25, path: [[19.4, -14], [19.4, 18], [19.4, -14]] },
+    { role: "faculty", count: 1, speed: 1.22, path: [[-14, 21.5], [14, 21.5], [-14, 21.5]] },
+    { role: "faculty", count: 1, speed: 1.20, path: [[-69.2, 14], [-69.2, -16], [-69.2, 14]] },
+    { role: "faculty", count: 2, speed: 1.18, path: [[-56, 31], [-36, 31], [-56, 31]] }
+  ];
+
+  for (const spec of walkGroupSpecs) {
+    const startP = spec.path[0];
+    const members = [];
+    for (let i = 0; i < spec.count; i++) {
+      const lat = (i - (spec.count - 1) * 0.5) * 0.72;
+      const h = createCampusHuman(spec.role, startP[0] + lat, startP[1], 0);
+      members.push({ human: h, latOffset: lat, zOffset: (i % 2) * 0.25 });
+    }
+    walkingGroups.push({
+      members,
+      path: spec.path,
+      wpIdx: 1,
+      pos: new A(startP[0], 0, startP[1]),
+      yaw: 0,
+      speed: spec.speed
+    });
+  }
+
+  // 2. Standing Conversation Circles (Students & Faculty talking, nodding & gesturing on Plazas!)
+  const circleSpecs = [
+    { cx: -8.5, cz: 20.5, roles: ["student", "student", "student"] },         // A-Block Front Plaza
+    { cx: 4.5, cz: 20.5, roles: ["faculty", "student", "student"] },          // A-Block Faculty-Student Chat
+    { cx: -3.0, cz: -2.0, roles: ["student", "student", "student", "student"] }, // A-Block Central Courtyard
+    { cx: 28.0, cz: 10.5, roles: ["faculty", "faculty", "student"] },         // G-Block Admin Portico
+    { cx: 27.6, cz: -17.5, roles: ["student", "student", "student"] },        // E-Block TEDxAnuragU Atrium
+    { cx: -60.5, cz: -38.5, roles: ["student", "student", "student"] },       // H-Block Green Solar Tree Plaza
+    { cx: -66.5, cz: -8.0, roles: ["student", "student", "faculty"] },        // D-Block Mural Plaza
+    { cx: -41.5, cz: 46.5, roles: ["student", "student", "student"] },        // C-Block Basketball Plaza
+    { cx: -78.5, cz: 59.5, roles: ["faculty", "student", "student"] }         // Dr. APJ Abdul Kalam Hall Plaza
+  ];
+
+  for (const cs of circleSpecs) {
+    const n = cs.roles.length;
+    const rad = n >= 4 ? 0.95 : 0.78;
+    const people = [];
+    for (let i = 0; i < n; i++) {
+      const ang = (i / n) * Math.PI * 2 + 0.3;
+      const px = cs.cx + Math.cos(ang) * rad;
+      const pz = cs.cz + Math.sin(ang) * rad;
+      const faceYaw = Math.atan2(cs.cx - px, cs.cz - pz);
+      const h = createCampusHuman(cs.roles[i], px, pz, faceYaw);
+      people.push({ human: h, baseYaw: faceYaw, talkSeed: i * 1.9 + cs.cx });
+    }
+    talkingCircles.push({ people });
+  }
+
+  // Animate All Campus Students & Faculty Every Frame inside Ye.setAnimationLoop (PC + Meta Quest 3 VR!)
+  let popTime = 0;
+  window._tickCampusPopulation = function(dt) {
+    const safeDt = Math.min(0.06, Math.max(0.001, dt || 0.016));
+    popTime += safeDt;
+
+    // 1. Update Walking Friend Groups & Strolling Faculty
+    for (const grp of walkingGroups) {
+      const wp = grp.path[grp.wpIdx];
+      const dx = wp[0] - grp.pos.x;
+      const dz = wp[1] - grp.pos.z;
+      const dist = Math.hypot(dx, dz);
+
+      // Politely yield if the Tour Buggy is driving right beside them!
+      let yielding = false;
+      if (CAMPUS_TOUR.state === "riding" && CAMPUS_TOUR.buggyPos.distanceTo(grp.pos) < 3.6) {
+        yielding = true;
+      }
+
+      if (!yielding) {
+        if (dist < 0.4) {
+          grp.wpIdx = (grp.wpIdx + 1) % grp.path.length;
+        } else {
+          const targetYaw = Math.atan2(dx, dz);
+          let dYaw = targetYaw - grp.yaw;
+          while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+          while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+          grp.yaw += dYaw * Math.min(1, safeDt * 5.0);
+          const step = Math.min(dist, grp.speed * safeDt);
+          grp.pos.x += (dx / dist) * step;
+          grp.pos.z += (dz / dist) * step;
+        }
+      }
+
+      const rightX = Math.cos(grp.yaw), rightZ = -Math.sin(grp.yaw);
+      const fwdX = Math.sin(grp.yaw), fwdZ = Math.cos(grp.yaw);
+
+      for (let mIdx = 0; mIdx < grp.members.length; mIdx++) {
+        const m = grp.members[mIdx];
+        const h = m.human;
+        const mx = grp.pos.x + rightX * m.latOffset - fwdX * m.zOffset;
+        const mz = grp.pos.z + rightZ * m.latOffset - fwdZ * m.zOffset;
+        h.root.position.set(mx, groundAt(mx, mz), mz);
+        h.root.rotation.y = grp.yaw;
+
+        if (!yielding) {
+          const t = popTime * 5.2 + h.phase;
+          const stride = Math.sin(t);
+          h.pelvis.position.y = 0.90 + Math.abs(stride) * 0.035;
+          h.legs[0].hip.rotation.x = stride * 0.48;
+          h.legs[1].hip.rotation.x = -stride * 0.48;
+          h.legs[0].knee.rotation.x = Math.max(0, -stride * 0.55);
+          h.legs[1].knee.rotation.x = Math.max(0, stride * 0.55);
+          // Natural arm swing + occasional friend-chat glance!
+          h.arms[0].sh.rotation.x = -stride * 0.36;
+          h.arms[1].sh.rotation.x = stride * 0.36;
+          h.arms[0].elb.rotation.x = -0.18;
+          h.arms[1].elb.rotation.x = -0.18;
+          h.idPivot.rotation.z = stride * 0.08;
+          h.headPivot.rotation.y = grp.members.length > 1 ? Math.sin(popTime * 1.1 + mIdx * 2.1) * 0.28 : 0;
+        } else {
+          // Politely stand & glance at the passing Campus Tour Buggy
+          h.legs[0].hip.rotation.x *= 0.85; h.legs[1].hip.rotation.x *= 0.85;
+          h.arms[0].sh.rotation.x *= 0.85; h.arms[1].sh.rotation.x *= 0.85;
+        }
+      }
+    }
+
+    // 2. Update Standing Conversation Circles (Natural Talking, Nodding & Hand Gestures!)
+    for (const circ of talkingCircles) {
+      for (const p of circ.people) {
+        const h = p.human;
+        const t = popTime + p.talkSeed;
+        const isSpeaking = Math.sin(t * 0.55) > 0.15;
+        h.pelvis.position.y = 0.90 + Math.sin(t * 1.6) * 0.012;
+        h.headPivot.rotation.x = isSpeaking ? Math.sin(t * 3.8) * 0.10 : Math.sin(t * 1.9) * 0.08;
+        h.headPivot.rotation.y = Math.sin(t * 0.9) * 0.18;
+        // Expressive hand gestures when speaking vs relaxed stance when listening
+        if (isSpeaking) {
+          h.arms[0].sh.rotation.x = -0.45 + Math.sin(t * 3.2) * 0.22;
+          h.arms[0].elb.rotation.x = -0.75 + Math.cos(t * 3.2) * 0.2;
+          h.arms[1].sh.rotation.x = -0.35 + Math.cos(t * 2.7) * 0.18;
+          h.arms[1].elb.rotation.x = -0.65;
+        } else {
+          h.arms[0].sh.rotation.x = -0.08; h.arms[0].elb.rotation.x = -0.22;
+          h.arms[1].sh.rotation.x = -0.08; h.arms[1].elb.rotation.x = -0.22;
+        }
+      }
+    }
+  };
+})();
 '''
     html = html.replace(
         '  if (window._tickRealisticShaders) window._tickRealisticShaders(e);',
-        '  if (window._tickRealisticShaders) window._tickRealisticShaders(e);\n  if (window._tickCampusTour) window._tickCampusTour(e);',
+        '  if (window._tickRealisticShaders) window._tickRealisticShaders(e);\n  if (window._tickCampusTour) window._tickCampusTour(e);\n  if (window._tickCampusPopulation) window._tickCampusPopulation(e);',
         1
     )
     html = html.replace(
